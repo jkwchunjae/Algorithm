@@ -32,7 +32,7 @@ using namespace std;
 const double eps = 1 / (double)1000000000;
 
 int main(){
-	freopen("input.txt", "r", stdin);
+	freopen("MakeItSmooth.in", "r", stdin);
 	freopen("output.txt", "w+", stdout);
 	int t;
 	cin >> t;

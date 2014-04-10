@@ -18,18 +18,18 @@
     <ClCompile Include="functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MakeInSmooth.cpp">
+    <ClCompile Include="MakeItSmooth_Solution.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MakeItSmooth_Solution.cpp">
+    <ClCompile Include="MakeItSmooth.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="input.txt">
+    <Text Include="output.txt">
       <Filter>Resource Files</Filter>
     </Text>
-    <Text Include="output.txt">
+    <Text Include="MakeItSmooth.in">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

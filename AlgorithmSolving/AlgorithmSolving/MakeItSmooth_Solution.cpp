@@ -58,7 +58,7 @@ void main2(void){
 }
 
 int main(void){
-	freopen("input.txt", "r", stdin);
+	freopen("MakeItSmooth.in", "r", stdin);
 	freopen("output.txt", "w+", stdout);
 	int number_of_test_cases, i;
 	scanf("%d", &number_of_test_cases);
