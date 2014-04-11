@@ -43,5 +43,8 @@
     <None Include="StackingPlates.in">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="StackingPlates.ans">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
