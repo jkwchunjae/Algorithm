@@ -24,6 +24,9 @@
     <ClCompile Include="MakeItSmooth.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StackingPlates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="output.txt">
@@ -35,5 +38,10 @@
     <Text Include="input.txt">
       <Filter>Resource Files</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="StackingPlates.in">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
