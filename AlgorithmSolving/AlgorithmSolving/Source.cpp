@@ -32,20 +32,31 @@ using namespace std;
 
 const double eps = 1 / (double)1000000000;
 
-long long ans[1010];
+long long a[100010];
 
 int main(){
 #ifdef _DEBUG
-	//freopen("input.txt", "r", stdin);
+	freopen("input.txt", "r", stdin);
 	//freopen("output.txt", "w+", stdout);
 #endif
 	int N;
 	cin >> N;
 
-	ans[1] = 0;
-	FOR1(i, 2, 1000) ans[i] = ans[i - 1] * 2 + (1 - (i % 2) * 2);
+	REP(i, N) cin >> a[i];
 
-	REP1(i, 100) cout << ans[i] << endl;
+	sort(a, a + N);
+
+
+	if (abs(2 * a[1] - a[0] - a[N - 1]) > abs(2 * a[N - 2] - a[0] - a[N - 1]))
+	{
+		cout << 2 * a[1] - a[0] - a[N - 1] << endl;
+	}
+	else
+	{
+		cout << 2 * a[N - 2] - a[0] - a[N - 1] << endl;
+	}
+
+	//cout << max(abs(2 * a[1] - a[0] - a[N - 1]), abs(2 * a[N - 2] - a[0] - a[N - 1])) << endl;
 
 	return 0;
 }
