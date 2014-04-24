@@ -30,116 +30,213 @@ using namespace std;
 #define REPD1(v, hi) for (int v=(hi);v>=1;v--)
 #define FOR1(v, lo, hi) for (int v=(lo);v<=(hi);v++)
 #define FORD1(v, lo, hi) for (int v=(hi);v>=(lo);v--)
+
 const double eps = 1 / (double)1000000000;
+
 //const int INF = 1 << 30;
 const int INF = 9999;
 
 int main(){
+#ifdef _DEBUG
+	//freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w+", stdout);
+#endif
 	//freopen("StackingPlates.in", "r", stdin);
-	freopen("input.txt", "r", stdin);
-	freopen("output.txt", "w+", stdout);
+	//freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w+", stdout);
 	int stackCount;
 	int caseNumber = 0;
 	while (cin >> stackCount)
 	{
-		vector<set<int> > stack(stackCount);
+		vector<set<int> > stackSet(stackCount);
+		vector<vector<int> > stack(stackCount);
+		vector<vector<int> > mergeMark(stackCount);
+		map<int, int> countNum;
+		vector<int> nums;
 		int list[60 * 60] = { 0 };
 		int cntList = 0;
-		REP(i, stackCount)
+		REP(i, stack.size())
 		{
 			int H, tmp;
 			cin >> H;
 			REP(j, H)
 			{
 				cin >> tmp;
-				if (stack[i].find(tmp) == stack[i].end())
+				if (stackSet[i].find(tmp) == stackSet[i].end())
 				{
-					stack[i].insert(tmp);
-					list[cntList++] = tmp;
+					stackSet[i].insert(tmp);
+					stack[i].push_back(tmp);
+					mergeMark[i].push_back(0);
+				}
+				if (countNum.find(tmp) == countNum.end())
+				{
+					countNum[tmp] = 1;
+					nums.push_back(tmp);
+				}
+				else
+				{
+					countNum[tmp] += 1;
 				}
 			}
 		}
-		sort(list, list + cntList);
 
-		int pointer[60] = { 0 };
-		int dp[60 * 60][60] = { 0 };
-		REP(i, 60 * 60) REP(j, 60) dp[i][j] = INF;
+		sort(nums.begin(), nums.end());
 
-		// dp[0] 로 따로 처리 (그냥 귀찮았음.. ㅈㅅㅈㅅ)
-		REP(stackIndex, stackCount)
+		int MarkNo = 0;
+
+		REP(n, nums.size())
 		{
-			dp[0][stackIndex] = (stack[stackIndex].find(list[0]) == stack[stackIndex].end()) ? INF : 0;
+			int prevNum = ((n == 0) ? -1 : nums[n - 1]);
+			int currNum = nums[n];
+			if (countNum[currNum] != 1) continue;
+
+			REP(i, stack.size())
+			{
+				if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
+
+				int currIndex;
+				REP(j, stack[i].size()) if (stack[i][j] == currNum) { currIndex = j; break; }
+				if (mergeMark[i][currIndex] != 0) continue;
+
+				++MarkNo;
+				mergeMark[i][currIndex] = MarkNo;
+				if (currIndex != 0 && mergeMark[i][currIndex - 1] == 0 && stack[i][currIndex - 1] == prevNum) mergeMark[i][currIndex - 1] = MarkNo;
+				FOR(j, currIndex + 1, stack[i].size())
+				{
+					if (countNum[stack[i][j]] == 1 && nums[n + (j - currIndex)] == stack[i][j])
+					{
+						mergeMark[i][j] = MarkNo;
+					}
+					else if (nums[n + (j - currIndex)] == stack[i][j])
+					{
+						mergeMark[i][j] = MarkNo;
+						break;
+					}
+				}
+				break;
+			}
 		}
 
-		int checkMinNumber = -1;
-		int checkMinIndex = -1;
-
-
-		FOR(listIndex, 1, cntList)
+		REP(n, nums.size())
 		{
-			int currNumber = list[listIndex];
-			int prevNumber = list[listIndex - 1];
-			REP(stackIndex, stackCount)
+			int prevNum = ((n > 0) ? nums[n - 1] : -1);
+			int currNum = nums[n];
+			int nextNum = ((n < nums.size() - 1) ? nums[n + 1] : -1);
+
+			REP(i, stack.size())
 			{
-				// currNumber 가 현재 stack 에 있는 경우 (★★★★★★)
-				set<int>& currStack = stack[stackIndex];
-				int& currDP = dp[listIndex][stackIndex];
-				int& prevDP = dp[listIndex - 1][stackIndex];
-				if (currStack.find(currNumber) != currStack.end())
+				if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
+
+				if (stack[i].size() == 1)
 				{
-					if (currNumber != prevNumber && dp[listIndex - 1][stackIndex] != INF)
+					mergeMark[i][0] = ++MarkNo;
+					continue;
+				}
+				REP(j, stack[i].size())
+				{
+					if (stack[i][j] != currNum) continue;
+					if (j == 0)
 					{
-						currDP = prevDP;
+						if (stack[i][j + 1] != nextNum)
+						{
+							mergeMark[i][j] = ++MarkNo;
+						}
+					}
+					else if (j == stack[i].size() - 1)
+					{
+						if (stack[i][j - 1] != prevNum)
+						{
+							mergeMark[i][j] = ++MarkNo;
+						}
 					}
 					else
 					{
-						int add = (currNumber == *currStack.begin()) ? 1 : 2;
-						REP(j, stackCount) if (j != stackIndex) currDP = min(currDP, dp[listIndex - 1][j] + add);
-						if (currNumber == checkMinNumber && stackIndex == checkMinIndex && listIndex >= 2 && currNumber == list[listIndex - 2]) {
-							currDP = INF;
+						if (stack[i][j - 1] != prevNum && stack[i][j + 1] != nextNum)
+						{
+							mergeMark[i][j] = ++MarkNo;
 						}
 					}
 				}
 			}
-
-			if (currNumber != checkMinNumber)
-			{
-				// 최소값이 하나일 경우에 대한 처리
-				// 최소값을 찾는다.
-				int minIndex = 0;
-				REP(i, stackCount) minIndex = (dp[listIndex][minIndex] > dp[listIndex][i]) ? i : minIndex;
-
-				// 최소값이 몇개인지 체크한다.
-				int cntMinn = 0;
-				REP(i, stackCount) cntMinn += (dp[listIndex][i] == dp[listIndex][minIndex]) ? 1 : 0;
-
-				// 최소값이 한개이면 골치아프다. 추가적인 조치가 필요
-				if (cntMinn == 1)
-				{
-					checkMinNumber = currNumber;
-					checkMinIndex = minIndex;
-				}
-				else
-				{
-					checkMinNumber = -1;
-					checkMinIndex = -1;
-				}
-			}
-
 		}
 
-		REP(i, cntList)
+		REP(n, nums.size() - 1)
 		{
-			REP(j, stackCount)
+			int currNum = nums[n];
+			int nextNum = nums[n + 1];
+			bool isMark = false;
+			bool isEndMark = false;
+			bool isBeginMark = false;
+
+			if (countNum[currNum] == 1) continue;
+
+			REP(i, stack.size())
 			{
-				//cout << dp[i][j] << '\t';
+				if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
+
+				int currIndex;
+				REP(j, stack[i].size()) if (stack[i][j] == currNum) { currIndex = j; break; }
+
+				if (mergeMark[i][currIndex] != 0)
+					isMark = true;
+				if (currIndex < stack[i].size() - 1 && mergeMark[i][currIndex + 1] == mergeMark[i][currIndex])
+				{
+					if (mergeMark[i][currIndex] != 0 && currIndex != 0 && mergeMark[i][currIndex - 1] != mergeMark[i][currIndex])
+						isBeginMark = true;
+					//if (mergeMark[i][currIndex] != 0 && currIndex == 0 && stack[i].size() > 1 && mergeMark[i][currIndex + 1] == mergeMark[i][currIndex])
+					if (mergeMark[i][currIndex] != 0 && currIndex == 0 && stack[i].size() > 1 && mergeMark[i][currIndex + 1] == mergeMark[i][currIndex])
+						isBeginMark = true;
+				}
+				if (mergeMark[i][currIndex] != 0 && currIndex != stack[i].size() - 1 && mergeMark[i][currIndex + 1] != mergeMark[i][currIndex])
+					isEndMark = true;
+				if (mergeMark[i][currIndex] != 0 && currIndex == stack[i].size() - 1)
+					isEndMark = true;
 			}
-			cout << list[i] << endl;
+
+			if (!isBeginMark && isEndMark || !isMark)
+			{
+				// 연속된거 한쌍 찾아서 마크한다
+				REP(i, stack.size())
+				{
+					if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
+					if (stackSet[i].find(nextNum) == stackSet[i].end()) continue;
+
+					int currIndex;
+					REP(j, stack[i].size()) if (stack[i][j] == currNum) { currIndex = j; break; }
+
+					if (mergeMark[i][currIndex] != 0) continue;
+					if (mergeMark[i][currIndex + 1] != 0) continue;
+
+					++MarkNo;
+					mergeMark[i][currIndex] = MarkNo;
+					mergeMark[i][currIndex + 1] = MarkNo;
+
+					break;
+
+				}
+			}
 		}
-		int result = INF;
-		REP(i, stackCount) result = min(result, dp[cntList - 1][i]);
-		//cout << "Case " << ++caseNumber << ": " << result << endl;
+		int SplitCount = 0;
+		int JoinCount = 0;
+		int result = -1;
+		REP(i, stack.size())
+		{
+			JoinCount += 1;
+			result += 1;
+			FOR(j, 1, stack[i].size())
+			{
+				if (mergeMark[i][j] == 0 || mergeMark[i][j - 1] != mergeMark[i][j])
+				{
+					++SplitCount;
+					JoinCount += 1;
+					result += 2;
+				}
+			}
+		}
 		//cout << result << endl;
+		cout << "Case " << ++caseNumber << ": " << result << endl;
 	}
+
 	return 0;
 }
+
