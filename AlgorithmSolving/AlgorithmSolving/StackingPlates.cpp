@@ -32,27 +32,18 @@ using namespace std;
 #define FORD1(v, lo, hi) for (int v=(hi);v>=(lo);v--)
 
 const double eps = 1 / (double)1000000000;
-<<<<<<< HEAD
-=======
 
->>>>>>> 6f16368d5ba5bbd81f5f7742eddc9fff43b82a5e
 //const int INF = 1 << 30;
 const int INF = 9999;
 
 int main(){
-<<<<<<< HEAD
-	//freopen("StackingPlates.in", "r", stdin);
-	freopen("input.txt", "r", stdin);
-	freopen("output.txt", "w+", stdout);
-=======
 #ifdef _DEBUG
 	//freopen("input.txt", "r", stdin);
 	//freopen("output.txt", "w+", stdout);
 #endif
 	//freopen("StackingPlates.in", "r", stdin);
-	//freopen("input.txt", "r", stdin);
-	//freopen("output.txt", "w+", stdout);
->>>>>>> 6f16368d5ba5bbd81f5f7742eddc9fff43b82a5e
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w+", stdout);
 	int stackCount;
 	int caseNumber = 0;
 	while (cin >> stackCount)
@@ -89,17 +80,9 @@ int main(){
 			}
 		}
 
-<<<<<<< HEAD
-		//REP(i, cntList) cout << list[i] << endl;
-
-		int pointer[60] = { 0 };
-		int dp[60 * 60][60] = { 0 };
-		REP(i, 60 * 60) REP(j, 60) dp[i][j] = INF;
-=======
 		sort(nums.begin(), nums.end());
 
 		int MarkNo = 0;
->>>>>>> 6f16368d5ba5bbd81f5f7742eddc9fff43b82a5e
 
 		REP(n, nums.size())
 		{
@@ -176,20 +159,6 @@ int main(){
 				}
 			}
 		}
-<<<<<<< HEAD
-		REP(i, cntList)
-		{
-			REP(j, stackCount){
-				cout << dp[i][j] << '\t';
-			}
-			cout << endl;
-		}
-		int result = INF;
-		REP(i, stackCount) result = min(result, dp[cntList - 1][i]);
-		//cout << "Case " << ++caseNumber << ": " << result << endl;
-		//cout << result << endl;
-		if (result == 37)
-=======
 
 		REP(n, nums.size() - 1)
 		{
@@ -251,7 +220,6 @@ int main(){
 		int JoinCount = 0;
 		int result = -1;
 		REP(i, stack.size())
->>>>>>> 6f16368d5ba5bbd81f5f7742eddc9fff43b82a5e
 		{
 			JoinCount += 1;
 			result += 1;

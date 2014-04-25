@@ -42,8 +42,8 @@ int main(){
 	//freopen("output.txt", "w+", stdout);
 #endif
 	//freopen("StackingPlates.in", "r", stdin);
-	//freopen("input.txt", "r", stdin);
-	//freopen("output.txt", "w+", stdout);
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w+", stdout);
 	int stackCount;
 	int caseNumber = 0;
 	while (cin >> stackCount)
@@ -211,7 +211,7 @@ int main(){
 					mergeMark[i][currIndex] = MarkNo;
 					mergeMark[i][currIndex + 1] = MarkNo;
 
-					break;
+					//break;
 
 				}
 			}
@@ -233,8 +233,8 @@ int main(){
 				}
 			}
 		}
-		//cout << result << endl;
-		cout << "Case " << ++caseNumber << ": " << result << endl;
+		cout << result << endl;
+		//cout << "Case " << ++caseNumber << ": " << result << endl;
 	}
 
 	return 0;
