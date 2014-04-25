@@ -30,10 +30,10 @@
     <ClCompile Include="BOJ_2056_작업.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source.cpp">
+    <ClCompile Include="Template.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Template.cpp">
+    <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
