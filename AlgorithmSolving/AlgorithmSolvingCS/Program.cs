@@ -11,16 +11,14 @@ namespace AlgorithmSolvingCS
     {
         static void Main(string[] args)
         {
-            var ans = new BigInteger[1010];
-            ans[1] = 0;
-            for (var i = 2; i <= 1000; i++)
-                ans[i] = ans[i - 1] * 2 + (1 - (i % 2) * 2);
-
             string s = Console.ReadLine();
             string[] ss = s.Split();
-            int N = int.Parse(ss[0]);
-
-            Console.WriteLine(ans[N]);
+            var N = new BigInteger();
+            foreach (var digit in ss[0])
+            {
+                N = N * 10 + int.Parse(digit.ToString());
+            }
+            Console.WriteLine(N);
         }
     }
 }

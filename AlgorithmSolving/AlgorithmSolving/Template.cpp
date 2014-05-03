@@ -31,6 +31,10 @@ using namespace std;
 #define FORD1(v, lo, hi) for (int v=(hi);v>=(lo);v--)
 
 const double eps = 1 / (double)1000000000;
+const int INT__MIN = 1 << 31;
+const int INT__MAX = INT__MIN - 1;
+const long long LL_MIN = 1L << 63;
+const long long LL_MAX = LL_MIN - 1;
 
 int main(){
 #ifdef _DEBUG

@@ -16,7 +16,6 @@
 #include <stack>
 #include <queue>
 #include <map>
-#include <set>
 #include <ctime>
 #include <cassert>
 
@@ -32,211 +31,110 @@ using namespace std;
 #define FORD1(v, lo, hi) for (int v=(hi);v>=(lo);v--)
 
 const double eps = 1 / (double)1000000000;
+const int INT__MIN = 1 << 31;
+const int INT__MAX = INT__MIN - 1;
+const long long LL_MIN = 1LL << 63;
+const long long LL_MAX = LL_MIN - 1;
 
-//const int INF = 1 << 30;
-const int INF = 9999;
+struct Point{
+	int x, y;
+};
 
-int main(){
-#ifdef _DEBUG
-	//freopen("input.txt", "r", stdin);
-	//freopen("output.txt", "w+", stdout);
-#endif
-	//freopen("StackingPlates.in", "r", stdin);
-	freopen("input.txt", "r", stdin);
-	freopen("output.txt", "w+", stdout);
-	int stackCount;
-	int caseNumber = 0;
-	while (cin >> stackCount)
+bool CompareX(Point& p1, Point& p2)
+{
+	if (p1.x != p2.x) return p1.x < p2.x;
+	return p1.y < p2.y;
+}
+
+bool CompareY(Point& p1, Point& p2)
+{
+	if (p1.y != p2.y) return p1.y < p2.y;
+	return p1.x < p2.x;
+}
+
+Point pset[100010];
+
+int calcDist(int pp1, int pp2)
+{
+	Point& p1 = pset[pp1];
+	Point& p2 = pset[pp2];
+	return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+}
+
+int naiveSolution(int begin, int end)
+{
+	int rst = INT__MAX;
+	FOR(i, begin, end)
+		FOR1(j, i + 1, end)
+			rst = min(rst, calcDist(i, j));
+	return rst;
+}
+
+int closestPairProblem(int begin, int end)
+{
+	if (end - begin + 1 <= 5)
 	{
-		vector<set<int> > stackSet(stackCount);
-		vector<vector<int> > stack(stackCount);
-		vector<vector<int> > mergeMark(stackCount);
-		map<int, int> countNum;
-		vector<int> nums;
-		int list[60 * 60] = { 0 };
-		int cntList = 0;
-		REP(i, stack.size())
+		return naiveSolution(begin, end);
+	}
+
+	int d = INT__MAX;
+	int mid = begin + (begin - end) / 2;
+
+	d = min(d, closestPairProblem(begin, mid));
+	d = min(d, closestPairProblem(mid + 1, end));
+
+	int leftBegin = mid;
+	while (calcDist(leftBegin, mid + 1) <= d) --leftBegin;
+	int rightEnd = mid + 1;
+	while (calcDist(rightEnd, mid) <= d) ++rightEnd;
+
+	sort(&pset[leftBegin], &pset[mid + 1], CompareY);
+	sort(&pset[mid + 1], &pset[rightEnd + 1], CompareY);
+
+	int rightIndex = mid + 1;
+	FOR1(leftIndex, leftBegin, mid)
+	{
+		Point& leftPoint = pset[leftIndex];
+		while (true)
 		{
-			int H, tmp;
-			cin >> H;
-			REP(j, H)
+			if (rightIndex == mid + 1) break;
+			if (leftPoint.y > pset[rightIndex].y
+				&& (leftPoint.y - pset[rightIndex].y) * (leftPoint.y - pset[rightIndex].y) <= d)
 			{
-				cin >> tmp;
-				if (stackSet[i].find(tmp) == stackSet[i].end())
-				{
-					stackSet[i].insert(tmp);
-					stack[i].push_back(tmp);
-					mergeMark[i].push_back(0);
-				}
-				if (countNum.find(tmp) == countNum.end())
-				{
-					countNum[tmp] = 1;
-					nums.push_back(tmp);
-				}
-				else
-				{
-					countNum[tmp] += 1;
-				}
+				--rightIndex;
 			}
-		}
-
-		sort(nums.begin(), nums.end());
-
-		int MarkNo = 0;
-
-		REP(n, nums.size())
-		{
-			int prevNum = ((n == 0) ? -1 : nums[n - 1]);
-			int currNum = nums[n];
-			if (countNum[currNum] != 1) continue;
-
-			REP(i, stack.size())
+			else
 			{
-				if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
-
-				int currIndex;
-				REP(j, stack[i].size()) if (stack[i][j] == currNum) { currIndex = j; break; }
-				if (mergeMark[i][currIndex] != 0) continue;
-
-				++MarkNo;
-				mergeMark[i][currIndex] = MarkNo;
-				if (currIndex != 0 && mergeMark[i][currIndex - 1] == 0 && stack[i][currIndex-1]==prevNum) mergeMark[i][currIndex - 1] = MarkNo;
-				FOR(j, currIndex + 1, stack[i].size())
-				{
-					if (countNum[stack[i][j]] == 1 && nums[n + (j - currIndex)] == stack[i][j])
-					{
-						mergeMark[i][j] = MarkNo;
-					}
-					else if (nums[n + (j - currIndex)] == stack[i][j])
-					{
-						mergeMark[i][j] = MarkNo;
-						break;
-					}
-				}
 				break;
 			}
 		}
-		
-		REP(n, nums.size())
+		while (rightIndex <= rightEnd)
 		{
-			int prevNum = ((n > 0) ? nums[n - 1] : -1);
-			int currNum = nums[n];
-			int nextNum = ((n < nums.size() - 1) ? nums[n + 1] : -1);
-
-			REP(i, stack.size())
-			{
-				if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
-
-				if (stack[i].size() == 1)
-				{
-					mergeMark[i][0] = ++MarkNo;
-					continue;
-				}
-				REP(j, stack[i].size())
-				{
-					if (stack[i][j] != currNum) continue;
-					if (j == 0)
-					{
-						if (stack[i][j + 1] != nextNum)
-						{
-							mergeMark[i][j] = ++MarkNo;
-						}
-					}
-					else if (j == stack[i].size() - 1)
-					{
-						if (stack[i][j - 1] != prevNum)
-						{
-							mergeMark[i][j] = ++MarkNo;
-						}
-					}
-					else
-					{
-						if (stack[i][j - 1] != prevNum && stack[i][j + 1] != nextNum)
-						{
-							mergeMark[i][j] = ++MarkNo;
-						}
-					}
-				}
-			}
+			Point& rightPoint = pset[rightIndex];
+			if (leftPoint.y < rightPoint.y
+				&& (leftPoint.y - rightPoint.y) * (leftPoint.y - rightPoint.y) > d)
+					break;
+			int currDist = calcDist(leftIndex, rightIndex);
+			d = min(d, currDist);
+			++rightIndex;
 		}
-
-		REP(n, nums.size() - 1)
-		{
-			int currNum = nums[n];
-			int nextNum = nums[n + 1];
-			bool isMark = false;
-			bool isEndMark = false;
-			bool isBeginMark = false;
-
-			if (countNum[currNum] == 1) continue;
-
-			REP(i, stack.size())
-			{
-				if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
-
-				int currIndex;
-				REP(j, stack[i].size()) if (stack[i][j] == currNum) { currIndex = j; break; }
-
-				if (mergeMark[i][currIndex] != 0)
-					isMark = true;
-				if (currIndex < stack[i].size() - 1 && mergeMark[i][currIndex + 1] == mergeMark[i][currIndex])
-				{
-					if (mergeMark[i][currIndex] != 0 && currIndex != 0 && mergeMark[i][currIndex - 1] != mergeMark[i][currIndex])
-						isBeginMark = true;
-					//if (mergeMark[i][currIndex] != 0 && currIndex == 0 && stack[i].size() > 1 && mergeMark[i][currIndex + 1] == mergeMark[i][currIndex])
-					if (mergeMark[i][currIndex] != 0 && currIndex == 0 && stack[i].size() > 1 && mergeMark[i][currIndex + 1] == mergeMark[i][currIndex])
-						isBeginMark = true;
-				}
-				if (mergeMark[i][currIndex] != 0 && currIndex != stack[i].size() - 1 && mergeMark[i][currIndex + 1] != mergeMark[i][currIndex])
-					isEndMark = true;
-				if (mergeMark[i][currIndex] != 0 && currIndex == stack[i].size() - 1)
-					isEndMark = true;
-			}
-
-			if (!isBeginMark && isEndMark || !isMark)
-			{
-				// 연속된거 한쌍 찾아서 마크한다
-				REP(i, stack.size())
-				{
-					if (stackSet[i].find(currNum) == stackSet[i].end()) continue;
-					if (stackSet[i].find(nextNum) == stackSet[i].end()) continue;
-
-					int currIndex;
-					REP(j, stack[i].size()) if (stack[i][j] == currNum) { currIndex = j; break; }
-
-					if (mergeMark[i][currIndex] != 0) continue;
-					if (mergeMark[i][currIndex + 1] != 0) continue;
-
-					++MarkNo;
-					mergeMark[i][currIndex] = MarkNo;
-					mergeMark[i][currIndex + 1] = MarkNo;
-
-					//break;
-
-				}
-			}
-		}
-		int SplitCount = 0;
-		int JoinCount = 0;
-		int result = -1;
-		REP(i, stack.size())
-		{
-			JoinCount += 1;
-			result += 1;
-			FOR(j, 1, stack[i].size())
-			{
-				if (mergeMark[i][j] == 0 || mergeMark[i][j - 1] != mergeMark[i][j])
-				{
-					++SplitCount;
-					JoinCount += 1;
-					result += 2;
-				}
-			}
-		}
-		cout << result << endl;
-		//cout << "Case " << ++caseNumber << ": " << result << endl;
 	}
 
+	return 0;
+}
+
+int main(){
+#ifdef _DEBUG
+	freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w+", stdout);
+#endif
+	int N;
+	while (cin >> N)
+	{
+		REP(i, N) cin >> pset[i].x >> pset[i].y;
+		sort(pset, &pset[N], CompareX);
+		cout << closestPairProblem(0, N - 1) << endl;
+	}
 	return 0;
 }
 
