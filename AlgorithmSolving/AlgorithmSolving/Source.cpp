@@ -32,21 +32,19 @@ using namespace std;
 
 const double eps = 1 / (double)1000000000;
 const int INT__MIN = 1 << 31;
-const int INT__MAX = INT__MIN - 1;
-const long long LL_MIN = 1LL << 63;
-const long long LL_MAX = LL_MIN - 1;
+const int INT__MAX = 0x7fffffff;
 
 struct Point{
 	int x, y;
 };
 
-bool CompareX(Point& p1, Point& p2)
+bool CompareX(const Point& p1, const Point& p2)
 {
 	if (p1.x != p2.x) return p1.x < p2.x;
 	return p1.y < p2.y;
 }
 
-bool CompareY(Point& p1, Point& p2)
+bool CompareY(const Point& p1, const Point& p2)
 {
 	if (p1.y != p2.y) return p1.y < p2.y;
 	return p1.x < p2.x;
@@ -78,7 +76,7 @@ int closestPairProblem(int begin, int end)
 	}
 
 	int d = INT__MAX;
-	int mid = begin + (begin - end) / 2;
+	int mid = begin + (end - begin) / 2;
 
 	d = min(d, closestPairProblem(begin, mid));
 	d = min(d, closestPairProblem(mid + 1, end));
@@ -98,15 +96,12 @@ int closestPairProblem(int begin, int end)
 		while (true)
 		{
 			if (rightIndex == mid + 1) break;
-			if (leftPoint.y > pset[rightIndex].y
-				&& (leftPoint.y - pset[rightIndex].y) * (leftPoint.y - pset[rightIndex].y) <= d)
-			{
-				--rightIndex;
-			}
-			else
+			if (!(leftPoint.y >= pset[rightIndex].y
+				&& (leftPoint.y - pset[rightIndex].y) * (leftPoint.y - pset[rightIndex].y) <= d))
 			{
 				break;
 			}
+			--rightIndex;
 		}
 		while (rightIndex <= rightEnd)
 		{
@@ -120,7 +115,7 @@ int closestPairProblem(int begin, int end)
 		}
 	}
 
-	return 0;
+	return d;
 }
 
 int main(){
