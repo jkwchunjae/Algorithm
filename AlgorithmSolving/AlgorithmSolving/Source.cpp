@@ -32,6 +32,7 @@ using namespace std;
 
 const double eps = 1 / (double)1000000000;
 const int INT__MIN = 1 << 31;
+<<<<<<< HEAD
 const int INT__MAX = 0x7fffffff;
 
 struct Point{
@@ -117,6 +118,11 @@ int closestPairProblem(int begin, int end)
 
 	return d;
 }
+=======
+const int INT__MAX = 0x8fffffff;
+const long long LL_MIN = 1L << 63;
+const long long LL_MAX = 0x8fffffffffffffff;
+>>>>>>> 7413dc944c11a28544991fb92d8047f786f22f17
 
 int main(){
 #ifdef _DEBUG
@@ -126,10 +132,38 @@ int main(){
 	int N;
 	while (cin >> N)
 	{
-		REP(i, N) cin >> pset[i].x >> pset[i].y;
-		sort(pset, &pset[N], CompareX);
-		cout << closestPairProblem(0, N - 1) << endl;
+		int result = -1;
+		//cout << N << " ";
+		if (N == 1) result = 0;
+		else if (N % 2 == 0) result = N >> 1;
+		else
+		{
+			int sq = sqrt(N);
+			FOR1(i, 3, sq)
+			{
+				if (N % i == 0)
+				{
+					result = N - (N / i);
+					break;
+				}
+			}
+			if (result == -1) result = N - 1;
+		}
+		cout << result << endl;
 	}
+	/*
+	while (cin >> N)
+	{
+		cout << N << " ";
+		int cnt = 0;
+		FORD(i, 1, N)
+		{
+			++cnt;
+			if (N % i == 0) break;
+		}
+		cout << cnt << endl;
+	}
+	*/
 	return 0;
 }
 
