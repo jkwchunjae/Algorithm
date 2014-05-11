@@ -32,9 +32,9 @@ using namespace std;
 
 const double eps = 1 / (double)1000000000;
 const int INT__MIN = 1 << 31;
-const int INT__MAX = INT__MIN - 1;
+const int INT__MAX = 0x8fffffff;
 const long long LL_MIN = 1L << 63;
-const long long LL_MAX = LL_MIN - 1;
+const long long LL_MAX = 0x8fffffffffffffff;
 
 int main(){
 #ifdef _DEBUG

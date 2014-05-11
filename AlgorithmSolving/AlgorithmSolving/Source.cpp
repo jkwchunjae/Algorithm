@@ -1,4 +1,3 @@
-
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
@@ -16,6 +15,7 @@
 #include <stack>
 #include <queue>
 #include <map>
+#include <set>
 #include <ctime>
 #include <cassert>
 
@@ -31,98 +31,22 @@ using namespace std;
 #define FORD1(v, lo, hi) for (int v=(hi);v>=(lo);v--)
 
 const double eps = 1 / (double)1000000000;
-const int INT__MIN = 1 << 31;
-<<<<<<< HEAD
-const int INT__MAX = 0x7fffffff;
 
-struct Point{
-	int x, y;
+class Obj {
+public:
+	int DeadLine;
+	int Cup;
+
+	bool operator < (const Obj& b) const {
+		if (Cup != b.Cup) return Cup < b.Cup;
+		return DeadLine < b.DeadLine;
+	}
+
+	bool operator >(const Obj& b) const {
+		if (Cup != b.Cup) return Cup > b.Cup;
+		return DeadLine > b.DeadLine;
+	}
 };
-
-bool CompareX(const Point& p1, const Point& p2)
-{
-	if (p1.x != p2.x) return p1.x < p2.x;
-	return p1.y < p2.y;
-}
-
-bool CompareY(const Point& p1, const Point& p2)
-{
-	if (p1.y != p2.y) return p1.y < p2.y;
-	return p1.x < p2.x;
-}
-
-Point pset[100010];
-
-int calcDist(int pp1, int pp2)
-{
-	Point& p1 = pset[pp1];
-	Point& p2 = pset[pp2];
-	return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
-}
-
-int naiveSolution(int begin, int end)
-{
-	int rst = INT__MAX;
-	FOR(i, begin, end)
-		FOR1(j, i + 1, end)
-			rst = min(rst, calcDist(i, j));
-	return rst;
-}
-
-int closestPairProblem(int begin, int end)
-{
-	if (end - begin + 1 <= 5)
-	{
-		return naiveSolution(begin, end);
-	}
-
-	int d = INT__MAX;
-	int mid = begin + (end - begin) / 2;
-
-	d = min(d, closestPairProblem(begin, mid));
-	d = min(d, closestPairProblem(mid + 1, end));
-
-	int leftBegin = mid;
-	while (calcDist(leftBegin, mid + 1) <= d) --leftBegin;
-	int rightEnd = mid + 1;
-	while (calcDist(rightEnd, mid) <= d) ++rightEnd;
-
-	sort(&pset[leftBegin], &pset[mid + 1], CompareY);
-	sort(&pset[mid + 1], &pset[rightEnd + 1], CompareY);
-
-	int rightIndex = mid + 1;
-	FOR1(leftIndex, leftBegin, mid)
-	{
-		Point& leftPoint = pset[leftIndex];
-		while (true)
-		{
-			if (rightIndex == mid + 1) break;
-			if (!(leftPoint.y >= pset[rightIndex].y
-				&& (leftPoint.y - pset[rightIndex].y) * (leftPoint.y - pset[rightIndex].y) <= d))
-			{
-				break;
-			}
-			--rightIndex;
-		}
-		while (rightIndex <= rightEnd)
-		{
-			Point& rightPoint = pset[rightIndex];
-			if (leftPoint.y < rightPoint.y
-				&& (leftPoint.y - rightPoint.y) * (leftPoint.y - rightPoint.y) > d)
-					break;
-			int currDist = calcDist(leftIndex, rightIndex);
-			d = min(d, currDist);
-			++rightIndex;
-		}
-	}
-
-	return d;
-}
-=======
-const int INT__MAX = 0x8fffffff;
-const long long LL_MIN = 1L << 63;
-const long long LL_MAX = 0x8fffffffffffffff;
->>>>>>> 7413dc944c11a28544991fb92d8047f786f22f17
 
 int main(){
 #ifdef _DEBUG
@@ -130,40 +54,29 @@ int main(){
 	//freopen("output.txt", "w+", stdout);
 #endif
 	int N;
-	while (cin >> N)
+	cin >> N;
+
+	vector<Obj> obj(N);
+	vector<int> Eat(N + 1);
+	set<int> sett;
+
+	REP(i, N) cin >> obj[i].DeadLine >> obj[i].Cup;
+	REP(i, N) sett.insert(-(i + 1));
+
+	sort(obj.begin(), obj.end(), greater<Obj>());
+
+	REP(i, N)
 	{
-		int result = -1;
-		//cout << N << " ";
-		if (N == 1) result = 0;
-		else if (N % 2 == 0) result = N >> 1;
-		else
-		{
-			int sq = sqrt(N);
-			FOR1(i, 3, sq)
-			{
-				if (N % i == 0)
-				{
-					result = N - (N / i);
-					break;
-				}
-			}
-			if (result == -1) result = N - 1;
-		}
-		cout << result << endl;
+		auto it = sett.lower_bound(-obj[i].DeadLine);
+		if (it == sett.end()) continue;
+		Eat[-(*it)] = obj[i].Cup;
+		sett.erase(it);
 	}
-	/*
-	while (cin >> N)
-	{
-		cout << N << " ";
-		int cnt = 0;
-		FORD(i, 1, N)
-		{
-			++cnt;
-			if (N % i == 0) break;
-		}
-		cout << cnt << endl;
-	}
-	*/
+
+	int result = 0;
+	REP(i, N) result += Eat[i];
+
+	cout << result << endl;
+
 	return 0;
 }
-
