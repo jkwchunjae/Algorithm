@@ -32,21 +32,16 @@ using namespace std;
 
 const double eps = 1 / (double)1000000000;
 
-class Obj {
-public:
-	int DeadLine;
-	int Cup;
-
-	bool operator < (const Obj& b) const {
-		if (Cup != b.Cup) return Cup < b.Cup;
-		return DeadLine < b.DeadLine;
+string dec2bin(int N)
+{
+	string str;
+	while (N > 0)
+	{
+		str.push_back('0' + N % 2);
+		N >>= 1;
 	}
-
-	bool operator >(const Obj& b) const {
-		if (Cup != b.Cup) return Cup > b.Cup;
-		return DeadLine > b.DeadLine;
-	}
-};
+	return str;
+}
 
 int main(){
 #ifdef _DEBUG
@@ -54,29 +49,43 @@ int main(){
 	//freopen("output.txt", "w+", stdout);
 #endif
 	int N;
-	cin >> N;
-
-	vector<Obj> obj(N);
-	vector<int> Eat(N + 1);
-	set<int> sett;
-
-	REP(i, N) cin >> obj[i].DeadLine >> obj[i].Cup;
-	REP(i, N) sett.insert(-(i + 1));
-
-	sort(obj.begin(), obj.end(), greater<Obj>());
-
-	REP(i, N)
+	while (cin >> N)
 	{
-		auto it = sett.lower_bound(-obj[i].DeadLine);
-		if (it == sett.end()) continue;
-		Eat[-(*it)] = obj[i].Cup;
-		sett.erase(it);
+		if (N == 0)
+		{
+			cout << "0 0" << endl;
+			continue;
+		}
+		auto bin = dec2bin(N);
+		if (bin.find('0') == -1)
+		{
+			cout << "0 " << N * 2 << endl;
+			continue;
+		}
+
+		auto minBin = bin;
+		auto flagZero = false;
+		auto cutOne = 0;
+		auto cntOne = 0;
+		REP(i, minBin.length())
+		{
+			if (minBin[i] == '0') flagZero = true;
+			if (minBin[i] == '1') ++cntOne;
+			if (flagZero && minBin[i] == '1')
+			{
+				cutOne = i;
+				break;
+			}
+		}
+		minBin[cutOne] = '0';
+		FORD(i, cutOne - cntOne, cutOne) minBin[i] = '1';
+		REPD(i, cutOne - cntOne) minBin[i] = '0';
+		cout << minBin << endl;
+		
+		auto maxBin = bin;
+		auto flagOne = false;
+		auto cutZero = -1;
+		cntOne = 0;
 	}
-
-	int result = 0;
-	REP(i, N) result += Eat[i];
-
-	cout << result << endl;
-
 	return 0;
 }
