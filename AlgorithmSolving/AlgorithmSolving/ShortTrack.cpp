@@ -38,27 +38,27 @@ const long long LL_MAX = 0x8fffffffffffffff;
 
 double fn(int a, int b, int x)
 {
-	return a * x / 2000.0 + b / 80.0 * (1.0 + x / 1000.0) * (1.0 + x / 1000.0);
+    return a * x / 2000.0 + b / 80.0 * (1.0 + x / 1000.0) * (1.0 + x / 1000.0);
 }
 
 int main(){
 #ifdef _DEBUG
-	freopen("input.txt", "r", stdin);
-	//freopen("output.txt", "w+", stdout);
+    freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w+", stdout);
 #endif
-	const int Cycle = 400;
+    const int Cycle = 400;
 
-	int N;
-	cin >> N;
+    int N;
+    cin >> N;
 
-	vector<int> a(N + 1), b(N + 1);
-	vector<vector<double>> dp(N + 1, vector<double>(41, 99999999.9));
-	dp[0][20] = 0;
+    vector<int> a(N + 1), b(N + 1);
+    vector<vector<double>> dp(N + 1, vector<double>(41, 99999999.9));
+    dp[0][20] = 0;
 
-	REP1(n, N) cin >> a[n] >> b[n];
-	REP1(n, N) REP(i, 41) REP(j, 41)
-		dp[n][i] = min(dp[n][i], dp[n - 1][j] + fn(a[n], b[n], Cycle + i - j));
-	cout << dp[N][20] << endl;
-	return 0;
+    REP1(n, N) cin >> a[n] >> b[n];
+    REP1(n, N) REP(i, 41) REP(j, 41)
+        dp[n][i] = min(dp[n][i], dp[n - 1][j] + fn(a[n], b[n], Cycle + i - j));
+    cout << dp[N][20] << endl;
+    return 0;
 }
 
