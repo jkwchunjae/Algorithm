@@ -1,3 +1,4 @@
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
@@ -15,7 +16,6 @@
 #include <stack>
 #include <queue>
 #include <map>
-#include <set>
 #include <ctime>
 #include <cassert>
 
@@ -31,61 +31,35 @@ using namespace std;
 #define FORD1(v, lo, hi) for (int v=(hi);v>=(lo);v--)
 
 const double eps = 1 / (double)1000000000;
+const int INT__MIN = 1 << 31;
+const int INT__MAX = 0x8fffffff;
+const long long LL_MIN = 1L << 63;
+const long long LL_MAX = 0x8fffffffffffffff;
 
-string dec2bin(int N)
-{
-	string str;
-	while (N > 0)
-	{
-		str.push_back('0' + N % 2);
-		N >>= 1;
-	}
-	return str;
-}
+string str[16];
 
 int main(){
 #ifdef _DEBUG
 	freopen("input.txt", "r", stdin);
 	//freopen("output.txt", "w+", stdout);
 #endif
-	int N;
-	while (cin >> N)
+	map<int, int> mapp;
+	str[0] = "{}";
+	FOR1(i, 1, 15)
 	{
-		if (N == 0)
-		{
-			cout << "0 0" << endl;
-			continue;
-		}
-		auto bin = dec2bin(N);
-		if (bin.find('0') == -1)
-		{
-			cout << "0 " << N * 2 << endl;
-			continue;
-		}
-
-		auto minBin = bin;
-		auto flagZero = false;
-		auto cutOne = 0;
-		auto cntOne = 0;
-		REP(i, minBin.length())
-		{
-			if (minBin[i] == '0') flagZero = true;
-			if (minBin[i] == '1') ++cntOne;
-			if (flagZero && minBin[i] == '1')
-			{
-				cutOne = i;
-				break;
-			}
-		}
-		minBin[cutOne] = '0';
-		FORD(i, cutOne - cntOne, cutOne) minBin[i] = '1';
-		REPD(i, cutOne - cntOne) minBin[i] = '0';
-		cout << minBin << endl;
-		
-		auto maxBin = bin;
-		auto flagOne = false;
-		auto cutZero = -1;
-		cntOne = 0;
+		str[i] = "{";
+		REP(j, i - 1) str[i] += str[j] + ",";
+		str[i] += str[i - 1] + "}";
+	}
+	REP(i, 16) mapp[str[i].length()] = i;
+	int T;
+	cin >> T;
+	while (T--)
+	{
+		string str1, str2;
+		cin >> str1 >> str2;
+		cout << str[mapp[str1.length()] + mapp[str2.length()]] << endl;
 	}
 	return 0;
 }
+
