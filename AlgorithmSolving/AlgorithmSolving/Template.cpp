@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <numeric>
 #include <string>
 #include <cstring>
 #include <sstream>

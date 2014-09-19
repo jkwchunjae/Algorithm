@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <numeric>
 #include <string>
 #include <cstring>
 #include <sstream>
@@ -32,34 +33,20 @@ using namespace std;
 
 const double eps = 1 / (double)1000000000;
 const int INT__MIN = 1 << 31;
-const int INT__MAX = 0x8fffffff;
-const long long LL_MIN = 1L << 63;
-const long long LL_MAX = 0x8fffffffffffffff;
-
-string str[16];
+const int INT__MAX = INT__MIN - 1;
+const long long LL_MIN = 1LL << 63;
+const long long LL_MAX = LL_MIN - 1;
 
 int main(){
 #ifdef _DEBUG
 	freopen("input.txt", "r", stdin);
 	//freopen("output.txt", "w+", stdout);
 #endif
-	map<int, int> mapp;
-	str[0] = "{}";
-	FOR1(i, 1, 15)
-	{
-		str[i] = "{";
-		REP(j, i - 1) str[i] += str[j] + ",";
-		str[i] += str[i - 1] + "}";
-	}
-	REP(i, 16) mapp[str[i].length()] = i;
-	int T;
-	cin >> T;
-	while (T--)
-	{
-		string str1, str2;
-		cin >> str1 >> str2;
-		cout << str[mapp[str1.length()] + mapp[str2.length()]] << endl;
-	}
+	long long dp[100][10] = { 0 };
+	dp[0][9] = 1;
+	REP1(len, 65) REP(d, 10) dp[len][d] = accumulate(dp[len - 1] + d, end(dp[len - 1]), 0LL);
+	istream_iterator<int> input(cin), eof;
+	for_each(input, eof, [&](int i) { cout << dp[i + 1][0] << endl; });
 	return 0;
 }
 
