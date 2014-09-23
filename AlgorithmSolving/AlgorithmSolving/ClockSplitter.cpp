@@ -56,6 +56,9 @@ int main(){
 		long long a = 1;
 		long long b = right - ((2 * right + 1) - (long long)sqrt((2 * right + 1)*(2 * right + 1) - 8 * leftSum)) / 2;
 		long long rightSum = right * (right + 1) / 2 - b * (b - 1) / 2;
+		long long currSum = b * (b - 1) / 2;
+		long long begin = 1;
+		long long end = b - 1;
 		cout << left << " " << right << " " << ans1 << " " << ans2 << " " << leftSum << " " << b << endl;
 	});
 	return 0;
