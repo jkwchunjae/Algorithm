@@ -8,23 +8,8 @@ public class Program
 {
 	public static void Main(string[] args)
 	{
-		var inputs = Extensions.GetInputLine().Split(' ');
-		var A = inputs[0].ToLong();
-		var B = inputs[1].ToLong();
-		var cnt = (int)(B - A + 1);
-
-		var isAnswer = Enumerable.Range(1, cnt).Select(x => true).ToList();
-
-		foreach (var square in Extensions.GetPrimeList(1001000).Select(x => x * x).Where(x => x <= B))
-		{
-			var index = A % square == 0 ? 0 : square - (A % square);
-			for (var i = index; i < cnt; i += square)
-			{
-				isAnswer[(int)i] = false;
-			}
-		}
-
-		isAnswer.Count(x => x).Dump();
+        var N = Extensions.GetInputLine().Split(' ')[1].ToInt();
+        Extensions.GetInputLine().Split(' ').Select(x => x.ToInt()).Where(x => x < N).StringJoin().Dump();
 	}
 }
 
@@ -58,6 +43,12 @@ public static class Extensions
 				isPrime[i] = true;
 		}
 	}
+
+    public static string StringJoin<T>(this IEnumerable<T> list, string separator = " ")
+    {
+        return string.Join(separator, list);
+    }
+
 
 	public static int ToInt(this string str)
 	{
