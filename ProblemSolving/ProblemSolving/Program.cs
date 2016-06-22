@@ -8,8 +8,16 @@ public class Program
 {
 	public static void Main(string[] args)
 	{
-        var N = Extensions.GetInputLine().Split(' ')[1].ToInt();
-        Extensions.GetInputLine().Split(' ').Select(x => x.ToInt()).Where(x => x < N).StringJoin().Dump();
+		Extensions.GetInputLine();
+		Extensions.GetInputLine().Split(' ')
+			.Select(x => x.ToInt())
+			.Where(x => x > 0)
+			.Select(x => new { Y = (x / 30 + 1) * 10, M = (x / 60 + 1) * 15 })
+			.GroupBy(x => 1)
+			.Select(x => new { Y = x.Sum(e => e.Y), M = x.Sum(e => e.M) })
+			.Select(x => "{0} {1}".With(x.Y == x.M ? "Y M" : x.Y < x.M ? "Y" : "M", Math.Min(x.Y, x.M)))
+			.First()
+			.Dump();
 	}
 }
 
@@ -42,6 +50,11 @@ public static class Extensions
 			for (var i = prime; i <= maximum; i += prime)
 				isPrime[i] = true;
 		}
+	}
+
+	public static string With(this string format, params object[] obj)
+	{
+		return string.Format(format, obj);
 	}
 
     public static string StringJoin<T>(this IEnumerable<T> list, string separator = " ")
