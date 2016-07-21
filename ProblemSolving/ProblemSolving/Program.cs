@@ -8,32 +8,77 @@ public class Program
 {
 	public static void Main(string[] args)
 	{
-		Extensions.GetInputLine();
-		Extensions.GetInputLine().Split(' ')
-			.Select(x => x.ToInt())
-			.Where(x => x > 0)
-			.Select(x => new { Y = (x / 30 + 1) * 10, M = (x / 60 + 1) * 15 })
-			.GroupBy(x => 1)
-			.Select(x => new { Y = x.Sum(e => e.Y), M = x.Sum(e => e.M) })
-			.Select(x => "{0} {1}".With(x.Y == x.M ? "Y M" : x.Y < x.M ? "Y" : "M", Math.Min(x.Y, x.M)))
-			.First()
-			.Dump();
+		int t = IOExt.GetInputLine().ToInt();
+		while (t-- > 0)
+		{
+			var N = IOExt.GetInputInt();
+			var a = IOExt.GetInputIntList();
+			var b = IOExt.GetInputIntList();
+			var A = Enumerable.Range(1, N).ToList();
+			var B = Enumerable.Range(1, N).ToList();
+			var C = Enumerable.Range(1, N).ToList();
+			A[0] = a[0];
+			B[0] = b[0];
+			C[0] = 0;
+			for (int i = 1; i < N; i++)
+			{
+				A[i] = Math.Max(B[i - 1], C[i - 1]) + a[i];
+				B[i] = Math.Max(A[i - 1], C[i - 1]) + b[i];
+				C[i] = Math.Max(A[i - 1], B[i - 1]);
+			}
+			Math.Max(A[N - 1], Math.Max(B[N - 1], C[N - 1])).Dump();
+		}
 	}
 }
 
-public static class Extensions
+public static class IOExt
 {
 #if DEBUG
 	static List<string> _input;
 	static int _readInputCount = 0;
 #endif
-	static Extensions()
+	static IOExt()
 	{
 #if DEBUG
 		_input = File.ReadAllLines("input.txt", Encoding.UTF8).ToList();
 #endif
 	}
 
+	public static string GetInputLine()
+	{
+#if DEBUG
+		return _input[_readInputCount++];
+#else
+		return Console.ReadLine();
+#endif
+	}
+
+	public static List<int> GetInputIntList()
+	{
+		return GetInputLine().Split(' ').Select(x => x.ToInt()).ToList();
+	}
+
+	public static int GetInputInt()
+	{
+		return GetInputLine().ToInt();
+	}
+
+	public static T Dump<T>(this T obj, string format = "")
+	{
+		if (format == "")
+		{
+			Console.WriteLine(obj);
+		}
+		else
+		{
+			Console.WriteLine(format, obj);
+		}
+		return obj;
+	}
+}
+
+public static class Extensions
+{
 	public static IEnumerable<long> GetPrimeList(int maximum)
 	{
 		if (maximum < 2)
@@ -57,11 +102,10 @@ public static class Extensions
 		return string.Format(format, obj);
 	}
 
-    public static string StringJoin<T>(this IEnumerable<T> list, string separator = " ")
-    {
-        return string.Join(separator, list);
-    }
-
+	public static string StringJoin<T>(this IEnumerable<T> list, string separator = " ")
+	{
+		return string.Join(separator, list);
+	}
 
 	public static int ToInt(this string str)
 	{
@@ -73,25 +117,4 @@ public static class Extensions
 		return long.Parse(str);
 	}
 
-	public static string GetInputLine()
-	{
-#if DEBUG
-		return _input[_readInputCount++];
-#else
-		return Console.ReadLine();
-#endif
-	}
-
-	public static T Dump<T>(this T obj, string format = "")
-	{
-		if (format == "")
-		{
-			Console.WriteLine(obj);
-		}
-		else
-		{
-			Console.WriteLine(format, obj);
-		}
-		return obj;
-	}
 }
