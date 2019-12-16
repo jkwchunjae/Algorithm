@@ -15,8 +15,8 @@ public class Program
             var arr = IO.GetIntList();
             edgeList.Add(new Edge
             {
-                Node1 = arr[0],
-                Node2 = arr[1],
+                Node1 = arr[0] - 1,
+                Node2 = arr[1] - 1,
                 Weight = arr[2],
             });
         }
@@ -27,12 +27,11 @@ public class Program
 #endif
     }
 
-    public static int Solve(List<Edge> edgeList, int nodeCount)
+    public static long Solve(List<Edge> edgeList, int nodeCount)
     {
-        var nodeList = new Node[nodeCount + 1];
-        nodeList[0] = new Node();
-        for (var i = 1; i <= nodeCount; i++)
-            nodeList[i] = new Node();
+        var nodeList = new Node[nodeCount];
+        for (var i = 0; i < nodeCount; i++)
+            nodeList[i] = new Node(i);
 
         edgeList.ForEach(edge =>
         {
@@ -40,9 +39,73 @@ public class Program
             nodeList[edge.Node2].EdgeList.Add(edge);
         });
 
-        var firstNode = nodeList.First(node => !node.IsLeaf);
+        var rootNode = nodeList.First(node => !node.IsLeaf);
 
-        return 111;
+        var result = GetTreeResult(nodeList, rootNode, -1, rootNode.Number);
+
+        return result.Result;
+    }
+
+    public static TreeResult GetTreeResult(Node[] tree, Node currentNode, int parentNodeNumber, int rootNodeNumber)
+    {
+        if (currentNode.IsLeaf)
+        {
+            return new TreeResult
+            {
+                LeafCount = 1,
+                Sum = currentNode.EdgeList[0].Weight,
+                SquareSum = currentNode.EdgeList[0].Weight * currentNode.EdgeList[0].Weight,
+                Result = currentNode.EdgeList[0].Weight,
+            };
+        }
+
+        if (currentNode.Number != rootNodeNumber && currentNode.EdgeList.Count == 2)
+        {
+            // child 가 하나밖에 없는 상황
+            var childEdge = currentNode.EdgeList.First(x => x.Node1 != parentNodeNumber && x.Node2 != parentNodeNumber);
+            var childNumber = childEdge.Node1 == currentNode.Number ? childEdge.Node2 : childEdge.Node1;
+            var childResult = GetTreeResult(tree, tree[childNumber], currentNode.Number, rootNodeNumber);
+            return new TreeResult
+            {
+                LeafCount = 1,
+                Sum = childResult.Sum + childEdge.Weight,
+                SquareSum = (childResult.Sum + childEdge.Weight) * (childResult.Sum + childEdge.Weight),
+            };
+        }
+
+        TreeResult result = null;
+        foreach (var edge in currentNode.EdgeList)
+        {
+            if (edge.Node1 == parentNodeNumber || edge.Node2 == parentNodeNumber)
+            {
+            }
+            else
+            {
+                var childNumber = edge.Node1 == currentNode.Number ? edge.Node2 : edge.Node1;
+                var childResult = GetTreeResult(tree, tree[childNumber], currentNode.Number, rootNodeNumber);
+                if (result == null)
+                {
+                    result = childResult;
+                }
+                else
+                {
+                    result = new TreeResult
+                    {
+                        LeafCount = result.LeafCount + childResult.LeafCount,
+                        Sum = result.Sum + childResult.Sum,
+                        SquareSum = result.SquareSum + childResult.SquareSum,
+                        Result = childResult.LeafCount * result.SquareSum
+                            + result.LeafCount * childResult.SquareSum
+                            + 2 * result.Sum * childResult.Sum
+                            + (result.LeafCount > 1 ? result.Result : 0)
+                            + (childResult.LeafCount > 1 ? childResult.Result : 0)
+                            ,
+                    };
+                }
+            }
+        }
+
+        return result;
     }
 }
 
@@ -55,8 +118,22 @@ public class Edge
 
 public class Node
 {
+    public int Number;
     public List<Edge> EdgeList = new List<Edge>();
-    public bool IsLeaf => EdgeList.Count == 1;
+    public bool IsLeaf => EdgeList.Any() && EdgeList.Count == 1;
+
+    public Node(int number)
+    {
+        Number = number;
+    }
+}
+
+public class TreeResult
+{
+    public int LeafCount;
+    public long Sum;
+    public long SquareSum;
+    public long Result;
 }
 
 public static class Extensionss
