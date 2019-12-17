@@ -59,21 +59,6 @@ public class Program
             };
         }
 
-        if (currentNode.Number != rootNodeNumber && currentNode.EdgeList.Count == 2)
-        {
-            // child 가 하나밖에 없는 상황
-            var childEdge = currentNode.EdgeList.First(x => x.Node1 != parentNodeNumber && x.Node2 != parentNodeNumber);
-            var childNumber = childEdge.Node1 == currentNode.Number ? childEdge.Node2 : childEdge.Node1;
-            var childResult = GetTreeResult(tree, tree[childNumber], currentNode.Number, rootNodeNumber);
-            return new TreeResult
-            {
-                LeafCount = 1,
-                Sum = childResult.Sum + childEdge.Weight,
-                SquareSum = (childResult.Sum + childEdge.Weight) * (childResult.Sum + childEdge.Weight),
-                Result = childResult.Sum + childEdge.Weight,
-            };
-        }
-
         TreeResult result = null;
         Edge parentEdge = null;
         foreach (var edge in currentNode.EdgeList)
@@ -111,7 +96,7 @@ public class Program
         if (currentNode.Number != rootNodeNumber)
         {
             var sum = result.Sum + parentEdge.Weight * result.LeafCount;
-            var squareSum = result.SquareSum + 2 * parentEdge.Weight * (result.Sum + parentEdge.Weight);
+            var squareSum = result.SquareSum + 2 * parentEdge.Weight * result.Sum + result.LeafCount * parentEdge.Weight * parentEdge.Weight;
             result.Sum = sum;
             result.SquareSum = squareSum;
         }
