@@ -70,14 +70,17 @@ public class Program
                 LeafCount = 1,
                 Sum = childResult.Sum + childEdge.Weight,
                 SquareSum = (childResult.Sum + childEdge.Weight) * (childResult.Sum + childEdge.Weight),
+                Result = childResult.Sum + childEdge.Weight,
             };
         }
 
         TreeResult result = null;
+        Edge parentEdge = null;
         foreach (var edge in currentNode.EdgeList)
         {
             if (edge.Node1 == parentNodeNumber || edge.Node2 == parentNodeNumber)
             {
+                parentEdge = edge;
             }
             else
             {
@@ -103,6 +106,14 @@ public class Program
                     };
                 }
             }
+        }
+
+        if (currentNode.Number != rootNodeNumber)
+        {
+            var sum = result.Sum + parentEdge.Weight * result.LeafCount;
+            var squareSum = result.SquareSum + 2 * parentEdge.Weight * (result.Sum + parentEdge.Weight);
+            result.Sum = sum;
+            result.SquareSum = squareSum;
         }
 
         return result;
