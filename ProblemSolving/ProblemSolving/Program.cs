@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Diagnostics;
 #endif
 
 public class Program
@@ -18,141 +19,76 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var inputOutputList = BojUtils.MakeInputOutput("17969", useLocalInput: false);
+        var problemNumber = "17979";
+        var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
+        var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
             Solve();
 #if DEBUG // delete
-            IO.IsCorrect().Dump();
+            var result = IO.IsCorrect().Dump();
+            checkAll = checkAll && result;
             Console.WriteLine();
         }
         DebugUtils.CopyCode();
+        if (checkAll)
+        {
+            Process.Start($"https://www.acmicpc.net/submit/{problemNumber}");
+        }
 #endif
     }
 
     public static void Solve()
     {
-        var nodeCount = IO.GetInt();
-        var edgeList = new List<Edge>();
-        for (var i = 0; i < nodeCount - 1; i++)
+        var arr0 = IO.GetIntList();
+        var M = arr0[0];
+        var N = arr0[1];
+
+        var priceList = new int[M + 1];
+        for (var i = 1; i <= M; i++)
+            priceList[i] = IO.GetInt();
+
+        var dataList = new List<Data>();
+        for (var i = 0; i < N; i++)
         {
             var arr = IO.GetIntList();
-            edgeList.Add(new Edge
+            dataList.Add(new Data
             {
-                Node1 = arr[0] - 1,
-                Node2 = arr[1] - 1,
-                Weight = arr[2],
+                Begin = arr[0],
+                End = arr[1],
+                Price1 = priceList[arr[2]],
             });
         }
-        var result = Solve(edgeList, nodeCount);
-        result.Dump();
-    }
 
-    public static long Solve(List<Edge> edgeList, int nodeCount)
-    {
-        var nodeList = new Node[nodeCount];
-        for (var i = 0; i < nodeCount; i++)
-            nodeList[i] = new Node(i);
+        dataList = dataList.OrderBy(x => x.End).ToList();
 
-        edgeList.ForEach(edge =>
+        dataList[0].Result = dataList[0].Price;
+        for (var i = 1; i < N; i++)
         {
-            nodeList[edge.Node1].EdgeList.Add(edge);
-            nodeList[edge.Node2].EdgeList.Add(edge);
-        });
+            var data = dataList[i];
+            var prevMaxResult = dataList
+                .Where(x => x.End <= data.Begin)
+                .Select(x => x.Result)
+                .DefaultIfEmpty(0)
+                .Max();
 
-        var rootNode = nodeList.First(node => !node.IsLeaf);
-
-        var result = GetTreeResult(nodeList, rootNode, -1, rootNode.Number);
-
-        return result.Result;
-    }
-
-    public static TreeResult GetTreeResult(Node[] tree, Node currentNode, int parentNodeNumber, int rootNodeNumber)
-    {
-        if (currentNode.IsLeaf)
-        {
-            return new TreeResult
-            {
-                LeafCount = 1,
-                Sum = currentNode.EdgeList[0].Weight,
-                SquareSum = currentNode.EdgeList[0].Weight * currentNode.EdgeList[0].Weight,
-                Result = currentNode.EdgeList[0].Weight,
-            };
+            dataList[i].Result = prevMaxResult + dataList[i].Price;
         }
 
-        TreeResult result = null;
-        Edge parentEdge = null;
-        foreach (var edge in currentNode.EdgeList)
-        {
-            if (edge.Node1 == parentNodeNumber || edge.Node2 == parentNodeNumber)
-            {
-                parentEdge = edge;
-            }
-            else
-            {
-                var childNumber = edge.Node1 == currentNode.Number ? edge.Node2 : edge.Node1;
-                var childResult = GetTreeResult(tree, tree[childNumber], currentNode.Number, rootNodeNumber);
-                if (result == null)
-                {
-                    result = childResult;
-                }
-                else
-                {
-                    result = new TreeResult
-                    {
-                        LeafCount = result.LeafCount + childResult.LeafCount,
-                        Sum = result.Sum + childResult.Sum,
-                        SquareSum = result.SquareSum + childResult.SquareSum,
-                        Result = childResult.LeafCount * result.SquareSum
-                            + result.LeafCount * childResult.SquareSum
-                            + 2 * result.Sum * childResult.Sum
-                            + (result.LeafCount > 1 ? result.Result : 0)
-                            + (childResult.LeafCount > 1 ? childResult.Result : 0)
-                            ,
-                    };
-                }
-            }
-        }
-
-        if (currentNode.Number != rootNodeNumber)
-        {
-            var sum = result.Sum + parentEdge.Weight * result.LeafCount;
-            var squareSum = result.SquareSum + 2 * parentEdge.Weight * result.Sum + result.LeafCount * parentEdge.Weight * parentEdge.Weight;
-            result.Sum = sum;
-            result.SquareSum = squareSum;
-        }
-
-        return result;
+        dataList.Max(x => x.Result).Dump();
     }
 }
 
-public class Edge
+public class Data
 {
-    public int Node1;
-    public int Node2;
-    public int Weight;
-}
+    public int Begin;
+    public int End;
+    public int Price1;
 
-public class Node
-{
-    public int Number;
-    public List<Edge> EdgeList = new List<Edge>();
-    public bool IsLeaf => EdgeList.Any() && EdgeList.Count == 1;
-
-    public Node(int number)
-    {
-        Number = number;
-    }
-}
-
-public class TreeResult
-{
-    public int LeafCount;
-    public long Sum;
-    public long SquareSum;
-    public long Result;
+    public int Price => Price1 * (End - Begin);
+    public int Result;
 }
 
 public static class Extensionss
