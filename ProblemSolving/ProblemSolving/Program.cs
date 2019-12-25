@@ -19,7 +19,7 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "17979";
+        var problemNumber = "3613";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
@@ -42,57 +42,43 @@ public class Program
 
     public static void Solve()
     {
-        var arr0 = IO.GetIntList();
-        var M = arr0[0];
-        var N = arr0[1];
-
-        var priceList = new int[M + 1];
-        for (var i = 1; i <= M; i++)
-            priceList[i] = IO.GetInt();
-
-        var dataList = new List<Data>();
-        for (var i = 0; i < N; i++)
+        var text = IO.GetLine();
+        if (text.IsJava())
         {
-            var arr = IO.GetIntList();
-            dataList.Add(new Data
-            {
-                Begin = arr[0],
-                End = arr[1],
-                Price1 = priceList[arr[2]],
-            });
+
         }
-
-        dataList = dataList.OrderBy(x => x.End).ToList();
-
-        dataList[0].Result = dataList[0].Price;
-        for (var i = 1; i < N; i++)
+        else if (text.IsCpp())
         {
-            var data = dataList[i];
-            var prevMaxResult = dataList
-                .Where(x => x.End <= data.Begin)
-                .Select(x => x.Result)
-                .DefaultIfEmpty(0)
-                .Max();
-
-            dataList[i].Result = prevMaxResult + dataList[i].Price;
         }
-
-        dataList.Max(x => x.Result).Dump();
+        else
+        {
+            "Error!".Dump();
+        }
     }
-}
-
-public class Data
-{
-    public int Begin;
-    public int End;
-    public int Price1;
-
-    public int Price => Price1 * (End - Begin);
-    public int Result;
 }
 
 public static class Extensionss
 {
+    public static bool IsCpp(this string text)
+    {
+        return text.All(x => x.ToString().ToLower() == x.ToString());
+    }
+
+    public static bool IsJava(this string text)
+    {
+        if (text.Contains("_"))
+            return false;
+        return text.Any(x => x.ToString().ToUpper() == x.ToString());
+    }
+
+    public static string ToCpp(this string text)
+    {
+
+    }
+    public static string ToJava(this string text)
+    {
+
+    }
 }
 
 
