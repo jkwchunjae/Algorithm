@@ -315,22 +315,25 @@ public static class BojUtils
 
     public static List<InputOutput> MakeInputOutput(string problemNumber, bool useLocalInput = false)
     {
+        InputOutput localInput = null;
         if (useLocalInput)
         {
-            return new List<InputOutput>
+            localInput = new InputOutput
             {
-                new InputOutput
-                {
-                    Number = 1,
-                    Input = File.ReadAllText("input.txt", Encoding.UTF8),
-                    Output = File.ReadAllText("output.txt", Encoding.UTF8),
-                },
+                Number = 1,
+                Input = File.ReadAllText("input.txt", Encoding.UTF8),
+                Output = File.ReadAllText("output.txt", Encoding.UTF8),
             };
         }
 
         if (AppCache.Exists(problemNumber))
         {
-            return AppCache.GetCachedInputOutput(problemNumber);
+            var cached = AppCache.GetCachedInputOutput(problemNumber);
+            if (useLocalInput)
+            {
+                cached.Add(localInput);
+            }
+            return cached;
         }
 
         var sampleDic = new Dictionary<(string, string), string>();
@@ -380,6 +383,11 @@ public static class BojUtils
             .ToList();
 
         AppCache.SaveInputOutput(problemNumber, result);
+
+        if (useLocalInput)
+        {
+            result.Add(localInput);
+        }
 
         return result;
     }
