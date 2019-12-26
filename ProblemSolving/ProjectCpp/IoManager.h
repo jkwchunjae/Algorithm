@@ -3,6 +3,25 @@
 #include <string>
 #include <vector>
 #include "Cache.h"
+#include "Utils.h"
+
+struct MakeInputArgs
+{
+	std::string ProblemNumber;
+	bool UseLocalInput;
+
+	MakeInputArgs()
+		: ProblemNumber(0),
+		UseLocalInput(false)
+	{
+	}
+
+	MakeInputArgs(const std::string& problemNumber)
+		: ProblemNumber(problemNumber),
+		UseLocalInput(false)
+	{
+	}
+};
 
 class IoManager
 {
@@ -21,7 +40,7 @@ private:
 public:
 	IoManager();
 
-	std::vector<InputOutput> MakeInputOutput(const std::string& problemNumber);
+	std::vector<InputOutput> MakeInputOutput(const MakeInputArgs& args);
 };
 
 

@@ -19,9 +19,11 @@ void Solve(istream& in, ostream& out)
 int main()
 {
 #if _DEBUG // delete
-	string problemNumber = "1000";
+	MakeInputArgs args;
+	args.ProblemNumber = "1000";
+
 	IoManager ioManager;
-	auto ioList = ioManager.MakeInputOutput(problemNumber);
+	auto ioList = ioManager.MakeInputOutput(args);
 
 	bool checkAll = true;
 	for (auto io : ioList)
@@ -47,8 +49,9 @@ int main()
 	if (checkAll)
 	{
 		cout << "Passed all sample inputs !!" << endl;
-		CopyCode();
-		OpenBrowser(problemNumber);
+		Utils utils;
+		utils.CopyCode();
+		utils.OpenBrowser(args.ProblemNumber);
 	}
 #else
 	Solve(cin, cout);

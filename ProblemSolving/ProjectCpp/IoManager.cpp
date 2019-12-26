@@ -1,6 +1,7 @@
 #include "IoManager.h"
 #include <atlbase.h>  // CComPtr
 #include <urlmon.h>
+#include <fstream>
 
 #pragma comment(lib, "urlmon.lib")
 
@@ -31,17 +32,29 @@ std::string IoManager::GetHtml(std::string problemNumber)
 	return std::string(html.begin(), html.end());
 }
 
-std::vector<InputOutput> IoManager::MakeInputOutput(const std::string& problemNumber)
+std::vector<InputOutput> IoManager::MakeInputOutput(const MakeInputArgs& args)
 {
-	Cache cache;
-	if (cache.ExistsInputOutput(problemNumber))
+	if (args.UseLocalInput)
 	{
-		return cache.GetInputOutput(problemNumber);
+		InputOutput inout;
+		inout.Number = 0;
+
+		Utils utils;
+		inout.Input = utils.ReadFile(L"input.txt");
+		inout.Output = utils.ReadFile(L"output.txt");
+
+		return { inout };
+	}
+
+	Cache cache;
+	if (cache.ExistsInputOutput(args.ProblemNumber))
+	{
+		return cache.GetInputOutput(args.ProblemNumber);
 	}
 
 	std::vector<InputOutput> result;
 
-	auto html = GetHtml(problemNumber);
+	auto html = GetHtml(args.ProblemNumber);
 
 	auto startIndex = 0;
 	while (true)
@@ -94,7 +107,7 @@ std::vector<InputOutput> IoManager::MakeInputOutput(const std::string& problemNu
 		startIndex = a + 1;
 	}
 
-	cache.SaveInputOutput(problemNumber, result);
+	cache.SaveInputOutput(args.ProblemNumber, result);
 
 	return result;
 }
