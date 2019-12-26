@@ -289,7 +289,7 @@ public static class BojUtils
             var b = html.IndexOf(">", a);
             var c = html.IndexOf("</pre>", a);
             var preHeader = html.Substring(a, b - a);
-            var preData = html.Substring(b + 1, c - b - 2).Trim();
+            var preData = html.Substring(b + 1, c - b - 1).Trim();
 
             // preHeader.Dump();
             // preData.Dump();
