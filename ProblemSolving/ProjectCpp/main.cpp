@@ -3,8 +3,6 @@
 #include <vector>
 #include <sstream>
 #if _DEBUG // delete
-#include "json.hpp"
-#include "InputOutput.h"
 #include "IoManager.h"
 #include "Utils.h"
 #endif
@@ -43,7 +41,7 @@ int main()
 			cout << "[Sample output]" << endl << io.Output << endl;
 		}
 
-		checkAll &= (output.str() == io.Output);
+		checkAll &= accepted;
 	}
 
 	if (checkAll)
