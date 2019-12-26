@@ -126,6 +126,18 @@ public static class IO
     public static List<int> GetIntList()
         => GetLine().Split(' ').Where(x => x.Length > 0).Select(x => x.ToInt()).ToList();
 
+    public static (int, int) GetIntTuple2()
+    {
+        var arr = GetIntList();
+        return (arr[0], arr[1]);
+    }
+
+    public static (int, int, int) GetIntTuple3()
+    {
+        var arr = GetIntList();
+        return (arr[0], arr[1], arr[2]);
+    }
+
     public static int GetInt()
         => GetLine().ToInt();
 
@@ -196,6 +208,54 @@ public static class Extensions
     {
         foreach (var item in source)
             action(item);
+    }
+
+    public static void ForEach<T>(this IEnumerable<T> source, Action<T, int> action)
+    {
+        var index = 0;
+        foreach (var item in source)
+            action(item, index++);
+    }
+
+    public static bool ForEachBool<T>(this IEnumerable<T> source, Func<T, bool> func)
+    {
+        var result = true;
+        foreach (var item in source)
+        {
+            if (!func(item))
+                result = false;
+        }
+        return result;
+    }
+
+    public static bool ForEachBool<T>(this IEnumerable<T> source, Func<T, int, bool> func)
+    {
+        var result = true;
+        var index = 0;
+        foreach (var item in source)
+        {
+            if (!func(item, index++))
+                result = false;
+        }
+        return result;
+    }
+
+    public static void ForEach(this int count, Action<int> action)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            action(i);
+        }
+    }
+
+    public static List<T> MakeList<T>(this int count, Func<int, T> func)
+    {
+        var result = new List<T>();
+        for (var i = 0; i < count; i++)
+        {
+            result.Add(func(i));
+        }
+        return result;
     }
 }
 
