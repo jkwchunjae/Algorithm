@@ -327,7 +327,7 @@ public static class BojUtils
 
 public static class AppCache
 {
-    private static readonly string DirPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Boj");
+    private static readonly string DirPath = Environment.CurrentDirectory;
     public static bool Exists(string problemNumber)
     {
         var problemPath = Path.Combine(DirPath, $"{problemNumber}.json");
