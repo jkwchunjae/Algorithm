@@ -227,7 +227,7 @@ public static class DebugUtils
         var beginIndex = sourceCode.IndexOf("#if DEBUG // delete");
         if (beginIndex == -1)
             return sourceCode;
-        var endIf = new List<string> { "#", "e", "n", "d", "i", "f" }.StringJoin("");
+        var endIf = "_endif".Replace("_", "#");
         var endIndex = sourceCode.IndexOf(endIf, beginIndex);
 
         return sourceCode.Substring(0, beginIndex - 1) + sourceCode.Substring(endIndex + 8);
