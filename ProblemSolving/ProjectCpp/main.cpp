@@ -25,6 +25,12 @@ int main()
 	IoManager ioManager;
 	auto ioList = ioManager.MakeInputOutput(args);
 
+	if (ioList.empty())
+	{
+		cout << "[ERROR] Empty inputs" << endl;
+		return 0;
+	}
+
 	bool checkAll = true;
 	for (auto io : ioList)
 	{
