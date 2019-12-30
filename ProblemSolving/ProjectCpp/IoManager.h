@@ -11,7 +11,7 @@ struct MakeInputArgs
 	bool UseLocalInput;
 
 	MakeInputArgs()
-		: ProblemNumber(0),
+		: ProblemNumber(""),
 		UseLocalInput(false)
 	{
 	}

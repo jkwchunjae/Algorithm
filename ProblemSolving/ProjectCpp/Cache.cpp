@@ -46,7 +46,7 @@ std::vector<InputOutput> Cache::GetInputOutput(const std::string& problemNumber)
 	if (!j.is_array())
 		return result;
 
-	for (const auto& obj : j.array())
+	for (const auto& obj : j)
 	{
 		InputOutput io;
 		io.Number = obj["Number"].get<int>();
