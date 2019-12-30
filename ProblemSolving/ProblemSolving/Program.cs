@@ -240,7 +240,7 @@ public static class Extensions
         return result;
     }
 
-    public static void ForEach(this int count, Action<int> action)
+    public static void For(this int count, Action<int> action)
     {
         for (var i = 0; i < count; i++)
         {
