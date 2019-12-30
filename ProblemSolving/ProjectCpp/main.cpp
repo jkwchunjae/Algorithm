@@ -19,6 +19,9 @@ void Solve(istream& in, ostream& out)
 int main()
 {
 #if _DEBUG // delete
+	Utils utils;
+	utils.CopyCode();
+
 	MakeInputArgs args;
 	args.ProblemNumber = "1000";
 
@@ -55,10 +58,9 @@ int main()
 	if (checkAll)
 	{
 		cout << "Passed all sample inputs !!" << endl;
-		Utils utils;
-		utils.CopyCode();
 		utils.OpenBrowser(args.ProblemNumber);
 	}
+	utils.CopyCode();
 #else
 	Solve(cin, cout);
 #endif
