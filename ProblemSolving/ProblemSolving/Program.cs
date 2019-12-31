@@ -217,6 +217,13 @@ public static class Extensions
             action(item, index++);
     }
 
+    public static void ForEach1<T>(this IEnumerable<T> source, Action<T, int> action)
+    {
+        var index = 1;
+        foreach (var item in source)
+            action(item, index++);
+    }
+
     public static bool ForEachBool<T>(this IEnumerable<T> source, Func<T, bool> func)
     {
         var result = true;
@@ -243,6 +250,14 @@ public static class Extensions
     public static void For(this int count, Action<int> action)
     {
         for (var i = 0; i < count; i++)
+        {
+            action(i);
+        }
+    }
+
+    public static void For1(this int count, Action<int> action)
+    {
+        for (var i = 1; i <= count; i++)
         {
             action(i);
         }
