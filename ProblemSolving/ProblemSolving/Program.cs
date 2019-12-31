@@ -164,6 +164,13 @@ public static class IO
     }
 }
 
+public enum LoopResult
+{
+    Void,
+    Break,
+    Continue,
+}
+
 public static class Extensions
 {
     public static IEnumerable<long> GetPrimeList(int maximum)
@@ -224,6 +231,53 @@ public static class Extensions
             action(item, index++);
     }
 
+    public static void ForEach<T>(this IEnumerable<T> source, Func<T, LoopResult> action)
+    {
+        foreach (var item in source)
+        {
+            var result = action(item);
+            switch (result)
+            {
+                case LoopResult.Break:
+                    break;
+                case LoopResult.Continue:
+                    continue;
+            }
+        }
+    }
+
+    public static void ForEach<T>(this IEnumerable<T> source, Func<T, int, LoopResult> action)
+    {
+        var index = 0;
+        foreach (var item in source)
+        {
+            var result = action(item, index++);
+            switch (result)
+            {
+                case LoopResult.Break:
+                    break;
+                case LoopResult.Continue:
+                    continue;
+            }
+        }
+    }
+
+    public static void ForEach1<T>(this IEnumerable<T> source, Func<T, int, LoopResult> action)
+    {
+        var index = 1;
+        foreach (var item in source)
+        {
+            var result = action(item, index++);
+            switch (result)
+            {
+                case LoopResult.Break:
+                    break;
+                case LoopResult.Continue:
+                    continue;
+            }
+        }
+    }
+
     public static bool ForEachBool<T>(this IEnumerable<T> source, Func<T, bool> func)
     {
         var result = true;
@@ -260,6 +314,36 @@ public static class Extensions
         for (var i = 1; i <= count; i++)
         {
             action(i);
+        }
+    }
+
+    public static void For(this int count, Func<int, LoopResult> action)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var result = action(i);
+            switch (result)
+            {
+                case LoopResult.Break:
+                    break;
+                case LoopResult.Continue:
+                    continue;
+            }
+        }
+    }
+
+    public static void For1(this int count, Func<int, LoopResult> action)
+    {
+        for (var i = 1; i <= count; i++)
+        {
+            var result = action(i);
+            switch (result)
+            {
+                case LoopResult.Break:
+                    break;
+                case LoopResult.Continue:
+                    continue;
+            }
         }
     }
 
