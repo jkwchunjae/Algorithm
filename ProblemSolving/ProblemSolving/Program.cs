@@ -57,30 +57,111 @@ public class Program
     }
 }
 
+
 public static class Extensionss
 {
-    public static bool IsCpp(this string text)
-    {
-        return text.All(x => x.ToString().ToLower() == x.ToString());
-    }
+}
 
-    public static bool IsJava(this string text)
-    {
-        if (text.Contains("_"))
-            return false;
-        return text.Any(x => x.ToString().ToUpper() == x.ToString());
-    }
+public class Node
+{
+    public int Number;
+    public bool Mark = false;
+    public List<Edge> EdgeList = new List<Edge>();
 
-    public static string ToCpp(this string text)
+    public Node(int number)
     {
-
-    }
-    public static string ToJava(this string text)
-    {
-
+        Number = number;
     }
 }
 
+public class Edge
+{
+    public int Weight;
+    public Node Target;
+
+    public Edge() { }
+    public Edge(Node target)
+    {
+        Weight = 1;
+        Target = target;
+    }
+
+    public Edge(int weight, Node target)
+    {
+        Weight = weight;
+        Target = target;
+    }
+}
+
+public static class Algorithm
+{
+    public static void BFS(this Node startNode, Action<Node> action)
+    {
+        var queue = new Queue<Node>();
+        queue.Enqueue(startNode);
+        startNode.Mark = true;
+
+        while (queue.Any())
+        {
+            var node = queue.Dequeue();
+            action(node);
+
+            node.EdgeList.ForEach(edge =>
+            {
+                if (!edge.Target.Mark)
+                {
+                    edge.Target.Mark = true;
+                    queue.Enqueue(edge.Target);
+                }
+            });
+        }
+    }
+
+    public static void DFS(this Node startNode, Action<Node> action, bool nonReq = false)
+    {
+        if (nonReq)
+        {
+            startNode.DFS_non_req(action);
+            return;
+        }
+
+        startNode.Mark = true;
+        action(startNode);
+
+        startNode.EdgeList.ForEach(edge =>
+        {
+            if (!edge.Target.Mark)
+            {
+                edge.Target.DFS(action);
+            }
+        });
+    }
+
+    public static void DFS_non_req(this Node startNode, Action<Node> action)
+    {
+        var stack = new Stack<Node>();
+        stack.Push(startNode);
+
+        while (stack.Any())
+        {
+            var node = stack.Pop();
+            if (node.Mark)
+                continue;
+
+            node.Mark = true;
+            action(node);
+
+            for (var i = node.EdgeList.Count - 1; i >= 0; i--)
+            {
+                var targetNode = node.EdgeList[i].Target;
+                if (!targetNode.Mark)
+                {
+                    stack.Push(targetNode);
+                }
+            }
+        }
+    }
+}
 
 public static class IO
 {
