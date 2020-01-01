@@ -282,6 +282,21 @@ public static class Extensions
         return string.Join(separator, list);
     }
 
+    public static string Left(this string value, int length = 1)
+    {
+        if (value.Length < length)
+            return value;
+        return value.Substring(0, length);
+    }
+
+    public static string Right(this string value, int length = 1)
+    {
+        if (value.Length < length)
+            return value;
+        return value.Substring(value.Length - length, length);
+    }
+
+
     public static int ToInt(this string str)
     {
         return int.Parse(str);
