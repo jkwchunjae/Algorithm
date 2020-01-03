@@ -19,7 +19,7 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "3613";
+        var problemNumber = "1000";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
@@ -42,18 +42,6 @@ public class Program
 
     public static void Solve()
     {
-        var text = IO.GetLine();
-        if (text.IsJava())
-        {
-
-        }
-        else if (text.IsCpp())
-        {
-        }
-        else
-        {
-            "Error!".Dump();
-        }
     }
 }
 
