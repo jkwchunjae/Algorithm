@@ -2,6 +2,7 @@
 #include <atlbase.h>  // CComPtr
 #include <urlmon.h>
 #include <fstream>
+#include <algorithm>
 
 #pragma comment(lib, "urlmon.lib")
 
