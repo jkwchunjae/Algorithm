@@ -498,15 +498,34 @@ public static class BojUtils
 
     public static List<InputOutput> MakeInputOutput(string problemNumber, bool useLocalInput = false)
     {
-        InputOutput localInput = null;
+        var localInputList = new List<InputOutput>();
         if (useLocalInput)
         {
-            localInput = new InputOutput
+            var inputText = File.ReadAllText("input.txt", Encoding.UTF8);
+            var outputText = File.ReadAllText("output.txt", Encoding.UTF8);
+
+            Func<string, List<string>> Normalize = text =>
+                Regex.Split(text.Replace("\r", ""), "\n\n")
+                    .Select(x => x.Trim())
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToList();
+
+            var inputList = Normalize(inputText);
+            var outputList = Normalize(outputText);
+
+            if (inputList.Count != outputList.Count)
             {
-                Number = 1,
-                Input = File.ReadAllText("input.txt", Encoding.UTF8),
-                Output = File.ReadAllText("output.txt", Encoding.UTF8),
-            };
+                throw new Exception("input, output 개수가 다릅니다.");
+            }
+
+            localInputList = inputList
+                .Zip(outputList, (input, output) => new InputOutput
+                {
+                    Number = 0,
+                    Input = input,
+                    Output = output,
+                })
+                .ToList();
         }
 
         if (AppCache.Exists(problemNumber))
@@ -514,7 +533,7 @@ public static class BojUtils
             var cached = AppCache.GetCachedInputOutput(problemNumber);
             if (useLocalInput)
             {
-                cached.Add(localInput);
+                cached = cached.Concat(localInputList).ToList();
             }
             return cached;
         }
@@ -569,7 +588,7 @@ public static class BojUtils
 
         if (useLocalInput)
         {
-            result.Add(localInput);
+            result = result.Concat(localInputList).ToList();
         }
 
         return result;
