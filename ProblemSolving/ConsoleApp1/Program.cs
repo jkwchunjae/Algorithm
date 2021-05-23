@@ -20,7 +20,7 @@ public class Program
     {
 #if DEBUG // delete
         var problemNumber = "1000";
-        var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
+        var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
