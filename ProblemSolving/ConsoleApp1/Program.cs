@@ -157,8 +157,8 @@ public static class Algorithm
 
 public static class IO
 {
+    static List<string> _input = new();
 #if DEBUG // delete
-    static List<string> _input;
     static string _answer;
     static string _output = "";
     static int _readInputCount = 0;
@@ -192,8 +192,15 @@ public static class IO
 #if DEBUG
         return _input[_readInputCount++];
 #else
-        return Console.ReadLine();
+        var input = Console.ReadLine();
+        _input.Add(input);
+        return input;
 #endif
+    }
+
+    public static string GetInput()
+    {
+        return string.Join(' ', _input);
     }
 
     public static List<int> GetIntList()
