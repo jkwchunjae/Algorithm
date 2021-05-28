@@ -19,23 +19,22 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "2618";
+        var problemNumber = "5373";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
-            var N = IO.GetInt();
-            var W = IO.GetInt();
+            var T = IO.GetInt();
 
-            var positions = W.MakeList(_ =>
+            T.For(_ =>
             {
-                var (x, y) = IO.GetIntTuple2();
-                return new Position(x, y);
-            });
+                var N = IO.GetInt();
+                var rotates = IO.GetLine().Split(' ').ToList();
 
-            Solve(N, W, positions);
+                Solve(rotates);
+            });
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -50,111 +49,190 @@ public class Program
 #endif
     }
 
-    public static void Solve(int N, int W, List<Position> positions)
+    public static void Solve(List<string> rotates)
     {
-        positions = new[] { new Position(0, 0) }.Concat(positions).ToList();
-        List<List<DpItem>> dp = (W + 1).MakeList(_ => (W + 1).MakeList(_ => new DpItem()));
+        var cube = new Cube();
 
-        var beginA = new Position(1, 1);
-        var beginB = new Position(N, N);
-
-        (W + 1).For(row =>
+        rotates.ForEach(r =>
         {
-            (W + 1).For(column =>
-            {
-                if (row == column)
-                    return LoopResult.Continue;
+            var face = r[0];
+            var clockwise = r[1] == '+';
 
-                if (row == 0 && column == 1)
-                    dp[0][1] = new DpItem { Value = beginB.Distance(positions[1]), Mark = 2 };
-
-                else if (row == 1 && column == 0)
-                    dp[1][0] = new DpItem { Value = beginA.Distance(positions[1]), Mark = 1 };
-
-                else if (row + 1 == column)
-                {
-                    row.For(j =>
-                    {
-                        var value = dp[row][j].Value + (j == 0 ? beginB : positions[j]).Distance(positions[column]);
-                        if (dp[row][column].Value > value)
-                        {
-                            dp[row][column].Value = value;
-                            dp[row][column].From = dp[row][j];
-                        }
-                    });
-                    dp[row][column].Mark = 2;
-                }
-
-                else if (column + 1 == row)
-                {
-                    column.For(i =>
-                    {
-                        var value = dp[i][column].Value + (i == 0 ? beginA : positions[i]).Distance(positions[row]);
-                        if (dp[row][column].Value > value)
-                        {
-                            dp[row][column].Value = value;
-                            dp[row][column].From = dp[i][column];
-                        }
-                    });
-                    dp[row][column].Mark = 1;
-                }
-
-                else if (column > row)
-                {
-                    dp[row][column].Value = dp[row][column - 1].Value + positions[column].Distance(positions[column - 1]);
-                    dp[row][column].From = dp[row][column - 1];
-                    dp[row][column].Mark = 2;
-                }
-
-                else if (row > column)
-                {
-                    dp[row][column].Value = dp[row - 1][column].Value + positions[row].Distance(positions[row - 1]);
-                    dp[row][column].From = dp[row - 1][column];
-                    dp[row][column].Mark = 1;
-                }
-
-                return LoopResult.Void;
-            });
+            cube.Rotate(face, clockwise);
         });
 
-        var minDpItem1 = Enumerable.Range(0, W)
-            .Reduce(new DpItem(), (minItem, row) =>
-                (minItem.Value > dp[row][W].Value) ? dp[row][W] : minItem);
-
-        var minDpItem = Enumerable.Range(0, W)
-            .Reduce(minDpItem1, (minItem, column) =>
-                (minItem.Value > dp[W][column].Value) ? dp[W][column] : minItem);
-
-        var dpItem = minDpItem;
-        List<int> path = new();
-        W.For(_ =>
-        {
-            path.Add(dpItem.Mark);
-            dpItem = dpItem.From;
-        });
-        path.Reverse();
-
-        minDpItem.Value.Dump();
-        W.For(i => path[i].Dump());
+        new string(new[] { cube.Up.Data[0], cube.Up.Data[1], cube.Up.Data[2] }).Dump();
+        new string(new[] { cube.Up.Data[3], cube.Up.Data[4], cube.Up.Data[5] }).Dump();
+        new string(new[] { cube.Up.Data[6], cube.Up.Data[7], cube.Up.Data[8] }).Dump();
     }
 }
 
-public record Position(int X, int Y);
-
-public class DpItem
+public class Cube
 {
-    public int Value { get; set; } = int.MaxValue;
-    public DpItem From { get; set; }
-    public int Mark { get; set; }
+    public Face Up = new Face('w');
+    Face Right = new Face('b');
+    Face Front = new Face('r');
+    Face Left = new Face('g');
+    Face Back = new Face('o');
+    Face Down = new Face('y');
+
+    public void Rotate(char face, bool clockwise)
+    {
+        if (face == 'U')
+            RotateUp(clockwise);
+        if (face == 'F')
+            RotateFront(clockwise);
+        if (face == 'L')
+            RotateLeft(clockwise);
+        if (face == 'R')
+            RotateRight(clockwise);
+        if (face == 'B')
+            RotateBack(clockwise);
+        if (face == 'D')
+            RotateDown(clockwise);
+    }
+
+    public void RotateUp(bool clockwise)
+    {
+        if (clockwise)
+        {
+            Up.Rotate(clockwise);
+            var tmp = Right.Top3;
+            Right.Top3 = Back.Top3;
+            Back.Top3 = Left.Top3;
+            Left.Top3 = Front.Top3;
+            Front.Top3 = tmp;
+        }
+        else
+        {
+            RotateUp(true);
+            RotateUp(true);
+            RotateUp(true);
+        }
+    }
+
+    public void RotateFront(bool clockwise)
+    {
+        MovePush(1);
+        RotateUp(clockwise);
+        MovePush(3);
+    }
+
+    public void RotateRight(bool clockwise)
+    {
+        MoveLeft(1);
+        RotateFront(clockwise);
+        MoveLeft(3);
+    }
+
+    public void RotateBack(bool clockwise)
+    {
+        MoveLeft(1);
+        RotateRight(clockwise);
+        MoveLeft(3);
+    }
+
+    public void RotateLeft(bool clockwise)
+    {
+        MoveLeft(1);
+        RotateBack(clockwise);
+        MoveLeft(3);
+    }
+
+    public void RotateDown(bool clockwise)
+    {
+        MovePush(2);
+        RotateUp(clockwise);
+        MovePush(2);
+    }
+
+    /// <summary> 큐브 자체를 왼쪽으로 돌리는 작업 </summary>
+    private void MoveLeft(int count)
+    {
+        count.For(_ =>
+        {
+            var tmp = Right;
+            Right = Back;
+            Back = Left;
+            Left = Front;
+            Front = tmp;
+
+            Up.Rotate(true);
+            Down.Rotate(false);
+        });
+    }
+
+    /// <summary> 큐브 자체를 뒤로 돌리는 작업 </summary>
+    private void MovePush(int count)
+    {
+        count.For(_ =>
+        {
+            var tmp = Up;
+            Up = Front;
+            Front = Down;
+            Down = Back.Reverse();
+            Back = tmp.Reverse();
+
+            Right.Rotate(true);
+            Left.Rotate(false);
+        });
+    }
 }
 
+public class Face
+{
+    public List<char> Data;
+    public (char, char, char) Top3
+    {
+        get => (Data[0], Data[1], Data[2]);
+        set
+        {
+            Data[0] = value.Item1;
+            Data[1] = value.Item2;
+            Data[2] = value.Item3;
+        }
+    }
+
+    public Face(char color)
+    {
+        Data = (9).MakeList(_ => color).ToList();
+    }
+
+    public void Rotate(bool clockwise)
+    {
+        char tmp;
+        if (clockwise)
+        {
+            tmp = Data[6];
+            Data[6] = Data[8];
+            Data[8] = Data[2];
+            Data[2] = Data[0];
+            Data[0] = tmp;
+
+            tmp = Data[3];
+            Data[3] = Data[7];
+            Data[7] = Data[5];
+            Data[5] = Data[1];
+            Data[1] = tmp;
+        }
+        else
+        {
+            Rotate(true);
+            Rotate(true);
+            Rotate(true);
+        }
+    }
+
+    public Face Reverse()
+    {
+        var reversed = new Face(' ');
+        (9).For(i => reversed.Data[i] = Data[9 - i - 1]);
+        return reversed;
+    }
+}
 
 public static class Extensionss
 {
-    public static int Distance(this Position p1, Position p2)
-    {
-        return Math.Abs(p1.X - p2.X) + Math.Abs(p1.Y - p2.Y);
-    }
 }
 
 public class Node
