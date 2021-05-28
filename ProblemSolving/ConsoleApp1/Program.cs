@@ -26,7 +26,16 @@ public class Program
         {
             IO.SetInputOutput(inputOutput);
 #endif
-            Solve();
+            var N = IO.GetInt();
+            var W = IO.GetInt();
+
+            var positions = W.MakeList(_ =>
+            {
+                var (x, y) = IO.GetIntTuple2();
+                return new Position(x, y);
+            });
+
+            Solve(N, W, positions);
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -41,87 +50,92 @@ public class Program
 #endif
     }
 
-    public static void Solve()
+    public static void Solve(int N, int W, List<Position> positions)
     {
-        var N = IO.GetInt();
-        var W = IO.GetInt();
+        positions = new[] { new Position(0, 0) }.Concat(positions).ToList();
+        List<List<DpItem>> dp = (W + 1).MakeList(_ => (W + 1).MakeList(_ => new DpItem()));
 
-        var list = W.MakeList(_ =>
+        var beginA = new Position(1, 1);
+        var beginB = new Position(N, N);
+
+        (W + 1).For(row =>
         {
-            var (x, y) = IO.GetIntTuple2();
-            return new Position(x, y);
+            (W + 1).For(column =>
+            {
+                if (row == column)
+                    return LoopResult.Continue;
+
+                if (row == 0 && column == 1)
+                    dp[0][1] = new DpItem { Value = beginB.Distance(positions[1]), Mark = 2 };
+
+                else if (row == 1 && column == 0)
+                    dp[1][0] = new DpItem { Value = beginA.Distance(positions[1]), Mark = 1 };
+
+                else if (row + 1 == column)
+                {
+                    row.For(j =>
+                    {
+                        var value = dp[row][j].Value + (j == 0 ? beginB : positions[j]).Distance(positions[column]);
+                        if (dp[row][column].Value > value)
+                        {
+                            dp[row][column].Value = value;
+                            dp[row][column].From = dp[row][j];
+                        }
+                    });
+                    dp[row][column].Mark = 2;
+                }
+
+                else if (column + 1 == row)
+                {
+                    column.For(i =>
+                    {
+                        var value = dp[i][column].Value + (i == 0 ? beginA : positions[i]).Distance(positions[row]);
+                        if (dp[row][column].Value > value)
+                        {
+                            dp[row][column].Value = value;
+                            dp[row][column].From = dp[i][column];
+                        }
+                    });
+                    dp[row][column].Mark = 1;
+                }
+
+                else if (column > row)
+                {
+                    dp[row][column].Value = dp[row][column - 1].Value + positions[column].Distance(positions[column - 1]);
+                    dp[row][column].From = dp[row][column - 1];
+                    dp[row][column].Mark = 2;
+                }
+
+                else if (row > column)
+                {
+                    dp[row][column].Value = dp[row - 1][column].Value + positions[row].Distance(positions[row - 1]);
+                    dp[row][column].From = dp[row - 1][column];
+                    dp[row][column].Mark = 1;
+                }
+
+                return LoopResult.Void;
+            });
         });
 
-        var dp = (W + 1).MakeList(_ => (A: new DpItem(), B: new DpItem()));
+        var minDpItem1 = Enumerable.Range(0, W)
+            .Reduce(new DpItem(), (minItem, row) =>
+                (minItem.Value > dp[row][W].Value) ? dp[row][W] : minItem);
 
-        dp[0].A.AValue = 0;
-        dp[0].A.BValue = 0;
-        dp[0].A.APosition = new Position(1, 1);
-        dp[0].A.BPosition = new Position(N, N);
+        var minDpItem = Enumerable.Range(0, W)
+            .Reduce(minDpItem1, (minItem, column) =>
+                (minItem.Value > dp[W][column].Value) ? dp[W][column] : minItem);
 
-        dp[0].B.AValue = 0;
-        dp[0].B.BValue = 0;
-        dp[0].B.APosition = new Position(1, 1);
-        dp[0].B.BPosition = new Position(N, N);
-
-        (W + 1).For(i =>
+        var dpItem = minDpItem;
+        List<int> path = new();
+        W.For(_ =>
         {
-            if (i == 0)
-                return LoopResult.Continue;
-
-            var prev = dp[i - 1];
-            var target = list[i - 1];
-
-            {
-                // move A
-                var valueA1 = prev.A.APosition.Distance(target) + prev.A.AValue;
-                var valueA2 = prev.B.APosition.Distance(target) + prev.B.AValue;
-                var value1 = valueA1 + prev.A.BValue;
-                var value2 = valueA2 + prev.B.BValue;
-                var from = value1 < value2 ? prev.A : prev.B;
-
-                dp[i].A.AValue = value1 < value2 ? valueA1 : valueA2;
-                dp[i].A.BValue = from.BValue;
-                dp[i].A.APosition = target;
-                dp[i].A.BPosition = from.BPosition;
-                dp[i].A.From = from;
-            }
-            {
-                // move B
-                var valueB1 = prev.A.BPosition.Distance(target) + prev.A.BValue;
-                var valueB2 = prev.B.BPosition.Distance(target) + prev.B.BValue;
-                var value1 = valueB1 + prev.A.AValue;
-                var value2 = valueB2 + prev.B.AValue;
-                var from = value1 < value2 ? prev.A : prev.B;
-
-                dp[i].B.AValue = from.AValue;
-                dp[i].B.BValue = value1 < value2 ? valueB1 : valueB2;
-                dp[i].B.APosition = from.APosition;
-                dp[i].B.BPosition = target;
-                dp[i].B.From = from;
-            }
-
-            return LoopResult.Void;
+            path.Add(dpItem.Mark);
+            dpItem = dpItem.From;
         });
+        path.Reverse();
 
-        var lastItem = dp[W];
-        var last = (lastItem.A.AValue + lastItem.A.BValue) < (lastItem.B.AValue + lastItem.B.BValue) ? lastItem.A : lastItem.B;
-        (last.AValue + last.BValue).Dump();
-
-        var current = last;
-        var result = new List<int>();
-        for (var i = W; i >= 1; i--)
-        {
-            var prev = dp[i].A == current ? 1 : dp[i].B == current ? 2 : -1;
-            if (prev == -1)
-            {
-                throw new PlatformNotSupportedException(IO.GetInput());
-            }
-            result.Add(prev);
-            current = current.From;
-        }
-        result.Reverse();
-        result.ForEach(x => x.Dump());
+        minDpItem.Value.Dump();
+        W.For(i => path[i].Dump());
     }
 }
 
@@ -129,11 +143,9 @@ public record Position(int X, int Y);
 
 public class DpItem
 {
-    public int AValue { get; set; }
-    public int BValue { get; set; }
-    public Position APosition { get; set; }
-    public Position BPosition { get; set; }
+    public int Value { get; set; } = int.MaxValue;
     public DpItem From { get; set; }
+    public int Mark { get; set; }
 }
 
 
@@ -541,6 +553,28 @@ public static class Extensions
             result.Add(func(i));
         }
         return result;
+    }
+    public static TResult Reduce<TSource, TResult>(this IEnumerable<TSource> source, TResult initValue, Func<TResult, TSource, TResult> fn)
+    {
+        return Reduce(source, initValue, (value, item, index, list) => fn(value, item));
+    }
+
+    public static TResult Reduce<TSource, TResult>(this IEnumerable<TSource> source, TResult initValue, Func<TResult, TSource, int, TResult> fn)
+    {
+        return Reduce(source, initValue, (value, item, index, list) => fn(value, item, index));
+    }
+
+    public static TResult Reduce<TSource, TResult>(this IEnumerable<TSource> source, TResult initValue, Func<TResult, TSource, int, IEnumerable<TSource>, TResult> fn)
+    {
+        var value = initValue;
+
+        var index = 0;
+        foreach (var item in source)
+        {
+            value = fn(value, item, index++, source);
+        }
+
+        return value;
     }
 }
 
