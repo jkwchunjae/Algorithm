@@ -19,22 +19,21 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "5373";
+        var problemNumber = "6549";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
-            var T = IO.GetInt();
-
-            T.For(_ =>
+            while (true)
             {
-                var N = IO.GetInt();
-                var rotates = IO.GetLine().Split(' ').ToList();
-
-                Solve(rotates);
-            });
+                var arr = IO.GetLongList();
+                if (arr[0] == 0)
+                    break;
+                var r = Solve(arr.Skip(1).ToList());
+                r.Dump();
+            }
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -49,185 +48,65 @@ public class Program
 #endif
     }
 
-    public static void Solve(List<string> rotates)
+    public static long Solve(List<long> arr, int begin = -1, int end = -1)
     {
-        var cube = new Cube();
-
-        rotates.ForEach(r =>
+        if (begin == -1 && end == -1)
         {
-            var face = r[0];
-            var clockwise = r[1] == '+';
-
-            cube.Rotate(face, clockwise);
-        });
-
-        new string(new[] { cube.Up.Data[0], cube.Up.Data[1], cube.Up.Data[2] }).Dump();
-        new string(new[] { cube.Up.Data[3], cube.Up.Data[4], cube.Up.Data[5] }).Dump();
-        new string(new[] { cube.Up.Data[6], cube.Up.Data[7], cube.Up.Data[8] }).Dump();
-    }
-}
-
-public class Cube
-{
-    public Face Up = new Face('w');
-    Face Right = new Face('b');
-    Face Front = new Face('r');
-    Face Left = new Face('g');
-    Face Back = new Face('o');
-    Face Down = new Face('y');
-
-    public void Rotate(char face, bool clockwise)
-    {
-        if (face == 'U')
-            RotateUp(clockwise);
-        if (face == 'F')
-            RotateFront(clockwise);
-        if (face == 'L')
-            RotateLeft(clockwise);
-        if (face == 'R')
-            RotateRight(clockwise);
-        if (face == 'B')
-            RotateBack(clockwise);
-        if (face == 'D')
-            RotateDown(clockwise);
-    }
-
-    public void RotateUp(bool clockwise)
-    {
-        if (clockwise)
-        {
-            Up.Rotate(clockwise);
-            var tmp = Right.Top3;
-            Right.Top3 = Back.Top3;
-            Back.Top3 = Left.Top3;
-            Left.Top3 = Front.Top3;
-            Front.Top3 = tmp;
+            begin = 0;
+            end = arr.Count;
         }
-        else
+
+        var size = end - begin;
+        if (size == 1)
+            return arr[0];
+
+        // split
+        var middle = (end + begin) / 2;
+        var m1 = Solve(arr, begin, middle);
+        var m2 = Solve(arr, middle, end);
+
+        // merge
+        var a = middle - 1;
+        var b = middle;
+        var left = arr[a];
+        var right = arr[b];
+        var m3 = Math.Max(left, right);
+
+        while (true)
         {
-            RotateUp(true);
-            RotateUp(true);
-            RotateUp(true);
+            var m = Math.Min(left, right) * (b - a + 1);
+            m3 = Math.Max(m3, m);
+
+            if (a == begin && b == end - 1)
+            {
+                break;
+            }
+            else if (a == begin)
+            {
+                b++;
+                right = Math.Min(right, arr[b]);
+            }
+            else if (b == end - 1)
+            {
+                a--;
+                left = Math.Min(left, arr[a]);
+            }
+            else
+            {
+                if (Math.Min(left, arr[a - 1]) > Math.Min(right, arr[b + 1]))
+                {
+                    a--;
+                    left = Math.Min(left, arr[a]);
+                }
+                else
+                {
+                    b++;
+                    right = Math.Min(right, arr[b]);
+                }
+            }
         }
-    }
 
-    public void RotateFront(bool clockwise)
-    {
-        MovePush(1);
-        RotateUp(clockwise);
-        MovePush(3);
-    }
-
-    public void RotateRight(bool clockwise)
-    {
-        MoveLeft(1);
-        RotateFront(clockwise);
-        MoveLeft(3);
-    }
-
-    public void RotateBack(bool clockwise)
-    {
-        MoveLeft(1);
-        RotateRight(clockwise);
-        MoveLeft(3);
-    }
-
-    public void RotateLeft(bool clockwise)
-    {
-        MoveLeft(1);
-        RotateBack(clockwise);
-        MoveLeft(3);
-    }
-
-    public void RotateDown(bool clockwise)
-    {
-        MovePush(2);
-        RotateUp(clockwise);
-        MovePush(2);
-    }
-
-    /// <summary> 큐브 자체를 왼쪽으로 돌리는 작업 </summary>
-    private void MoveLeft(int count)
-    {
-        count.For(_ =>
-        {
-            var tmp = Right;
-            Right = Back;
-            Back = Left;
-            Left = Front;
-            Front = tmp;
-
-            Up.Rotate(true);
-            Down.Rotate(false);
-        });
-    }
-
-    /// <summary> 큐브 자체를 뒤로 돌리는 작업 </summary>
-    private void MovePush(int count)
-    {
-        count.For(_ =>
-        {
-            var tmp = Up;
-            Up = Front;
-            Front = Down;
-            Down = Back.Reverse();
-            Back = tmp.Reverse();
-
-            Right.Rotate(true);
-            Left.Rotate(false);
-        });
-    }
-}
-
-public class Face
-{
-    public List<char> Data;
-    public (char, char, char) Top3
-    {
-        get => (Data[0], Data[1], Data[2]);
-        set
-        {
-            Data[0] = value.Item1;
-            Data[1] = value.Item2;
-            Data[2] = value.Item3;
-        }
-    }
-
-    public Face(char color)
-    {
-        Data = (9).MakeList(_ => color).ToList();
-    }
-
-    public void Rotate(bool clockwise)
-    {
-        char tmp;
-        if (clockwise)
-        {
-            tmp = Data[6];
-            Data[6] = Data[8];
-            Data[8] = Data[2];
-            Data[2] = Data[0];
-            Data[0] = tmp;
-
-            tmp = Data[3];
-            Data[3] = Data[7];
-            Data[7] = Data[5];
-            Data[5] = Data[1];
-            Data[1] = tmp;
-        }
-        else
-        {
-            Rotate(true);
-            Rotate(true);
-            Rotate(true);
-        }
-    }
-
-    public Face Reverse()
-    {
-        var reversed = new Face(' ');
-        (9).For(i => reversed.Data[i] = Data[9 - i - 1]);
-        return reversed;
+        return Math.Max(m1, Math.Max(m2, m3));
     }
 }
 
@@ -344,7 +223,7 @@ public static class IO
     static string _output = "";
     static int _readInputCount = 0;
 
-    public static bool IsCorrect() => _output.Trim() == _answer.Trim();
+    public static bool IsCorrect() => _output.Replace("\r", "").Trim() == _answer.Replace("\r", "").Trim();
     public static int InputCount => _input.Count();
 
     static IO()
