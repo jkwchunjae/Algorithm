@@ -19,21 +19,38 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "6549";
+        var problemNumber = "11438";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
-            while (true)
+
+            var N = IO.GetInt();
+            var nodes = (N + 1).MakeList(i => new Node(i));
+            (N - 1).For(_ =>
             {
-                var arr = IO.GetLongList();
-                if (arr[0] == 0)
-                    break;
-                var r = Solve(arr.Skip(1).ToList());
-                r.Dump();
-            }
+                var (n1, n2) = IO.GetIntTuple2();
+                var node1 = nodes[n1];
+                var node2 = nodes[n2];
+
+                node1.NodeList.Add(node2);
+                node2.NodeList.Add(node1);
+            });
+
+            var M = IO.GetInt();
+            var list = M.MakeList(_ =>
+            {
+                var (n1, n2) = IO.GetIntTuple2();
+                var node1 = nodes[n1];
+                var node2 = nodes[n2];
+
+                return (node1, node2);
+            });
+
+            Solve(nodes[1], list);
+
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -48,65 +65,52 @@ public class Program
 #endif
     }
 
-    public static long Solve(List<long> arr, int begin = -1, int end = -1)
+    public static void Solve(Node root, List<(Node Node1, Node Node2)> nodes)
     {
-        if (begin == -1 && end == -1)
+        root.SetParent();
+        nodes.ForEach(x =>
         {
-            begin = 0;
-            end = arr.Count;
+            var lca = GetLCA(x.Node1, x.Node2);
+            lca.Number.Dump();
+        });
+        return;
+    }
+
+    public static Node GetLCA(Node node1, Node node2)
+    {
+        List<Node> list1 = new();
+        List<Node> list2 = new();
+
+        while (node1 != null && node1.Number != 0)
+        {
+            list1.Add(node1);
+            node1 = node1.Parent;
+        }
+        while (node2 != null && node2.Number != 0)
+        {
+            list2.Add(node2);
+            node2 = node2.Parent;
         }
 
-        var size = end - begin;
-        if (size == 1)
-            return arr[0];
-
-        // split
-        var middle = (end + begin) / 2;
-        var m1 = Solve(arr, begin, middle);
-        var m2 = Solve(arr, middle, end);
-
-        // merge
-        var a = middle - 1;
-        var b = middle;
-        var left = arr[a];
-        var right = arr[b];
-        var m3 = Math.Max(left, right);
-
-        while (true)
+        if (list1.Count > list2.Count)
         {
-            var m = Math.Min(left, right) * (b - a + 1);
-            m3 = Math.Max(m3, m);
+            var tmp = list1;
+            list1 = list2;
+            list2 = tmp;
+        }
 
-            if (a == begin && b == end - 1)
-            {
+        var index1 = 0;
+        var index2 = list2.Count - list1.Count;
+
+        while (index1 < list1.Count)
+        {
+            if (list1[index1] == list2[index2])
                 break;
-            }
-            else if (a == begin)
-            {
-                b++;
-                right = Math.Min(right, arr[b]);
-            }
-            else if (b == end - 1)
-            {
-                a--;
-                left = Math.Min(left, arr[a]);
-            }
-            else
-            {
-                if (Math.Min(left, arr[a - 1]) > Math.Min(right, arr[b + 1]))
-                {
-                    a--;
-                    left = Math.Min(left, arr[a]);
-                }
-                else
-                {
-                    b++;
-                    right = Math.Min(right, arr[b]);
-                }
-            }
+            index1++;
+            index2++;
         }
 
-        return Math.Max(m1, Math.Max(m2, m3));
+        return list1[index1];
     }
 }
 
@@ -118,11 +122,22 @@ public class Node
 {
     public int Number;
     public bool Mark = false;
-    public List<Edge> EdgeList = new List<Edge>();
+    public Node Parent;
+    public List<Edge> EdgeList = new();
+    public List<Node> NodeList = new();
 
     public Node(int number)
     {
         Number = number;
+    }
+
+    public void SetParent()
+    {
+        foreach(var node in NodeList.Where(x => x.Number != Parent?.Number))
+        {
+            node.Parent = this;
+            node.SetParent();
+        }
     }
 }
 
