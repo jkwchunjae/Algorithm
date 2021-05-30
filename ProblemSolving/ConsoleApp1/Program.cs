@@ -19,7 +19,7 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "11438";
+        var problemNumber = "7578";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
@@ -28,28 +28,10 @@ public class Program
 #endif
 
             var N = IO.GetInt();
-            var nodes = (N + 1).MakeList(i => new Node(i));
-            (N - 1).For(_ =>
-            {
-                var (n1, n2) = IO.GetIntTuple2();
-                var node1 = nodes[n1];
-                var node2 = nodes[n2];
+            var list1 = IO.GetIntList();
+            var list2 = IO.GetIntList();
 
-                node1.NodeList.Add(node2);
-                node2.NodeList.Add(node1);
-            });
-
-            var M = IO.GetInt();
-            var list = M.MakeList(_ =>
-            {
-                var (n1, n2) = IO.GetIntTuple2();
-                var node1 = nodes[n1];
-                var node2 = nodes[n2];
-
-                return (node1, node2);
-            });
-
-            Solve(nodes[1], list);
+            Solve(list1, list2);
 
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
@@ -65,52 +47,75 @@ public class Program
 #endif
     }
 
-    public static void Solve(Node root, List<(Node Node1, Node Node2)> nodes)
+    public static void Solve(List<int> list1, List<int> list2)
     {
-        root.SetParent();
-        nodes.ForEach(x =>
+        var indexDic = list1.Select((x, i) => (x, i))
+            .ToDictionary(x => x.x, x => x.i);
+
+        var arr = list2.Select(x => indexDic[x]).ToList();
+
+        var root = MakeNode(arr, 0, arr.Count);
+
+        var sum = 0;
+        int index = 0;
+        foreach (var num in arr)
         {
-            var lca = GetLCA(x.Node1, x.Node2);
-            lca.Number.Dump();
-        });
-        return;
+            var val = Calc(root, num, index);
+
+            sum += val;
+            index++;
+        }
+
+        sum.Dump();
     }
 
-    public static Node GetLCA(Node node1, Node node2)
+    public static int Calc(Node node, int num, int index)
     {
-        List<Node> list1 = new();
-        List<Node> list2 = new();
+        if (node.Min > num && node.EndIndex <= index)
+            return node.Count;
 
-        while (node1 != null && node1.Number != 0)
+        if (node.BeginIndex >= index)
+            return 0;
+
+        if (node.Max <= num)
+            return 0;
+
+        if (node.Count == 1)
+            return 0;
+
+        var left = Calc(node.Left, num, index);
+        var right = Calc(node.Right, num, index);
+        return left + right;
+    }
+
+    public static Node MakeNode(List<int> arr, int begin, int end)
+    {
+        var size = end - begin;
+
+        if (size == 1)
+            return new Node
+            {
+                Min = arr[begin],
+                Max = arr[begin],
+                Count = size,
+                BeginIndex = begin,
+                EndIndex = end - 1,
+            };
+
+        var middle = (begin + end) / 2;
+        var leftNode = MakeNode(arr, begin, middle);
+        var rightNode = MakeNode(arr, middle, end);
+
+        return new Node
         {
-            list1.Add(node1);
-            node1 = node1.Parent;
-        }
-        while (node2 != null && node2.Number != 0)
-        {
-            list2.Add(node2);
-            node2 = node2.Parent;
-        }
-
-        if (list1.Count > list2.Count)
-        {
-            var tmp = list1;
-            list1 = list2;
-            list2 = tmp;
-        }
-
-        var index1 = 0;
-        var index2 = list2.Count - list1.Count;
-
-        while (index1 < list1.Count)
-        {
-            if (list1[index1] == list2[index2])
-                break;
-            index1++;
-            index2++;
-        }
-
-        return list1[index1];
+            Min = Math.Min(leftNode.Min, rightNode.Min),
+            Max = Math.Max(leftNode.Max, rightNode.Max),
+            Count = size,
+            Left = leftNode,
+            Right = rightNode,
+            BeginIndex = begin,
+            EndIndex = end - 1,
+        };
     }
 }
 
@@ -120,115 +125,126 @@ public static class Extensionss
 
 public class Node
 {
-    public int Number;
-    public bool Mark = false;
-    public Node Parent;
-    public List<Edge> EdgeList = new();
-    public List<Node> NodeList = new();
-
-    public Node(int number)
-    {
-        Number = number;
-    }
-
-    public void SetParent()
-    {
-        foreach(var node in NodeList.Where(x => x.Number != Parent?.Number))
-        {
-            node.Parent = this;
-            node.SetParent();
-        }
-    }
+    public int Min { get; set; }
+    public int Max { get; set; }
+    public int Count { get; set; }
+    public int BeginIndex { get; set; }
+    public int EndIndex { get; set; }
+    public Node Left { get; set; }
+    public Node Right { get; set; }
 }
 
-public class Edge
-{
-    public int Weight;
-    public Node Target;
+//public class Node
+//{
+//    public int Number;
+//    public bool Mark = false;
+//    public Node Parent;
+//    public List<Edge> EdgeList = new();
+//    public List<Node> NodeList = new();
 
-    public Edge() { }
-    public Edge(Node target)
-    {
-        Weight = 1;
-        Target = target;
-    }
+//    public Node(int number)
+//    {
+//        Number = number;
+//    }
 
-    public Edge(int weight, Node target)
-    {
-        Weight = weight;
-        Target = target;
-    }
-}
+//    public void SetParent()
+//    {
+//        foreach (var node in NodeList.Where(x => x.Number != Parent?.Number))
+//        {
+//            node.Parent = this;
+//            node.SetParent();
+//        }
+//    }
+//}
 
-public static class Algorithm
-{
-    public static void BFS(this Node startNode, Action<Node> action)
-    {
-        var queue = new Queue<Node>();
-        queue.Enqueue(startNode);
-        startNode.Mark = true;
+//public class Edge
+//{
+//    public int Weight;
+//    public Node Target;
 
-        while (queue.Any())
-        {
-            var node = queue.Dequeue();
-            action(node);
+//    public Edge() { }
+//    public Edge(Node target)
+//    {
+//        Weight = 1;
+//        Target = target;
+//    }
 
-            node.EdgeList.ForEach(edge =>
-            {
-                if (!edge.Target.Mark)
-                {
-                    edge.Target.Mark = true;
-                    queue.Enqueue(edge.Target);
-                }
-            });
-        }
-    }
+//    public Edge(int weight, Node target)
+//    {
+//        Weight = weight;
+//        Target = target;
+//    }
+//}
 
-    public static void DFS(this Node startNode, Action<Node> action, bool nonReq = false)
-    {
-        if (nonReq)
-        {
-            startNode.DFS_non_req(action);
-            return;
-        }
+//public static class Algorithm
+//{
+//    public static void BFS(this Node startNode, Action<Node> action)
+//    {
+//        var queue = new Queue<Node>();
+//        queue.Enqueue(startNode);
+//        startNode.Mark = true;
 
-        startNode.Mark = true;
-        action(startNode);
+//        while (queue.Any())
+//        {
+//            var node = queue.Dequeue();
+//            action(node);
 
-        startNode.EdgeList.ForEach(edge =>
-        {
-            if (!edge.Target.Mark)
-            {
-                edge.Target.DFS(action);
-            }
-        });
-    }
+//            node.EdgeList.ForEach(edge =>
+//            {
+//                if (!edge.Target.Mark)
+//                {
+//                    edge.Target.Mark = true;
+//                    queue.Enqueue(edge.Target);
+//                }
+//            });
+//        }
+//    }
 
-    public static void DFS_non_req(this Node startNode, Action<Node> action)
-    {
-        var stack = new Stack<Node>();
-        stack.Push(startNode);
+//    public static void DFS(this Node startNode, Action<Node> action, bool nonReq = false)
+//    {
+//        if (nonReq)
+//        {
+//            startNode.DFS_non_req(action);
+//            return;
+//        }
 
-        while (stack.Any())
-        {
-            var node = stack.Pop();
-            if (node.Mark)
-                continue;
+//        startNode.Mark = true;
+//        action(startNode);
 
-            node.Mark = true;
-            action(node);
+//        startNode.EdgeList.ForEach(edge =>
+//        {
+//            if (!edge.Target.Mark)
+//            {
+//                edge.Target.DFS(action);
+//            }
+//        });
+//    }
 
-            for (var i = node.EdgeList.Count - 1; i >= 0; i--)
-            {
-                var targetNode = node.EdgeList[i].Target;
-                if (!targetNode.Mark)
-                {
-                    stack.Push(targetNode);
-                }
-            }
-        }
-    }
-}
+//    public static void DFS_non_req(this Node startNode, Action<Node> action)
+//    {
+//        var stack = new Stack<Node>();
+//        stack.Push(startNode);
+
+//        while (stack.Any())
+//        {
+//            var node = stack.Pop();
+//            if (node.Mark)
+//                continue;
+
+//            node.Mark = true;
+//            action(node);
+
+//            for (var i = node.EdgeList.Count - 1; i >= 0; i--)
+//            {
+//                var targetNode = node.EdgeList[i].Target;
+//                if (!targetNode.Mark)
+//                {
+//                    stack.Push(targetNode);
+//                }
+//            }
+//        }
+//    }
+//}
 
 public static class IO
 {
