@@ -19,18 +19,14 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "1307";
+        var problemNumber = "1019";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
-
-            var N = IO.GetInt();
-
-            Solve(N);
-
+            Solve();
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -45,125 +41,131 @@ public class Program
 #endif
     }
 
-    private static void Solve(int N)
+    public static void Solve()
     {
-        List<List<int>> arr = new();
-        if (N % 2 == 1)
+        var N = IO.GetLong();
+
+        var result = _1_xxx(N);
+
+        result.StringJoin(" ").Dump();
+    }
+
+    static Dictionary<long, int[]> _000_cache = new();
+    static Dictionary<long, int[]> _1_cache = new();
+
+    public static List<int> _1_xxx(long N)
+    {
+        if (_1_cache.TryGetValue(N, out var cached))
         {
-            arr = Solve3(N);
+            return cached.ToList();
         }
-        else if (N % 4 == 0)
+        if (N < 10)
         {
-            arr = Solve4(N);
+            var result0 = Enumerable.Range(0, 10).Select(x => 0).ToList();
+            Enumerable.Range(1, (int)N)
+                .ForEach(x => result0[x] = 1);
+            _1_cache[N] = result0.ToArray();
+            return result0;
+        }
+
+        // N = 325
+        var ten = 1; // ten = 100
+        while (ten * 10 <= N)
+            ten *= 10;
+        int first = (int)(N / ten); // first = 3
+
+        var result = Enumerable.Range(1, first - 1)
+            .Select(x =>
+            {
+                var r = _000_xxx(ten - 1);
+                r[x] += ten;
+                return r;
+            })
+            .Aggregate(Enumerable.Range(0, 10).Select(x => 0).ToList(), (a, b) => a.Zip(b, (x, y) => x + y).ToList());
+
+        if (N.ToString().Length - 1 == (N % ten).ToString().Length)
+        {
+            var tail = _000_xxx(N % ten /* 25 */);
+            tail[first] += (int)(N % ten + 1);
+            result = result.Zip(tail, (a, b) => a + b).ToList();
         }
         else
         {
-            arr = Solve6(N);
+            var tail = _000_xxx(N % ten, N.ToString().Length - 1);
+            tail[first] += (int)(N % ten + 1);
+            result = result.Zip(tail, (a, b) => a + b).ToList();
         }
 
-        //var valid = Validate(arr);
-        //$"{N}: {valid}".Dump();
+        var next = _1_xxx(ten - 1 /* 99 */);
+        result = result.Zip(next, (a, b) => a + b).ToList();
 
-        arr.ForEach(x =>
-        {
-            (x.StringJoin(" ") + " ").Dump();
-        });
+        _1_cache[N] = result.ToArray();
+
+        return result;
     }
 
-    private static List<List<int>> Solve3(int N)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="N"></param>
+    /// <returns></returns>
+    public static List<int> _000_xxx(long N, int digit = 0)
     {
-        var arr = N.MakeList(_ => N.MakeList(_ => 0));
-
-        var n = N / 2;
-        var row = 0;
-        var col = n;
-        (N * N).For1(i =>
+        if (digit > 0)
         {
-            arr[row][col] = i;
+            // N = 25
+            // digit = 4
+            // 0000 ~ 0025
+            var r = _000_xxx(N);
+            r[0] += (int)((digit - N.ToString().Length) * (N + 1));
+            return r;
+        }
+        if (_000_cache.TryGetValue(N, out var cached))
+        {
+            return cached.ToList();
+        }
+        if (N < 10)
+        {
+            var result0 = Enumerable.Range(0, 10).Select(x => 0).ToList();
+            Enumerable.Range(0, (int)N + 1)
+                .ForEach(x => result0[x] = 1);
+            _000_cache[N] = result0.ToArray();
+            return result0;
+        }
 
-            var nextRow = row - 1;
-            var nextCol = col + 1;
-            if (nextRow == -1)
-                nextRow = N - 1;
-            if (nextCol == N)
-                nextCol = 0;
-            if (arr[nextRow][nextCol] != 0)
+        // N = 325
+        var ten = 1; // ten = 100
+        while (ten * 10 <= N)
+            ten *= 10;
+
+        int first = (int)(N / ten); // first = 3
+
+        // 000-099, 100-199, 200-299
+        var result = Enumerable.Range(0, first)
+            .Select(x =>
             {
-                nextRow = row + 1;
-                nextCol = col;
-            }
+                var r = _000_xxx(ten - 1);
+                r[x] += ten;
+                return r;
+            })
+            .Aggregate(Enumerable.Range(0, 10).Select(x => 0).ToList(), (a, b) => a.Zip(b, (x, y) => x + y).ToList());
 
-            row = nextRow;
-            col = nextCol;
-        });
+        result[first] += (int)(N % ten + 1);
 
-        return arr;
-    }
-
-    private static List<List<int>> Solve4(int N)
-    {
-        var n = N / 4;
-        var arr = N.MakeList(row => N.MakeList(col =>
+        if (N.ToString().Length - 1 == (N % ten).ToString().Length)
         {
-            var rowH = (row / (n * 2)) % 2 == 0;
-            var rowQ = (row / n) % 2 == 0;
-            var colH = (col / (n * 2)) % 2 == 0;
-            var colQ = (col / n) % 2 == 0;
+            var next = _000_xxx(N % ten);
+            result = result.Zip(next, (a, b) => a + b).ToList();
+        }
+        else
+        {
+            var next = _000_xxx(N % ten, N.ToString().Length - 1);
+            result = result.Zip(next, (a, b) => a + b).ToList();
+        }
 
-            var value = row * N + col + 1;
+        _000_cache[N] = result.ToArray();
 
-            var aaa = !((rowH == colH) ^ (rowQ == colQ));
-
-            return aaa ? value : (N * N) - value + 1;
-        }));
-
-        return arr;
-    }
-
-    private static List<List<int>> Solve6(int N)
-    {
-        // https://m.blog.naver.com/askmrkwon/220768685076
-        var arr = N.MakeList(_ => N.MakeList(_ => 0));
-
-        var half = N / 2;
-        var arr3 = Solve3(half);
-        half.For(row => half.For(col => arr[row][col] = arr3[row][col] + 0));
-        half.For(row => half.For(col => arr[row + half][col + half] = arr3[row][col] + (half * half)));
-        half.For(row => half.For(col => arr[row][col + half] = arr3[row][col] + (half * half) * 2));
-        half.For(row => half.For(col => arr[row + half][col] = arr3[row][col] + (half * half) * 3));
-
-        var n = N / 4; // N=6: n=1, 10: 2, 14: 3
-
-        half.For(row => n.For(col => Swap(arr, (row, col), (row + half, col))));
-        half.For(row => (n - 1).For(col => Swap(arr, (row, N - col - 1), (row + half, N - col - 1))));
-
-        Swap(arr, (half / 2, half / 2 - 1), (half / 2 + half, half / 2 - 1));
-        Swap(arr, (half / 2, half / 2), (half / 2 + half, half / 2));
-
-        return arr;
-    }
-
-    private static void Swap(List<List<int>> arr, (int Row, int Col) cell1, (int Row, int Col) cell2)
-    {
-        var tmp = arr[cell1.Row][cell1.Col];
-        arr[cell1.Row][cell1.Col] = arr[cell2.Row][cell2.Col];
-        arr[cell2.Row][cell2.Col] = tmp;
-    }
-
-    private static bool Validate(List<List<int>> arr)
-    {
-        var sum = arr[0].Sum();
-        var result1 = arr.Select(rows => rows.Sum() == sum)
-            .Aggregate((a, b) => a & b);
-
-        var indexes = Enumerable.Range(0, arr.Count);
-        var result2 = indexes.Select(col => indexes.Select(row => arr[row][col]).Sum() == sum)
-            .Aggregate((a, b) => a & b);
-
-        var result3 = indexes.Select(x => arr[x][x]).Sum() == sum;
-        var result4 = indexes.Select(x => arr[arr.Count - x - 1][x]).Sum() == sum;
-
-        return result1 & result2 & result3 & result4;
+        return result;
     }
 }
 
