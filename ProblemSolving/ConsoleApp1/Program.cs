@@ -19,14 +19,21 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "1019";
+        var problemNumber = "9184";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
-            Solve();
+            while (true)
+            {
+                var (a, b, c) = IO.GetIntTuple3();
+                if (a == -1 && b == -1 && c == -1)
+                    break;
+                var wValue = Solve(a, b, c);
+                $"w({a}, {b}, {c}) = {wValue}".Dump();
+            }
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -41,130 +48,33 @@ public class Program
 #endif
     }
 
-    public static void Solve()
+    static Dictionary<(int a, int b, int c), long> _cache = new();
+
+    public static long Solve(int a, int b, int c)
     {
-        var N = IO.GetLong();
-
-        var result = _1_xxx(N);
-
-        result.StringJoin(" ").Dump();
-    }
-
-    static Dictionary<long, int[]> _000_cache = new();
-    static Dictionary<long, int[]> _1_cache = new();
-
-    public static List<int> _1_xxx(long N)
-    {
-        if (_1_cache.TryGetValue(N, out var cached))
+        if (_cache.TryGetValue((a, b, c), out var result))
         {
-            return cached.ToList();
-        }
-        if (N < 10)
-        {
-            var result0 = Enumerable.Range(0, 10).Select(x => 0).ToList();
-            Enumerable.Range(1, (int)N)
-                .ForEach(x => result0[x] = 1);
-            _1_cache[N] = result0.ToArray();
-            return result0;
+            return result;
         }
 
-        // N = 325
-        var ten = 1; // ten = 100
-        while (ten * 10 <= N)
-            ten *= 10;
-        int first = (int)(N / ten); // first = 3
-
-        var result = Enumerable.Range(1, first - 1)
-            .Select(x =>
-            {
-                var r = _000_xxx(ten - 1);
-                r[x] += ten;
-                return r;
-            })
-            .Aggregate(Enumerable.Range(0, 10).Select(x => 0).ToList(), (a, b) => a.Zip(b, (x, y) => x + y).ToList());
-
-        if (N.ToString().Length - 1 == (N % ten).ToString().Length)
+        if (a <= 0 || b <= 0 || c <= 0)
         {
-            var tail = _000_xxx(N % ten /* 25 */);
-            tail[first] += (int)(N % ten + 1);
-            result = result.Zip(tail, (a, b) => a + b).ToList();
+            return 1;
+        }
+        else if (a > 20 || b > 20 || c > 20)
+        {
+            result = Solve(20, 20, 20);
+        }
+        else if (a < b && b < c)
+        {
+            result = Solve(a, b, c - 1) + Solve(a, b - 1, c - 1) - Solve(a, b - 1, c);
         }
         else
         {
-            var tail = _000_xxx(N % ten, N.ToString().Length - 1);
-            tail[first] += (int)(N % ten + 1);
-            result = result.Zip(tail, (a, b) => a + b).ToList();
+            result = Solve(a - 1, b, c) + Solve(a - 1, b - 1, c) + Solve(a - 1, b, c - 1) - Solve(a - 1, b - 1, c - 1);
         }
 
-        var next = _1_xxx(ten - 1 /* 99 */);
-        result = result.Zip(next, (a, b) => a + b).ToList();
-
-        _1_cache[N] = result.ToArray();
-
-        return result;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="N"></param>
-    /// <returns></returns>
-    public static List<int> _000_xxx(long N, int digit = 0)
-    {
-        if (digit > 0)
-        {
-            // N = 25
-            // digit = 4
-            // 0000 ~ 0025
-            var r = _000_xxx(N);
-            r[0] += (int)((digit - N.ToString().Length) * (N + 1));
-            return r;
-        }
-        if (_000_cache.TryGetValue(N, out var cached))
-        {
-            return cached.ToList();
-        }
-        if (N < 10)
-        {
-            var result0 = Enumerable.Range(0, 10).Select(x => 0).ToList();
-            Enumerable.Range(0, (int)N + 1)
-                .ForEach(x => result0[x] = 1);
-            _000_cache[N] = result0.ToArray();
-            return result0;
-        }
-
-        // N = 325
-        var ten = 1; // ten = 100
-        while (ten * 10 <= N)
-            ten *= 10;
-
-        int first = (int)(N / ten); // first = 3
-
-        // 000-099, 100-199, 200-299
-        var result = Enumerable.Range(0, first)
-            .Select(x =>
-            {
-                var r = _000_xxx(ten - 1);
-                r[x] += ten;
-                return r;
-            })
-            .Aggregate(Enumerable.Range(0, 10).Select(x => 0).ToList(), (a, b) => a.Zip(b, (x, y) => x + y).ToList());
-
-        result[first] += (int)(N % ten + 1);
-
-        if (N.ToString().Length - 1 == (N % ten).ToString().Length)
-        {
-            var next = _000_xxx(N % ten);
-            result = result.Zip(next, (a, b) => a + b).ToList();
-        }
-        else
-        {
-            var next = _000_xxx(N % ten, N.ToString().Length - 1);
-            result = result.Zip(next, (a, b) => a + b).ToList();
-        }
-
-        _000_cache[N] = result.ToArray();
-
+        _cache[(a, b, c)] = result;
         return result;
     }
 }
@@ -722,7 +632,10 @@ public static class BojUtils
             // preHeader.Dump();
             // preData.Dump();
             if (!Regex.IsMatch(preHeader, sampleDataPattern))
+            {
+                startIndex = a + 1;
                 continue;
+            }
 
             var match = Regex.Match(preHeader, sampleNumberPattern);
             if (match.Success)
