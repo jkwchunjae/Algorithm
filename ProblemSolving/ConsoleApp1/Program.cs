@@ -19,21 +19,14 @@ public class Program
     public static void Main(string[] args)
     {
 #if DEBUG // delete
-        var problemNumber = "9184";
+        var problemNumber = "1932";
         var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
         var checkAll = true;
         foreach (var inputOutput in inputOutputList)
         {
             IO.SetInputOutput(inputOutput);
 #endif
-            while (true)
-            {
-                var (a, b, c) = IO.GetIntTuple3();
-                if (a == -1 && b == -1 && c == -1)
-                    break;
-                var wValue = Solve(a, b, c);
-                $"w({a}, {b}, {c}) = {wValue}".Dump();
-            }
+            Solve().Dump();
 #if DEBUG // delete
             var result = IO.IsCorrect().Dump();
             checkAll = checkAll && result;
@@ -48,34 +41,34 @@ public class Program
 #endif
     }
 
-    static Dictionary<(int a, int b, int c), long> _cache = new();
-
-    public static long Solve(int a, int b, int c)
+    public static long Solve()
     {
-        if (_cache.TryGetValue((a, b, c), out var result))
-        {
-            return result;
-        }
+        var N = IO.GetInt();
+        var arr = N.MakeList(i => IO.GetLongList());
 
-        if (a <= 0 || b <= 0 || c <= 0)
+        N.For(i =>
         {
-            return 1;
-        }
-        else if (a > 20 || b > 20 || c > 20)
-        {
-            result = Solve(20, 20, 20);
-        }
-        else if (a < b && b < c)
-        {
-            result = Solve(a, b, c - 1) + Solve(a, b - 1, c - 1) - Solve(a, b - 1, c);
-        }
-        else
-        {
-            result = Solve(a - 1, b, c) + Solve(a - 1, b - 1, c) + Solve(a - 1, b, c - 1) - Solve(a - 1, b - 1, c - 1);
-        }
+            if (i == 0) return LoopResult.Continue;
 
-        _cache[(a, b, c)] = result;
-        return result;
+            (i + 1).For(j =>
+            {
+                long left = 0;
+                if (j != 0)
+                {
+                    left = arr[i - 1][j - 1];
+                }
+                long right = 0;
+                if (j != i)
+                {
+                    right = arr[i - 1][j];
+                }
+                arr[i][j] += Math.Max(left, right);
+            });
+
+            return LoopResult.Void;
+        });
+
+        return arr.Last().Max();
     }
 }
 
