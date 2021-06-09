@@ -72,6 +72,11 @@ namespace ConsoleApp1
 
             return arr.Last().Max();
         }
+
+        public static int Add(int a, int b)
+        {
+            return a + b;
+        }
     }
 
     public static class Extensionss
