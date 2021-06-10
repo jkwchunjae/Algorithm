@@ -22,14 +22,14 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1932";
+                var problemNumber = "15552";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                Solve().Dump();
+                Solve();
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -44,138 +44,24 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static long Solve()
+        public static void Solve()
         {
-            var N = IO.GetInt();
-            var arr = N.MakeList(i => IO.GetLongList());
-
-            N.For(i =>
+            var T = IO.GetInt();
+            T.For(_ =>
             {
-                if (i == 0) return LoopResult.Continue;
-
-                (i + 1).For(j =>
-                {
-                    long left = 0;
-                    if (j != 0)
-                    {
-                        left = arr[i - 1][j - 1];
-                    }
-                    long right = 0;
-                    if (j != i)
-                    {
-                        right = arr[i - 1][j];
-                    }
-                    arr[i][j] += Math.Max(left, right);
-                });
-
-                return LoopResult.Void;
+                var (a, b) = IO.GetIntTuple2();
+                Add(a, b).Dump();
             });
-
-            return arr.Last().Max();
         }
 
         public static int Add(int a, int b)
         {
             return a + b;
         }
-
-        public static List<int> QuickMedianSort(List<int> indexList)
-        {
-            if (indexList.Count <= 2)
-            {
-                return indexList;
-            }
-            if (indexList.Count == 3)
-            {
-                var median = Ex.GetMedian(indexList[0], indexList[1], indexList[2]);
-                if (median == indexList[0])
-                    return new List<int> { indexList[1], indexList[0], indexList[2] };
-                else if (median == indexList[2])
-                    return new List<int> { indexList[1], indexList[2], indexList[0] };
-                else
-                    return indexList;
-            }
-
-            var (leftList, centerList, rightList, leftPivotIndex, rightPovitIndex) = Split(indexList);
-
-            // Merge
-            leftList = QuickMedianSort(leftList);
-            centerList = QuickMedianSort(centerList);
-            rightList = QuickMedianSort(rightList);
-
-            if (leftList.Count >= 2)
-            {
-                var median = Ex.GetMedian(leftPivotIndex, leftList.Last(), leftList[leftList.Count - 2]);
-                if (median != leftList.Last())
-                {
-                    leftList.Reverse();
-                }
-            }
-            if (centerList.Count >= 2)
-            {
-                var median = Ex.GetMedian(leftPivotIndex, centerList[0], centerList[1]);
-                if (median != centerList[0])
-                {
-                    centerList.Reverse();
-                }
-            }
-            if (rightList.Count >= 2)
-            {
-                var median = Ex.GetMedian(rightPovitIndex, rightList[0], rightList[1]);
-                if (median != rightList[0])
-                {
-                    rightList.Reverse();
-                }
-            }
-            return leftList
-                .Concat(new[] { leftPivotIndex })
-                .Concat(centerList)
-                .Concat(new[] { rightPovitIndex })
-                .Concat(rightList)
-                .ToList();
-        }
-
-        public static (List<int> LeftList, List<int> CenterList, List<int> RightList, int LeftPivotIndex, int RightPivotIndex) Split(List<int> indexList)
-        {
-            var leftList = new List<int>();
-            var centerList = new List<int>();
-            var rightList = new List<int>();
-
-            var p1 = indexList[0];
-            var p2 = indexList[1];
-
-            indexList.ForEach(index =>
-            {
-                if (p1 == index || p2 == index)
-                    return;
-
-                var median = Ex.GetMedian(p1, p2, index);
-                if (median == p1)
-                {
-                    leftList.Add(index);
-                }
-                else if (median == p2)
-                {
-                    rightList.Add(index);
-                }
-                else
-                {
-                    centerList.Add(index);
-                }
-            });
-
-            return (leftList, centerList, rightList, p1, p2);
-        }
     }
 
     public static class Ex
     {
-        public static int GetMedian(int index1, int index2, int index3)
-        {
-            Console.WriteLine($"{index1} {index2} {index3}");
-            var result = Console.ReadLine();
-            return int.Parse(result);
-        }
     }
 
     public class Node
