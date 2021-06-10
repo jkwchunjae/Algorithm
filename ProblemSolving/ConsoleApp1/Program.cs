@@ -20,6 +20,7 @@ namespace ConsoleApp1
 #endif
         public static void Main(string[] args)
         {
+            using var io = new IoInstance();
 #if DEBUG // delete
             var problemNumber = "1932";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
@@ -289,10 +290,20 @@ namespace ConsoleApp1
         }
     }
 
+    public class IoInstance : IDisposable
+    {
+        public void Dispose()
+        {
+#if !DEBUG
+            IO.Dispose();
+#endif
+        }
+    }
+
     public static class IO
     {
-        static List<string> _input = new();
 #if DEBUG // delete
+        static List<string> _input = new();
         static string _answer;
         static string _output = "";
         static int _readInputCount = 0;
@@ -321,20 +332,23 @@ namespace ConsoleApp1
         }
 #endif
 
+#if !DEBUG
+        static StreamReader _inputReader;
+        static StringBuilder _outputBuffer = new();
+
+        static IO()
+        {
+            _inputReader = new StreamReader(Console.OpenStandardInput());
+        }
+#endif
+
         public static string GetLine()
         {
 #if DEBUG
             return _input[_readInputCount++];
 #else
-        var input = Console.ReadLine();
-        _input.Add(input);
-        return input;
+            return _inputReader.ReadLine();
 #endif
-        }
-
-        public static string GetInput()
-        {
-            return string.Join(' ', _input);
         }
 
         public static List<int> GetIntList()
@@ -364,18 +378,35 @@ namespace ConsoleApp1
         public static T Dump<T>(this T obj, string format = "")
         {
             var text = string.IsNullOrEmpty(format) ? $"{obj}" : string.Format(format, obj);
-            Console.WriteLine(text);
 #if DEBUG // delete
+            Console.WriteLine(text);
             _output += Environment.NewLine + text;
+#endif
+#if !DEBUG
+            _outputBuffer.AppendLine(text);
 #endif
             return obj;
         }
 
         public static List<T> Dump<T>(this List<T> list)
         {
+#if DEBUG // delete
             Console.WriteLine(list.StringJoin(" "));
+#endif
+#if !DEBUG
+            _outputBuffer.AppendLine(list.StringJoin(" "));
+#endif
             return list;
         }
+
+#if !DEBUG
+        public static void Dispose()
+        {
+            _inputReader.Close();
+            using var streamWriter = new StreamWriter(Console.OpenStandardOutput());
+            streamWriter.Write(_outputBuffer.ToString());
+        }
+#endif
     }
 
     public enum LoopResult
