@@ -224,7 +224,7 @@ namespace ConsoleApp1
 
         static IO()
         {
-            _inputReader = new StreamReader(Console.OpenStandardInput());
+            _inputReader = new StreamReader(new BufferedStream(Console.OpenStandardInput()));
         }
 #endif
 
@@ -237,26 +237,32 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static List<int> GetIntList()
-            => GetLine().Split(' ').Where(x => x.Length > 0).Select(x => x.ToInt()).ToList();
+        public static int[] GetIntList()
+            => GetLine().Split(' ').Where(x => x.Length > 0).Select(x => x.ToInt()).ToArray();
 
         public static (int, int) GetIntTuple2()
         {
-            var arr = GetIntList();
-            return (arr[0], arr[1]);
+            var arr = GetLine().Split(' ');
+            return (arr[0].ToInt(), arr[1].ToInt());
         }
 
         public static (int, int, int) GetIntTuple3()
         {
-            var arr = GetIntList();
-            return (arr[0], arr[1], arr[2]);
+            var arr = GetLine().Split(' ');
+            return (arr[0].ToInt(), arr[1].ToInt(), arr[2].ToInt());
+        }
+
+        public static (int, int, int, int) GetIntTuple4()
+        {
+            var arr = GetLine().Split(' ');
+            return (arr[0].ToInt(), arr[1].ToInt(), arr[2].ToInt(), arr[3].ToInt());
         }
 
         public static int GetInt()
             => GetLine().ToInt();
 
-        public static List<long> GetLongList()
-            => GetLine().Split(' ').Where(x => x.Length > 0).Select(x => x.ToLong()).ToList();
+        public static long[] GetLongList()
+            => GetLine().Split(' ').Where(x => x.Length > 0).Select(x => x.ToLong()).ToArray();
 
         public static long GetLong()
             => GetLine().ToLong();
@@ -289,7 +295,7 @@ namespace ConsoleApp1
         public static void Dispose()
         {
             _inputReader.Close();
-            using var streamWriter = new StreamWriter(Console.OpenStandardOutput());
+            using var streamWriter = new StreamWriter(new BufferedStream(Console.OpenStandardOutput()));
             streamWriter.Write(_outputBuffer.ToString());
         }
 #endif
