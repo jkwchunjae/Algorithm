@@ -22,14 +22,21 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-                var problemNumber = "15552";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
+            var problemNumber = "12728";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                Solve();
+                var T = IO.GetInt();
+                T.For1(t =>
+                {
+                    var N = IO.GetInt();
+                    var result = Solve(N);
+
+                    $"Case #{t}: {result:000}".Dump();
+                });
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -44,14 +51,19 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static void Solve()
+        public static long Solve(int exp)
         {
-            var T = IO.GetInt();
-            T.For(_ =>
-            {
-                var (a, b) = IO.GetIntTuple2();
-                Add(a, b).Dump();
-            });
+            var res = (3L, 1L).Pow(exp, (1L, 0L), Calc);
+            var value = (long)(res.Item1+ res.Item2 * Math.Sqrt(5));
+            return value % 1000;
+        }
+
+        public static (long A, long B) Calc((long A, long B) v1, (long C, long D) v2)
+        {
+            var a = v1.A * v2.C + v1.B * v2.D * 5;
+            var b = v1.A * v2.D + v1.B * v2.C;
+
+            return (a % 100000, b % 100000);
         }
 
         public static int Add(int a, int b)
@@ -361,6 +373,44 @@ namespace ConsoleApp1
         public static long ToLong(this string str)
         {
             return long.Parse(str);
+        }
+
+        /// <summary>
+        /// pow1의 exp제곱을 구한다. \n
+        /// 2^10 = 2.Pow(10, 1, (a, b) => a * b);
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="base">밑</param>
+        /// <param name="exp">지수</param>
+        /// <param name="pow0">밑의 0제곱</param>
+        /// <param name="fnMultifly">곱셈연산</param>
+        /// <returns></returns>
+        public static T Pow<T>(this T @base, int exp, T pow0, Func<T, T, T> fnMultifly)
+        {
+            // Addition-Chain exponentiation
+
+            var basee = @base;
+            var res = pow0;
+
+            while (exp > 0)
+            {
+                if ((exp & 1) != 0)
+                    res = fnMultifly(res, basee);
+                exp >>= 1;
+                basee = fnMultifly(basee, basee);
+            }
+
+            return res;
+        }
+
+        public static int Pow(this int @base, int exp)
+        {
+            return @base.Pow(exp, 1, (a, b) => a * b);
+        }
+
+        public static long Pow(this long @base, int exp)
+        {
+            return @base.Pow(exp, 1, (a, b) => a * b);
         }
 
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
