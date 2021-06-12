@@ -1,30 +1,20 @@
 using ConsoleApp1;
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace TestProject1
 {
     public class UnitTest1
     {
-        [Theory]
-        [InlineData(49, 4)]
-        [InlineData(123, 6)]
-        [InlineData(999, 9)]
-        public void Test_Dig(int value, int dig)
+        [Fact]
+        public void Test_MakeList()
         {
-            var calcDig = Program.Dig(value);
+            var arr = new List<int> { 75, 30, 100, 38, 50, 51, 52, 20, 81, 5 };
+            var root = Program.MakeTree(arr, 0, arr.Count - 1);
 
-            Assert.Equal(dig, calcDig);
-        }
-
-        [Theory]
-        [InlineData(2, 0, 6)]
-        [InlineData(12, 2, 1)]
-        public void Test_Pattern(int M, int patternBeginIndex, int patternLength)
-        {
-            var pattern = Program.GetPattern(M);
-
-            Assert.Equal((patternBeginIndex, patternLength), pattern);
+            Assert.Equal(5, root.Min);
+            Assert.Equal(100, root.Max);
         }
     }
 }

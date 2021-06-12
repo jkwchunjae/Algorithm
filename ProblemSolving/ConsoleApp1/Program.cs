@@ -22,20 +22,21 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1399";
+            var problemNumber = "2357";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var T = IO.GetInt();
-                T.For(_ =>
+                var (N, M) = IO.GetIntTuple2();
+                var arr = N.MakeList(_ => IO.GetInt());
+                List<(int Begin, int End)> queries = M.MakeList(_ =>
                 {
-                    var (K, M) = IO.GetIntTuple2();
-                    var point = Solve(K, M);
-                    $"{point.X} {point.Y}".Dump();
+                    var (begin, end) = IO.GetIntTuple2();
+                    return (begin - 1, end - 1);
                 });
+                Solve(arr, queries);
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -50,59 +51,67 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static (int X, int Y) Solve(int K, int M)
+        public static void Solve(List<int> arr, List<(int Begin, int End)> queries)
         {
-            var (patternBeginIndex, patternLength) = GetPattern(M);
-            if (K > patternBeginIndex)
+            var root = MakeTree(arr, 0, arr.Count - 1);
+            queries.ForEach(query =>
             {
-                K = (K - patternBeginIndex) % (patternLength * 4) + patternBeginIndex;
-            }
-
-            (int X, int Y) location = (0, 0);
-            var dxdyList = new[] { (0, 1), (1, 0), (0, -1), (-1, 0) };
-
-            var digValue = 1;
-            K.For(i =>
-            {
-                var dxdy = dxdyList[i % 4];
-                location.X += dxdy.Item1 * digValue;
-                location.Y += dxdy.Item2 * digValue;
-                digValue = Dig(digValue * M);
+                var (min, max) = Query(root, query.Begin, query.End);
+                $"{min} {max}".Dump();
             });
-
-            return location;
         }
 
-        public static (int patternBeginIndex, int patternLength) GetPattern(int M)
+        public static Node MakeTree(List<int> arr, int begin, int end)
         {
-            var list = new List<int> { 1 };
-            while (true)
+            if (begin == end)
             {
-                var next = Dig(list.Last() * M);
-                var foundIndex = list.IndexOf(next);
-                if (foundIndex == -1)
-                {
-                    list.Add(next);
-                }
-                else
-                {
-                    return (foundIndex, list.Count - foundIndex);
-                }
+                return new Node { Min = arr[begin], Max = arr[begin], BeginIndex = begin, EndIndex = end };
             }
+
+            var middle = (begin + end) / 2;
+            var left = MakeTree(arr, begin, middle);
+            var right = MakeTree(arr, middle + 1, end);
+
+            var root = new Node
+            {
+                Min = Math.Min(left.Min, right.Min),
+                Max = Math.Max(left.Max, right.Max),
+                BeginIndex = begin,
+                EndIndex = end,
+                Left = left,
+                Right = right,
+            };
+            left.Parent = root;
+            right.Parent = root;
+
+            return root;
         }
 
-        public static int Dig(int value)
+        public static (int Min, int Max) Query(Node node, int begin, int end)
         {
-            if (value < 10)
-                return value;
-
-            int dig = 0;
-            while (value != 0)
+            if (node.BeginIndex == begin && node.EndIndex == end)
             {
-                dig += (value % 10);
-                value /= 10;
+                return (node.Min, node.Max);
             }
-            return Dig(dig);
+
+            var min = int.MaxValue;
+            var max = int.MinValue;
+
+            var middle = (node.BeginIndex + node.EndIndex) / 2;
+            if (begin <= middle)
+            {
+                var leftResult = Query(node.Left, begin, Math.Min(node.EndIndex, middle));
+                min = Math.Min(min, leftResult.Min);
+                max = Math.Max(max, leftResult.Max);
+            }
+            if (middle + 1 <= end)
+            {
+                var rightResult = Query(node.Right, Math.Max(node.BeginIndex, middle + 1), end);
+                min = Math.Min(min, rightResult.Min);
+                max = Math.Max(max, rightResult.Max);
+            }
+
+            return (min, max);
         }
     }
 
@@ -112,13 +121,24 @@ namespace ConsoleApp1
 
     public class Node
     {
+        public int Min;
+        public int Max;
+        public int BeginIndex;
+        public int EndIndex;
+        public Node Parent;
+        public Node Left;
+        public Node Right;
+    }
+
+    public class Node2
+    {
         public int Number;
         public bool Mark = false;
-        public Node Parent;
+        public Node2 Parent;
         public List<Edge> EdgeList = new();
-        public List<Node> NodeList = new();
+        public List<Node2> NodeList = new();
 
-        public Node(int number)
+        public Node2(int number)
         {
             Number = number;
         }
@@ -136,16 +156,16 @@ namespace ConsoleApp1
     public class Edge
     {
         public int Weight;
-        public Node Target;
+        public Node2 Target;
 
         public Edge() { }
-        public Edge(Node target)
+        public Edge(Node2 target)
         {
             Weight = 1;
             Target = target;
         }
 
-        public Edge(int weight, Node target)
+        public Edge(int weight, Node2 target)
         {
             Weight = weight;
             Target = target;
@@ -154,9 +174,9 @@ namespace ConsoleApp1
 
     public static class Algorithm
     {
-        public static void BFS(this Node startNode, Action<Node> action)
+        public static void BFS(this Node2 startNode, Action<Node2> action)
         {
-            var queue = new Queue<Node>();
+            var queue = new Queue<Node2>();
             queue.Enqueue(startNode);
             startNode.Mark = true;
 
@@ -176,7 +196,7 @@ namespace ConsoleApp1
             }
         }
 
-        public static void DFS(this Node startNode, Action<Node> action, bool nonReq = false)
+        public static void DFS(this Node2 startNode, Action<Node2> action, bool nonReq = false)
         {
             if (nonReq)
             {
@@ -196,9 +216,9 @@ namespace ConsoleApp1
             });
         }
 
-        public static void DFS_non_req(this Node startNode, Action<Node> action)
+        public static void DFS_non_req(this Node2 startNode, Action<Node2> action)
         {
-            var stack = new Stack<Node>();
+            var stack = new Stack<Node2>();
             stack.Push(startNode);
 
             while (stack.Any())
