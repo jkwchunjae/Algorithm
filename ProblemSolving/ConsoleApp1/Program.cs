@@ -22,20 +22,19 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "12728";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
+            var problemNumber = "1399";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
                 var T = IO.GetInt();
-                T.For1(t =>
+                T.For(_ =>
                 {
-                    var N = IO.GetInt();
-                    var result = Solve(N);
-
-                    $"Case #{t}: {result:000}".Dump();
+                    var (K, M) = IO.GetIntTuple2();
+                    var point = Solve(K, M);
+                    $"{point.X} {point.Y}".Dump();
                 });
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
@@ -51,24 +50,59 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static long Solve(int exp)
+        public static (int X, int Y) Solve(int K, int M)
         {
-            var res = (3L, 1L).Pow(exp, (1L, 0L), Calc);
-            var value = (long)(res.Item1+ res.Item2 * Math.Sqrt(5));
-            return value % 1000;
+            var (patternBeginIndex, patternLength) = GetPattern(M);
+            if (K > patternBeginIndex)
+            {
+                K = (K - patternBeginIndex) % (patternLength * 4) + patternBeginIndex;
+            }
+
+            (int X, int Y) location = (0, 0);
+            var dxdyList = new[] { (0, 1), (1, 0), (0, -1), (-1, 0) };
+
+            var digValue = 1;
+            K.For(i =>
+            {
+                var dxdy = dxdyList[i % 4];
+                location.X += dxdy.Item1 * digValue;
+                location.Y += dxdy.Item2 * digValue;
+                digValue = Dig(digValue * M);
+            });
+
+            return location;
         }
 
-        public static (long A, long B) Calc((long A, long B) v1, (long C, long D) v2)
+        public static (int patternBeginIndex, int patternLength) GetPattern(int M)
         {
-            var a = v1.A * v2.C + v1.B * v2.D * 5;
-            var b = v1.A * v2.D + v1.B * v2.C;
-
-            return (a % 100000, b % 100000);
+            var list = new List<int> { 1 };
+            while (true)
+            {
+                var next = Dig(list.Last() * M);
+                var foundIndex = list.IndexOf(next);
+                if (foundIndex == -1)
+                {
+                    list.Add(next);
+                }
+                else
+                {
+                    return (foundIndex, list.Count - foundIndex);
+                }
+            }
         }
 
-        public static int Add(int a, int b)
+        public static int Dig(int value)
         {
-            return a + b;
+            if (value < 10)
+                return value;
+
+            int dig = 0;
+            while (value != 0)
+            {
+                dig += (value % 10);
+                value /= 10;
+            }
+            return Dig(dig);
         }
     }
 

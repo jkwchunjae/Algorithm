@@ -6,15 +6,25 @@ namespace TestProject1
 {
     public class UnitTest1
     {
-        [Fact]
-        public void Test1()
+        [Theory]
+        [InlineData(49, 4)]
+        [InlineData(123, 6)]
+        [InlineData(999, 9)]
+        public void Test_Dig(int value, int dig)
         {
-            var n2 = Program.Calc((3, 1), (3, 1));
-            var n4 = Program.Calc(n2, n2);
-            var n8 = Program.Calc(n4, n4);
-            var pow8 = Program.Pow(8);
+            var calcDig = Program.Dig(value);
 
-            Assert.Equal(n8, pow8);
+            Assert.Equal(dig, calcDig);
+        }
+
+        [Theory]
+        [InlineData(2, 0, 6)]
+        [InlineData(12, 2, 1)]
+        public void Test_Pattern(int M, int patternBeginIndex, int patternLength)
+        {
+            var pattern = Program.GetPattern(M);
+
+            Assert.Equal((patternBeginIndex, patternLength), pattern);
         }
     }
 }
