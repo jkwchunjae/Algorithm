@@ -23,7 +23,7 @@ namespace ConsoleApp1
             using var io = new IoInstance();
 #if DEBUG // delete
             var problemNumber = "2357";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
@@ -100,13 +100,13 @@ namespace ConsoleApp1
             var middle = (node.BeginIndex + node.EndIndex) / 2;
             if (begin <= middle)
             {
-                var leftResult = Query(node.Left, begin, Math.Min(node.EndIndex, middle));
+                var leftResult = Query(node.Left, begin, Math.Min(end, middle));
                 min = Math.Min(min, leftResult.Min);
                 max = Math.Max(max, leftResult.Max);
             }
             if (middle + 1 <= end)
             {
-                var rightResult = Query(node.Right, Math.Max(node.BeginIndex, middle + 1), end);
+                var rightResult = Query(node.Right, Math.Max(begin, middle + 1), end);
                 min = Math.Min(min, rightResult.Min);
                 max = Math.Max(max, rightResult.Max);
             }
