@@ -22,21 +22,16 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2357";
+            var problemNumber = "1422";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var (N, M) = IO.GetIntTuple2();
-                var arr = N.MakeList(_ => IO.GetInt());
-                List<(int Begin, int End)> queries = M.MakeList(_ =>
-                {
-                    var (begin, end) = IO.GetIntTuple2();
-                    return (begin - 1, end - 1);
-                });
-                Solve(arr, queries);
+                var (K, N) = IO.GetIntTuple2();
+                var arr = K.MakeList(_ => IO.GetLine());
+                Solve(arr, K, N).Dump();
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -51,67 +46,45 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static void Solve(List<int> arr, List<(int Begin, int End)> queries)
+        public static string Solve(List<string> arr, int K, int N)
         {
-            var root = MakeTree(arr, 0, arr.Count - 1);
-            queries.ForEach(query =>
+            var list = arr
+                .Select((number, i) => new { Index = i, Number = number, Repeat = Repeat(number, 20) })
+                .OrderByDescending(x => x.Repeat)
+                .ToList();
+
+            var longIndex = 0;
+            var longLength = 0;
+            list.ForEach(x =>
             {
-                var (min, max) = Query(root, query.Begin, query.End);
-                $"{min} {max}".Dump();
+                if (longLength < x.Number.Length)
+                {
+                    longIndex = x.Index;
+                    longLength = x.Number.Length;
+                }
             });
+
+            var builder = new StringBuilder();
+            list.ForEach(x =>
+            {
+                if (x.Index == longIndex)
+                {
+                    (N - K + 1).For(_ => builder.Append(arr[x.Index]));
+                }
+                else
+                {
+                    builder.Append(arr[x.Index]);
+                }
+            });
+
+            return builder.ToString();
         }
 
-        public static Node MakeTree(List<int> arr, int begin, int end)
+        public static string Repeat(string number, int length)
         {
-            if (begin == end)
-            {
-                return new Node { Min = arr[begin], Max = arr[begin], BeginIndex = begin, EndIndex = end };
-            }
-
-            var middle = (begin + end) / 2;
-            var left = MakeTree(arr, begin, middle);
-            var right = MakeTree(arr, middle + 1, end);
-
-            var root = new Node
-            {
-                Min = Math.Min(left.Min, right.Min),
-                Max = Math.Max(left.Max, right.Max),
-                BeginIndex = begin,
-                EndIndex = end,
-                Left = left,
-                Right = right,
-            };
-            left.Parent = root;
-            right.Parent = root;
-
-            return root;
-        }
-
-        public static (int Min, int Max) Query(Node node, int begin, int end)
-        {
-            if (node.BeginIndex == begin && node.EndIndex == end)
-            {
-                return (node.Min, node.Max);
-            }
-
-            var min = int.MaxValue;
-            var max = int.MinValue;
-
-            var middle = (node.BeginIndex + node.EndIndex) / 2;
-            if (begin <= middle)
-            {
-                var leftResult = Query(node.Left, begin, Math.Min(end, middle));
-                min = Math.Min(min, leftResult.Min);
-                max = Math.Max(max, leftResult.Max);
-            }
-            if (middle + 1 <= end)
-            {
-                var rightResult = Query(node.Right, Math.Max(begin, middle + 1), end);
-                min = Math.Min(min, rightResult.Min);
-                max = Math.Max(max, rightResult.Max);
-            }
-
-            return (min, max);
+            var count = (length / number.Length) + 1;
+            var result = number.Pow(count, string.Empty, (a, b) => a + b);
+            return result.Left(length);
         }
     }
 
