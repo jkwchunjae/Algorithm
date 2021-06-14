@@ -22,16 +22,22 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1422";
+            var problemNumber = "10875";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var (K, N) = IO.GetIntTuple2();
-                var arr = K.MakeList(_ => IO.GetLine());
-                Solve(arr, K, N).Dump();
+                var L = IO.GetInt();
+                var N = IO.GetInt();
+                var left = "L";
+                var orders = N.MakeList(_ =>
+                {
+                    var (length, direction) = IO.GetStringTuple2();
+                    return (length.ToLong(), direction == left ? Direction.Left : Direction.Right);
+                });
+                Solve(L, orders).Dump();
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -46,172 +52,267 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static string Solve(List<string> arr, int K, int N)
+        public static long Solve(int L, List<(long Length, Direction Direction)> orders)
         {
-            var list = arr
-                .Select((number, i) => new { Index = i, Number = number, Repeat = Repeat(number, 20) })
-                .OrderByDescending(x => x.Repeat)
-                .ToList();
-
-            var longIndex = 0;
-            var longLength = 0;
-            list.ForEach(x =>
+            var currentDirection = Direction.Right;
+            var currentPoint = new Point(0, 0);
+            var lines = new List<Line>()
             {
-                if (longLength < x.Number.Length)
-                {
-                    longIndex = x.Index;
-                    longLength = x.Number.Length;
-                }
-            });
+                // 테두리도 뱀의 몸통의 일부라고 생각하자.
+                new Line{ P1 = new Point(L + 1, L + 1), P2 = new Point(L + 1, - L - 1) },
+                new Line{ P1 = new Point(L + 1, L + 1), P2 = new Point(-L - 1, L + 1) },
+                new Line{ P1 = new Point(-L - 1, -L - 1), P2 = new Point(-L - 1, L + 1) },
+                new Line{ P1 = new Point(-L - 1, -L - 1), P2 = new Point(L + 1, - L - 1) },
+            };
+            // 마지막엔 엄청 긴 입력이 있다.
+            orders.Add((L * 3, Direction.Left));
 
-            var builder = new StringBuilder();
-            list.ForEach(x =>
+            var time = 0L;
+            foreach (var order in orders)
             {
-                if (x.Index == longIndex)
+                if (IsDead(currentPoint, currentDirection, order.Length, lines, out var after))
                 {
-                    (N - K + 1).For(_ => builder.Append(arr[x.Index]));
+                    time += after;
+                    return time;
                 }
                 else
                 {
-                    builder.Append(arr[x.Index]);
+                    var nextPoint = GetNextPoint(currentPoint, currentDirection, order.Length);
+                    lines.Add(new Line { P1 = currentPoint, P2 = nextPoint });
+                    currentPoint = nextPoint;
+                    currentDirection = GetNextDirection(currentDirection, order.Direction);
+                    time += order.Length;
                 }
-            });
+            }
 
-            return builder.ToString();
+            return 0;
         }
 
-        public static string Repeat(string number, int length)
+        /// <summary> point에서 direction 방향으로 length만큼 갔을 때 죽나? 죽으면 몇 초 뒤에?  </summary>
+        public static bool IsDead(Point point, Direction direction, long length, List<Line> lines, out long after)
         {
-            var count = (length / number.Length) + 1;
-            var result = number.Pow(count, string.Empty, (a, b) => a + b);
-            return result.Left(length);
+            var next = GetNextPoint(point, direction, length);
+            var newLine = new Line { P1 = point, P2 = next };
+
+            var crashTime = long.MaxValue;
+            var isDead = false;
+            foreach (var line in lines)
+            {
+                if (IsCrash(newLine, line, direction, out var crashPoint))
+                {
+                    if (crashPoint == point)
+                        continue; // 직전 몸통과의 충돌은 무시
+
+                    isDead = true;
+                    var currentCrashTime = Math.Abs(point.X - crashPoint.X) + Math.Abs(point.Y - crashPoint.Y);
+                    crashTime = Math.Min(crashTime, currentCrashTime);
+                }
+            }
+
+            after = crashTime;
+            return isDead;
+        }
+
+        public static Point GetNextPoint(Point point, Direction direction, long length)
+        {
+            if (direction == Direction.Down)
+                return new Point(point.X, point.Y - length);
+            else if (direction == Direction.Up)
+                return new Point(point.X, point.Y + length);
+            else if (direction == Direction.Left)
+                return new Point(point.X - length, point.Y);
+            else // if (direction == Direction.Right)
+                return new Point(point.X + length, point.Y);
+        }
+
+        public static Direction GetNextDirection(Direction current, Direction order)
+        {
+            if (current == Direction.Down)
+            {
+                if (order == Direction.Left)
+                    return Direction.Right;
+                else
+                    return Direction.Left;
+            }
+            else if (current == Direction.Up)
+            {
+                return order;
+            }
+            else if (current == Direction.Left)
+            {
+                if (order == Direction.Left)
+                    return Direction.Down;
+                else
+                    return Direction.Up;
+            }
+            else
+            {
+                if (order == Direction.Left)
+                    return Direction.Up;
+                else
+                    return Direction.Down;
+            }
+        }
+
+        public static bool IsCrash(Line headLine, Line bodyLine, Direction direction, out Point crashPoint)
+        {
+            // 충돌하면 충돌한 지점을 반환
+            // 평행한 경우에 x----o----x----o 같이 이어지는 경우가 있을 수 있음.
+            Point p = null;
+            bool crashed = Ex.IsIntersect(bodyLine, headLine);
+            if (crashed)
+            {
+                if (bodyLine.P1.Y == bodyLine.P2.Y && headLine.P1.Y == headLine.P2.Y && bodyLine.P1.Y == headLine.P1.Y)
+                {
+                    // 수평
+                    if (direction == Direction.Right)
+                    {
+                        p = bodyLine.P1.X < bodyLine.P2.X ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
+                    }
+                    else // if Left
+                    {
+                        p = bodyLine.P1.X > bodyLine.P2.X ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
+                    }
+                }
+                else if (bodyLine.P1.X == bodyLine.P2.X && headLine.P1.X == headLine.P2.X && bodyLine.P1.X == headLine.P1.X)
+                {
+                    // 수직
+                    if (direction == Direction.Up)
+                    {
+                        p = bodyLine.P1.Y < bodyLine.P2.Y ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
+                    }
+                    else // if Down
+                    {
+                        p = bodyLine.P1.Y > bodyLine.P2.Y ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
+                    }
+                }
+                else if (headLine.P1.X == headLine.P2.X)
+                {
+                    // 교차 and 머리가 올라가거나 내려가는 중에 충돌
+                    p = new Point(headLine.P1.X, bodyLine.P1.Y);
+                }
+                else if (headLine.P1.Y == headLine.P2.Y)
+                {
+                    // 교차 and 머리가 왼쪽이나 오른쪽으로 가는 중에 충돌
+                    p = new Point(bodyLine.P1.X, headLine.P1.Y);
+                }
+            }
+
+            crashPoint = p;
+            return crashed;
+        }
+    }
+
+    public enum Direction
+    {
+        Left, Right, Up, Down,
+    }
+
+    public class Line
+    {
+        public Point P1;
+        public Point P2;
+
+        public long Length => Math.Abs(P1.X - P2.X) + Math.Abs(P1.Y - P2.Y);
+    }
+
+    public class Point
+    {
+        public long X;
+        public long Y;
+        public Point() { }
+        public Point(long x, long y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public static bool operator <(Point a, Point b)
+        {
+            if (a.X < b.X)
+                return true;
+            else if (a.X == b.X && a.Y < b.Y)
+                return true;
+            return false;
+        }
+
+        public static bool operator <=(Point a, Point b)
+        {
+            if (a.X < b.X)
+                return true;
+            else if (a.X == b.X && a.Y <= b.Y)
+                return true;
+            return false;
+        }
+
+        public static bool operator ==(Point a, Point b)
+        {
+            return a.X == b.X && a.Y == b.Y;
+        }
+
+        public static bool operator !=(Point a, Point b)
+        {
+            return !(a == b);
+        }
+
+        public static bool operator >(Point a, Point b)
+        {
+            return !(a <= b);
+        }
+
+        public static bool operator >=(Point a, Point b)
+        {
+            return !(a < b);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Point)
+            {
+                return this == (Point)obj;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
     }
 
     public static class Ex
     {
-    }
-
-    public class Node
-    {
-        public int Min;
-        public int Max;
-        public int BeginIndex;
-        public int EndIndex;
-        public Node Parent;
-        public Node Left;
-        public Node Right;
-    }
-
-    public class Node2
-    {
-        public int Number;
-        public bool Mark = false;
-        public Node2 Parent;
-        public List<Edge> EdgeList = new();
-        public List<Node2> NodeList = new();
-
-        public Node2(int number)
+        public static int Ccw(Point a, Point b, Point c)
         {
-            Number = number;
+            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
+            var op = a.X * b.Y + b.X * c.Y + c.X * a.Y;
+            op -= (a.Y * b.X + b.Y * c.X + c.Y * a.X);
+            if (op > 0) return 1;
+            else if (op == 0) return 0;
+            else return -1;
         }
 
-        public void SetParent()
+        public static bool IsIntersect(Line line1, Line line2)
         {
-            foreach (var node in NodeList.Where(x => x.Number != Parent?.Number))
+            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
+            var a = line1.P1;
+            var b = line1.P2;
+            var c = line2.P1;
+            var d = line2.P2;
+            int ab = Ccw(a, b, c) * Ccw(a, b, d);
+            int cd = Ccw(c, d, a) * Ccw(c, d, b);
+            if (ab == 0 && cd == 0)
             {
-                node.Parent = this;
-                node.SetParent();
+                if (a > b) (a, b) = Swap(a, b);
+                if (c > d) (c, d) = Swap(c, d);
+                return c <= b && a <= d;
             }
-        }
-    }
-
-    public class Edge
-    {
-        public int Weight;
-        public Node2 Target;
-
-        public Edge() { }
-        public Edge(Node2 target)
-        {
-            Weight = 1;
-            Target = target;
+            return ab <= 0 && cd <= 0;
         }
 
-        public Edge(int weight, Node2 target)
+        public static (T b, T a) Swap<T>(T a, T b)
         {
-            Weight = weight;
-            Target = target;
-        }
-    }
-
-    public static class Algorithm
-    {
-        public static void BFS(this Node2 startNode, Action<Node2> action)
-        {
-            var queue = new Queue<Node2>();
-            queue.Enqueue(startNode);
-            startNode.Mark = true;
-
-            while (queue.Any())
-            {
-                var node = queue.Dequeue();
-                action(node);
-
-                node.EdgeList.ForEach(edge =>
-                {
-                    if (!edge.Target.Mark)
-                    {
-                        edge.Target.Mark = true;
-                        queue.Enqueue(edge.Target);
-                    }
-                });
-            }
-        }
-
-        public static void DFS(this Node2 startNode, Action<Node2> action, bool nonReq = false)
-        {
-            if (nonReq)
-            {
-                startNode.DFS_non_req(action);
-                return;
-            }
-
-            startNode.Mark = true;
-            action(startNode);
-
-            startNode.EdgeList.ForEach(edge =>
-            {
-                if (!edge.Target.Mark)
-                {
-                    edge.Target.DFS(action);
-                }
-            });
-        }
-
-        public static void DFS_non_req(this Node2 startNode, Action<Node2> action)
-        {
-            var stack = new Stack<Node2>();
-            stack.Push(startNode);
-
-            while (stack.Any())
-            {
-                var node = stack.Pop();
-                if (node.Mark)
-                    continue;
-
-                node.Mark = true;
-                action(node);
-
-                for (var i = node.EdgeList.Count - 1; i >= 0; i--)
-                {
-                    var targetNode = node.EdgeList[i].Target;
-                    if (!targetNode.Mark)
-                    {
-                        stack.Push(targetNode);
-                    }
-                }
-            }
+            return (b, a);
         }
     }
 
@@ -274,6 +375,30 @@ namespace ConsoleApp1
 #else
             return _inputReader.ReadLine();
 #endif
+        }
+
+        public static string GetString()
+            => GetLine();
+
+        public static string[] GetStringList()
+            => GetLine().Split(' ');
+
+        public static (string, string) GetStringTuple2()
+        {
+            var arr = GetStringList();
+            return (arr[0], arr[1]);
+        }
+
+        public static (string, string, string) GetStringTuple3()
+        {
+            var arr = GetStringList();
+            return (arr[0], arr[1], arr[2]);
+        }
+
+        public static (string, string, string, string) GetStringTuple4()
+        {
+            var arr = GetStringList();
+            return (arr[0], arr[1], arr[2], arr[3]);
         }
 
         public static int[] GetIntList()
