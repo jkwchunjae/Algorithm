@@ -5,7 +5,7 @@ using Xunit;
 
 namespace TestProject1
 {
-    public class UnitTest1
+    public class UnitTest_Line
     {
         [Fact]
         public void Test_IsIntersect_±³Â÷1()

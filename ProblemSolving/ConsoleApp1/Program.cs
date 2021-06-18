@@ -29,15 +29,11 @@ namespace ConsoleApp1
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var L = IO.GetInt();
-                var N = IO.GetInt();
-                var left = "L";
-                var orders = N.MakeList(_ =>
-                {
-                    var (length, direction) = IO.GetStringTuple2();
-                    return (length.ToLong(), direction == left ? Direction.Left : Direction.Right);
-                });
-                Solve(L, orders).Dump();
+                var (N, M) = IO.GetIntTuple2();
+                var elevators = M.MakeList(_ => IO.GetIntTuple2());
+                var (A, B) = IO.GetIntTuple2();
+
+                Solve(N, elevators, A, B);
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -52,267 +48,95 @@ namespace ConsoleApp1
 #endif
         }
 
-        public static long Solve(int L, List<(long Length, Direction Direction)> orders)
+        public static void Solve(int N, List<(int Base, int Term)> elevators, int A, int B)
         {
-            var currentDirection = Direction.Right;
-            var currentPoint = new Point(0, 0);
-            var lines = new List<Line>()
-            {
-                // 테두리도 뱀의 몸통의 일부라고 생각하자.
-                new Line{ P1 = new Point(L + 1, L + 1), P2 = new Point(L + 1, - L - 1) },
-                new Line{ P1 = new Point(L + 1, L + 1), P2 = new Point(-L - 1, L + 1) },
-                new Line{ P1 = new Point(-L - 1, -L - 1), P2 = new Point(-L - 1, L + 1) },
-                new Line{ P1 = new Point(-L - 1, -L - 1), P2 = new Point(L + 1, - L - 1) },
-            };
-            // 마지막엔 엄청 긴 입력이 있다.
-            orders.Add((L * 3, Direction.Left));
-
-            var time = 0L;
-            foreach (var order in orders)
-            {
-                if (IsDead(currentPoint, currentDirection, order.Length, lines, out var after))
-                {
-                    time += after;
-                    return time;
-                }
-                else
-                {
-                    var nextPoint = GetNextPoint(currentPoint, currentDirection, order.Length);
-                    lines.Add(new Line { P1 = currentPoint, P2 = nextPoint });
-                    currentPoint = nextPoint;
-                    currentDirection = GetNextDirection(currentDirection, order.Direction);
-                    time += order.Length;
-                }
-            }
-
-            return 0;
         }
 
-        /// <summary> point에서 direction 방향으로 length만큼 갔을 때 죽나? 죽으면 몇 초 뒤에?  </summary>
-        public static bool IsDead(Point point, Direction direction, long length, List<Line> lines, out long after)
+        /// <summary> N 층 안에서 e1과 e2가 만나는가?  </summary>
+        public static bool IsConnected((int Base, int Term) e1, (int Base, int Term) e2, int N)
         {
-            var next = GetNextPoint(point, direction, length);
-            var newLine = new Line { P1 = point, P2 = next };
+            var b = Math.Abs(e1.Base - e2.Base);
+            var t = Math.Abs(e1.Term - e2.Term);
 
-            var crashTime = long.MaxValue;
-            var isDead = false;
-            foreach (var line in lines)
+            if (e1.Term == e2.Term)
             {
-                if (IsCrash(newLine, line, direction, out var crashPoint))
-                {
-                    if (crashPoint == point)
-                        continue; // 직전 몸통과의 충돌은 무시
-
-                    isDead = true;
-                    var currentCrashTime = Math.Abs(point.X - crashPoint.X) + Math.Abs(point.Y - crashPoint.Y);
-                    crashTime = Math.Min(crashTime, currentCrashTime);
-                }
+                return e1.Base == e2.Base; // 완전 동일한 경우
             }
 
-            after = crashTime;
-            return isDead;
-        }
-
-        public static Point GetNextPoint(Point point, Direction direction, long length)
-        {
-            if (direction == Direction.Down)
-                return new Point(point.X, point.Y - length);
-            else if (direction == Direction.Up)
-                return new Point(point.X, point.Y + length);
-            else if (direction == Direction.Left)
-                return new Point(point.X - length, point.Y);
-            else // if (direction == Direction.Right)
-                return new Point(point.X + length, point.Y);
-        }
-
-        public static Direction GetNextDirection(Direction current, Direction order)
-        {
-            if (current == Direction.Down)
+            var termGcd = Ex.Gcd(e1.Term, e2.Term);
+            if (b % termGcd == 0)
             {
-                if (order == Direction.Left)
-                    return Direction.Right;
-                else
-                    return Direction.Left;
-            }
-            else if (current == Direction.Up)
-            {
-                return order;
-            }
-            else if (current == Direction.Left)
-            {
-                if (order == Direction.Left)
-                    return Direction.Down;
-                else
-                    return Direction.Up;
+                // 만나긴 한다. N 이하에서 만나는지 체크해야함.
             }
             else
             {
-                if (order == Direction.Left)
-                    return Direction.Up;
-                else
-                    return Direction.Down;
-            }
-        }
-
-        public static bool IsCrash(Line headLine, Line bodyLine, Direction direction, out Point crashPoint)
-        {
-            // 충돌하면 충돌한 지점을 반환
-            // 평행한 경우에 x----o----x----o 같이 이어지는 경우가 있을 수 있음.
-            Point p = null;
-            bool crashed = Ex.IsIntersect(bodyLine, headLine);
-            if (crashed)
-            {
-                if (bodyLine.P1.Y == bodyLine.P2.Y && headLine.P1.Y == headLine.P2.Y && bodyLine.P1.Y == headLine.P1.Y)
-                {
-                    // 수평
-                    if (direction == Direction.Right)
-                    {
-                        p = bodyLine.P1.X < bodyLine.P2.X ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
-                    }
-                    else // if Left
-                    {
-                        p = bodyLine.P1.X > bodyLine.P2.X ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
-                    }
-                }
-                else if (bodyLine.P1.X == bodyLine.P2.X && headLine.P1.X == headLine.P2.X && bodyLine.P1.X == headLine.P1.X)
-                {
-                    // 수직
-                    if (direction == Direction.Up)
-                    {
-                        p = bodyLine.P1.Y < bodyLine.P2.Y ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
-                    }
-                    else // if Down
-                    {
-                        p = bodyLine.P1.Y > bodyLine.P2.Y ? new Point(bodyLine.P1.X, bodyLine.P1.Y) : new Point(bodyLine.P2.X, bodyLine.P2.Y);
-                    }
-                }
-                else if (headLine.P1.X == headLine.P2.X)
-                {
-                    // 교차 and 머리가 올라가거나 내려가는 중에 충돌
-                    p = new Point(headLine.P1.X, bodyLine.P1.Y);
-                }
-                else if (headLine.P1.Y == headLine.P2.Y)
-                {
-                    // 교차 and 머리가 왼쪽이나 오른쪽으로 가는 중에 충돌
-                    p = new Point(bodyLine.P1.X, headLine.P1.Y);
-                }
-            }
-
-            crashPoint = p;
-            return crashed;
-        }
-    }
-
-    public enum Direction
-    {
-        Left, Right, Up, Down,
-    }
-
-    public class Line
-    {
-        public Point P1;
-        public Point P2;
-
-        public long Length => Math.Abs(P1.X - P2.X) + Math.Abs(P1.Y - P2.Y);
-    }
-
-    public class Point
-    {
-        public long X;
-        public long Y;
-        public Point() { }
-        public Point(long x, long y)
-        {
-            X = x;
-            Y = y;
-        }
-
-        public static bool operator <(Point a, Point b)
-        {
-            if (a.X < b.X)
-                return true;
-            else if (a.X == b.X && a.Y < b.Y)
-                return true;
-            return false;
-        }
-
-        public static bool operator <=(Point a, Point b)
-        {
-            if (a.X < b.X)
-                return true;
-            else if (a.X == b.X && a.Y <= b.Y)
-                return true;
-            return false;
-        }
-
-        public static bool operator ==(Point a, Point b)
-        {
-            return a.X == b.X && a.Y == b.Y;
-        }
-
-        public static bool operator !=(Point a, Point b)
-        {
-            return !(a == b);
-        }
-
-        public static bool operator >(Point a, Point b)
-        {
-            return !(a <= b);
-        }
-
-        public static bool operator >=(Point a, Point b)
-        {
-            return !(a < b);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is Point)
-            {
-                return this == (Point)obj;
+                return false;
             }
             return false;
         }
 
-        public override int GetHashCode()
+        public static bool TryGetFirstMeet((int Base, int Term) e1, (int Base, int Term) e2, out int firstMeet)
         {
-            return base.GetHashCode();
+            firstMeet = 0;
+            if (e1.Term == e2.Term)
+            {
+                firstMeet = e1.Base;
+                return e1.Base == e2.Base; // 완전 동일한 경우
+            }
+
+            var termGcd = Ex.Gcd(e1.Term, e2.Term);
+            if (Math.Abs(e1.Base - e2.Base) % termGcd == 0)
+            {
+                // e1과 e2를 같게하는 x의 수학적인 값. 음수일 수도 있다.
+                var minX = (e2.Base - e1.Base) / (e1.Term - e2.Term); // 항상 딱 떨어짐
+
+                // e1==e2 를 만족하게 하는 x 중에서 수식의 값이 0 이상인 경우
+                var e1X = minX % (e2.Term / termGcd);
+                var e2X = minX % (e1.Term / termGcd);
+
+                var value1 = e1.Term * e1X + e1.Base; // 양수여야 한다.
+                var value2 = e2.Term * e2X + e2.Base;
+
+                firstMeet = Math.Min(value1, value2);
+                return true;
+            }
+            return false;
         }
     }
 
-    public static class Ex
+    public class Node
     {
-        public static int Ccw(Point a, Point b, Point c)
-        {
-            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
-            var op = a.X * b.Y + b.X * c.Y + c.X * a.Y;
-            op -= (a.Y * b.X + b.Y * c.X + c.Y * a.X);
-            if (op > 0) return 1;
-            else if (op == 0) return 0;
-            else return -1;
-        }
+        public List<Node> Nodes = new();
+        public bool Mark = false;
 
-        public static bool IsIntersect(Line line1, Line line2)
+        public Node()
         {
-            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
-            var a = line1.P1;
-            var b = line1.P2;
-            var c = line2.P1;
-            var d = line2.P2;
-            int ab = Ccw(a, b, c) * Ccw(a, b, d);
-            int cd = Ccw(c, d, a) * Ccw(c, d, b);
-            if (ab == 0 && cd == 0)
+        }
+    }
+
+    public static partial class Ex
+    {
+        public static int Gcd(int a, int b)
+        {
+            if (a == b) { return a; }
+            else if (a > b && a % b == 0) { return b; }
+            else if (b > a && b % a == 0) { return a; }
+
+            var _gcd = 0;
+            while (b != 0)
             {
-                if (a > b) (a, b) = Swap(a, b);
-                if (c > d) (c, d) = Swap(c, d);
-                return c <= b && a <= d;
+                _gcd = b;
+                b = a % b;
+                a = _gcd;
             }
-            return ab <= 0 && cd <= 0;
+            return _gcd;
         }
 
-        public static (T b, T a) Swap<T>(T a, T b)
+        public static int Lcm(int a, int b)
         {
-            return (b, a);
+            var gcd = Gcd(a, b);
+            var lcm = (a / gcd) * b;
+            return lcm;
         }
     }
 
@@ -731,6 +555,183 @@ namespace ConsoleApp1
             }
 
             return value;
+        }
+    }
+
+    public static partial class Ex
+    {
+        public static int Ccw(Point a, Point b, Point c)
+        {
+            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
+            var op = a.X * b.Y + b.X * c.Y + c.X * a.Y;
+            op -= (a.Y * b.X + b.Y * c.X + c.Y * a.X);
+            if (op > 0) return 1;
+            else if (op == 0) return 0;
+            else return -1;
+        }
+
+        public static bool IsIntersect(Line line1, Line line2)
+        {
+            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
+            var a = line1.P1;
+            var b = line1.P2;
+            var c = line2.P1;
+            var d = line2.P2;
+            int ab = Ccw(a, b, c) * Ccw(a, b, d);
+            int cd = Ccw(c, d, a) * Ccw(c, d, b);
+            if (ab == 0 && cd == 0)
+            {
+                if (a > b) (a, b) = Swap(a, b);
+                if (c > d) (c, d) = Swap(c, d);
+                return c <= b && a <= d;
+            }
+            return ab <= 0 && cd <= 0;
+        }
+
+        public static (T b, T a) Swap<T>(T a, T b)
+        {
+            return (b, a);
+        }
+
+        public static (bool found, int x, int y) FindDiophantusEquation(int a, int b, int c)
+        {
+            // https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=beneys&logNo=221122957338
+
+            var initA = a;
+            var initB = b;
+
+            var list = new List<(int A, int B, int M, int R)>();
+            do
+            {
+                var m = a / b;
+                var r = a % b;
+                list.Add((a, b, m, r));
+                a = b;
+                b = r;
+            } while (a % b != 0);
+
+            var gdc = list.Last().R;
+            if (c % gdc != 0)
+            {
+                return (false, 0, 0);
+            }
+
+            //list.Dump();
+            list.Reverse();
+
+            var first = list.First();
+            var list2 = new List<(int A, int X, int B, int Y)>
+            {
+                (first.A, 1, first.B, -first.M)
+            };
+            foreach (var (A, B, M, R) in list.Skip(1))
+            {
+                var prev = list2.Last();
+                if (R == prev.A)
+                {
+                    var nextA = A;
+                    var nextX = prev.X;
+                    var nextB = B;
+                    var nextY = prev.Y + (-M) * prev.X;
+                    list2.Add((nextA, nextX, nextB, nextY));
+                }
+                else // if (R == prev.B)
+                {
+                    var nextA = B;
+                    var nextX = prev.X + (-M) * prev.Y;
+                    var nextB = A;
+                    var nextY = prev.Y;
+                    list2.Add((nextA, nextX, nextB, nextY));
+                }
+            }
+            //list2.Dump();
+
+            var mm = c / gdc;
+            var last = list2.Last();
+            var x = (initA == last.A ? last.X : last.Y) * mm;
+            var y = (initA == last.A ? last.Y : last.X) * mm;
+
+            //((initA * x + initB * y)).Dump("C: " + c);
+
+            return (true, x, y);
+        }
+
+        public static int ChineseRemainderTheorem(List<(int A, int M)> arr)
+        {
+            // https://j1w2k3.tistory.com/1340
+            var M = arr.Select(x => x.M).Aggregate((a, b) => a * b);
+            var nList = arr.Select(x => M / x.M).ToList();
+
+            var xxxList = arr
+                .Zip(nList, (condition, N) => new
+                {
+                    condition.A,
+                    N,
+                    Dio = FindDiophantusEquation(N, condition.M, 1), // 특수해
+                })
+                .ToList();
+
+            var x = 0;
+            foreach (var xxx in xxxList)
+            {
+                x += (xxx.A * xxx.N * xxx.Dio.x) % M;
+                x %= M;
+            }
+
+            return x;
+        }
+    }
+
+    public class Line
+    {
+        public Point P1;
+        public Point P2;
+
+        public long Length => Math.Abs(P1.X - P2.X) + Math.Abs(P1.Y - P2.Y);
+    }
+
+    public record Point
+    {
+        public long X;
+        public long Y;
+        public Point() { }
+        public Point(long x, long y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public static bool operator <(Point a, Point b)
+        {
+            if (a.X < b.X)
+                return true;
+            else if (a.X == b.X && a.Y < b.Y)
+                return true;
+            return false;
+        }
+
+        public static bool operator <=(Point a, Point b)
+        {
+            if (a.X < b.X)
+                return true;
+            else if (a.X == b.X && a.Y <= b.Y)
+                return true;
+            return false;
+        }
+
+        public static bool operator >(Point a, Point b)
+        {
+            return !(a <= b);
+        }
+
+        public static bool operator >=(Point a, Point b)
+        {
+            return !(a < b);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
     }
 
