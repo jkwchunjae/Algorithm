@@ -22,18 +22,37 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "15994";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
+            var problemNumber = "5631";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var (N, M) = IO.GetIntTuple2();
-                var elevators = M.MakeList(_ => IO.GetLongTuple2());
-                var (A, B) = IO.GetLongTuple2();
+                var caseCount = 0;
+                while (true)
+                {
+                    var N = IO.GetInt();
+                    if (N == 0)
+                        break;
 
-                Solve(N, elevators, A, B);
+                    caseCount++;
+
+                    var list = N.MakeList(_ => IO.GetIntTuple2());
+                    var arr = IO.GetIntList();
+                    var info = new
+                    {
+                        Ax = arr[0],
+                        Ay = arr[1],
+                        Bx = arr[2],
+                        By = arr[3],
+                        Q = arr[4],
+                    };
+
+                    $"Case {caseCount}:".Dump();
+                    var r = info.Q.MakeList(_ => IO.GetIntTuple2());
+                    Solve(list, (info.Ax, info.Ay), (info.Bx, info.By), r);
+                }
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -49,201 +68,54 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static void Solve(long N, List<(long Base, long Term)> elevators, long A, long B)
+        public static void Solve(List<(int X, int Y)> arr, (int X, int Y) aa, (int X, int Y) bb, List<(int R1, int R2)> rr)
         {
-            var nodes = MakeNodes(N, elevators, A, B);
+            var aList = arr
+                .Select(p => (p.X - aa.X) * (p.X - aa.X) + (p.Y - aa.Y) * (p.Y - aa.Y))
+                .OrderBy(x => x)
+                .ToList();
 
-            var minLength = long.MaxValue;
-            var nodeIndex = new List<long>();
-            nodes.Where(x => x.IsStart).ForEach(node =>
+            var bList = arr
+                .Select(p => (p.X - bb.X) * (p.X - bb.X) + (p.Y - bb.Y) * (p.Y - bb.Y))
+                .OrderBy(x => x)
+                .ToList();
+
+            rr.ForEach(r =>
             {
-                nodes.ForEach(n => n.Clear());
+                var aR = r.R1 * r.R1;
+                var bR = r.R2 * r.R2;
 
-                if (BFS(node, out var goalNode))
-                {
-                    if (minLength > goalNode.Depth)
-                    {
-                        minLength = goalNode.Depth;
-                        nodeIndex.Clear();
+                var aCount = GetLastIndex_BinarySearch(aList, aR) + 1;
+                var bCount = GetLastIndex_BinarySearch(bList, bR) + 1;
 
-                        var tNode = goalNode;
-                        while (tNode != null)
-                        {
-                            nodeIndex.Add(tNode.Index);
-                            tNode = tNode.PrevNode;
-                        }
-                    }
-                }
+                var result = Math.Max(0, arr.Count - aCount - bCount);
+
+                result.Dump();
             });
-
-            if (minLength == long.MaxValue)
-            {
-                (-1).Dump();
-            }
-            else
-            {
-                minLength.Dump();
-                nodeIndex.Reverse();
-                nodeIndex.ForEach(index => index.Dump());
-            }
         }
 
-        private static bool BFS(Node start, out Node goalNode)
+        public static int GetLastIndex_BinarySearch(List<int> arr, int value)
         {
-            var queue = new Queue<Node>();
+            var a = 0;
+            var c = arr.Count;
 
-            start.Mark = true;
-            start.Depth = 1;
-            queue.Enqueue(start);
-
-            goalNode = null;
-            while (queue.Any())
+            while (a < c)
             {
-                var node = queue.Dequeue();
-                if (node.IsGoal)
+                var b = (a + c) / 2;
+
+                if (value >= arr[b])
                 {
-                    goalNode = node;
-                    return true;
+                    a = b + 1;
                 }
-
-                node.Nodes.Where(target => !target.Mark)
-                    .ForEach(target =>
-                    {
-                        target.Depth = node.Depth + 1;
-                        target.Mark = true;
-                        target.PrevNode = node;
-                        queue.Enqueue(target);
-                    });
-            }
-
-            return false;
-        }
-
-        private static List<Node> MakeNodes(long N, List<(long Base, long Term)> elevators, long A, long B)
-        {
-            var nodes = elevators.Select((e, i) => new Node(i + 1, e)).ToList();
-
-            nodes.ForEach(node1 =>
-            {
-                nodes.Where(node2 => node2 != node1)
-                    .Where(node2 => IsConnected(node1.Elevator, node2.Elevator, N))
-                    .ForEach(node2 =>
-                    {
-                        node1.Nodes.Add(node2);
-                        node2.Nodes.Add(node1);
-                    });
-
-                if (node1.Elevator.Base <= A)
+                else
                 {
-                    node1.IsStart = (A - node1.Elevator.Base) % node1.Elevator.Term == 0;
+                    c = b;
                 }
-                if (node1.Elevator.Base <= B)
-                {
-                    node1.IsGoal = (B - node1.Elevator.Base) % node1.Elevator.Term == 0;
-                }
-            });
-
-            return nodes;
-        }
-
-        /// <summary> N 층 안에서 e1과 e2가 만나는가?  </summary>
-        public static bool IsConnected((long Base, long Term) e1, (long Base, long Term) e2, long N)
-        {
-            if (TryGetFirst(e1, e2, out var first))
-            {
-                var maxBase = Math.Max(e1.Base, e2.Base);
-                if (first > N)
-                    return false;
-                if (first >= maxBase)
-                    return true;
-
-                var lcm = Ex.Lcm(e1.Term, e2.Term);
-                var fixedFirst = ((maxBase - 1 - first) / lcm + 1) * lcm + first;
-
-                if (fixedFirst <= N)
-                    return true;
-
-                return false;
             }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static bool TryGetFirst((long Base, long Term) e1, (long Base, long Term) e2, out long first)
-        {
-            var m1 = e1.Term;
-            var m2 = e2.Term;
-            var a1 = e1.Base % m1;
-            var a2 = e2.Base % m2;
-
-            var gcd = Ex.Gcd(m1, m2);
-            var lcm = m1 / gcd * m2;
-            var aaa = Math.Abs(e1.Base - e2.Base);
-
-            first = 0;
-            if (aaa % gcd != 0)
-            {
-                return false;
-            }
-
-            if (m1 == m2)
-            {
-                first = Math.Min(a1, a2);
-                if (aaa % m1 == 0)
-                {
-                    return true;
-                }
-                return false;
-            }
-
-            var (found, x, y) = Ex.FindDiophantusEquation(m1 / gcd, m2 / gcd, 1);
-            if (!found)
-            {
-                while (true) { }
-            }
-
-            var v1 = (a1 * (m2 / gcd) % lcm) * y % lcm;
-            var v2 = (a2 * (m1 / gcd) % lcm) * x % lcm;
-
-            var minValue = (v1 + v2) % lcm;
-            while (minValue < 0)
-            {
-                minValue += lcm;
-            }
-            first = minValue;
-            return true;
+            return a - 1;
         }
     }
 
-    public class Node
-    {
-        public int Index { get; init; }
-        public (long Base, long Term) Elevator { get; init; }
-
-        public List<Node> Nodes = new();
-        public bool Mark = false;
-
-        public bool IsStart = false;
-        public bool IsGoal = false;
-
-        public int Depth = 0;
-        public Node PrevNode = null;
-
-        public Node(int index, (long Base, long term) e)
-        {
-            Index = index;
-            Elevator = e;
-        }
-
-        public void Clear()
-        {
-            Mark = false;
-            Depth = 0;
-            PrevNode = null;
-        }
-    }
 
     public static partial class Ex
     {

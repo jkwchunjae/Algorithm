@@ -10,47 +10,58 @@ namespace TestProject1
 {
     public class UnitTest_Problem
     {
-        [Theory]
-        [InlineData(4, 3, 7, 5, true, 7)]
-        [InlineData(4, 3, 4, 4, true, 4)]
-        [InlineData(7, 5, 4, 4, true, 12)]
-        [InlineData(12, 4, 32, 4, true, 0)]
-        [InlineData(13, 4, 33, 4, true, 1)]
-        [InlineData(4, 3, 5, 3, false, 0)]
-        [InlineData(7, 30, 17, 25, true, 67)]
-        [InlineData(7, 30, 18, 25, false, 67)]
-        [InlineData(7, 30, 17, 1124, true, 11257)]
-        [InlineData(12, 8, 32, 6, true, 20)]
-        public void Test_FirstMeet(int e1Base, int e1Term, int e2Base, int e2Term, bool expectedMeet, int expectedFirstMeet)
+        [Fact]
+        public void Test_GetLastIndex_BinarySearch1()
         {
-            var e1 = (e1Base, e1Term);
-            var e2 = (e2Base, e2Term);
-
-            var meet = Program.TryGetFirst(e1, e2, out var first);
-
-            Assert.Equal(expectedMeet, meet);
-            if (meet)
-            {
-                Assert.Equal(expectedFirstMeet, first);
-            }
+            var arr = new List<int> { 2, 3, 4, 5, 6 };
+            var value = 3;
+            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
+            Assert.Equal(1, lastIndex);
         }
 
-        [Theory]
-        [InlineData(12, 8, 32, 6, 50, true)]
-        [InlineData(12, 8, 32, 6, 40, false)]
-        [InlineData(7, 5, 4, 4, 12, true)]
-        [InlineData(7, 5, 4, 4, 11, false)]
-        [InlineData(12, 43, 32, 6, 97, false)]
-        [InlineData(12, 43, 32, 6, 98, true)]
-        [InlineData(12, 43, 392, 6, 600, false)]
-        [InlineData(12, 43, 392, 6, 700, true)]
-        public void Test_IsConnected(int e1Base, int e1Term, int e2Base, int e2Term, int N, bool expectedConnect)
+        [Fact]
+        public void Test_GetLastIndex_BinarySearch2()
         {
-            var e1 = (e1Base, e1Term);
-            var e2 = (e2Base, e2Term);
-            var connected = Program.IsConnected(e1, e2, N);
+            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 4, 5, 6 };
+            var value = 3;
+            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
+            Assert.Equal(5, lastIndex);
+        }
 
-            Assert.Equal(expectedConnect, connected);
+        [Fact]
+        public void Test_GetLastIndex_BinarySearch3()
+        {
+            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 4, 5, 6 };
+            var value = 6;
+            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
+            Assert.Equal(8, lastIndex);
+        }
+
+        [Fact]
+        public void Test_GetLastIndex_BinarySearch4()
+        {
+            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 4, 5, 6, 6 };
+            var value = 6;
+            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
+            Assert.Equal(9, lastIndex);
+        }
+
+        [Fact]
+        public void Test_GetLastIndex_BinarySearch5()
+        {
+            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 5, 6, 6 };
+            var value = 4;
+            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
+            Assert.Equal(5, lastIndex);
+        }
+
+        [Fact]
+        public void Test_GetLastIndex_BinarySearch6()
+        {
+            var arr = new List<int> { 425, 481, 578, 625, 1556, 2196, 2533, 2665, 2873, 3098, 5330 };
+            var value = 961;
+            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
+            Assert.Equal(3, lastIndex);
         }
     }
 }
