@@ -18,11 +18,11 @@ namespace ConsoleApp1
 #if DEBUG // delete
         [STAThread]
 #endif
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "10875";
+            var problemNumber = "15994";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
@@ -30,8 +30,8 @@ namespace ConsoleApp1
                 IO.SetInputOutput(inputOutput);
 #endif
                 var (N, M) = IO.GetIntTuple2();
-                var elevators = M.MakeList(_ => IO.GetIntTuple2());
-                var (A, B) = IO.GetIntTuple2();
+                var elevators = M.MakeList(_ => IO.GetLongTuple2());
+                var (A, B) = IO.GetLongTuple2();
 
                 Solve(N, elevators, A, B);
 #if DEBUG // delete
@@ -46,83 +46,210 @@ namespace ConsoleApp1
                 Process.Start(new ProcessStartInfo($"powershell", $"start chrome {url}"));
             }
 #endif
+            return 0;
         }
 
-        public static void Solve(int N, List<(int Base, int Term)> elevators, int A, int B)
+        public static void Solve(long N, List<(long Base, long Term)> elevators, long A, long B)
         {
+            var nodes = MakeNodes(N, elevators, A, B);
+
+            var minLength = long.MaxValue;
+            var nodeIndex = new List<long>();
+            nodes.Where(x => x.IsStart).ForEach(node =>
+            {
+                nodes.ForEach(n => n.Clear());
+
+                if (BFS(node, out var goalNode))
+                {
+                    if (minLength > goalNode.Depth)
+                    {
+                        minLength = goalNode.Depth;
+                        nodeIndex.Clear();
+
+                        var tNode = goalNode;
+                        while (tNode != null)
+                        {
+                            nodeIndex.Add(tNode.Index);
+                            tNode = tNode.PrevNode;
+                        }
+                    }
+                }
+            });
+
+            if (minLength == long.MaxValue)
+            {
+                (-1).Dump();
+            }
+            else
+            {
+                minLength.Dump();
+                nodeIndex.Reverse();
+                nodeIndex.ForEach(index => index.Dump());
+            }
+        }
+
+        private static bool BFS(Node start, out Node goalNode)
+        {
+            var queue = new Queue<Node>();
+
+            start.Mark = true;
+            start.Depth = 1;
+            queue.Enqueue(start);
+
+            goalNode = null;
+            while (queue.Any())
+            {
+                var node = queue.Dequeue();
+                if (node.IsGoal)
+                {
+                    goalNode = node;
+                    return true;
+                }
+
+                node.Nodes.Where(target => !target.Mark)
+                    .ForEach(target =>
+                    {
+                        target.Depth = node.Depth + 1;
+                        target.Mark = true;
+                        target.PrevNode = node;
+                        queue.Enqueue(target);
+                    });
+            }
+
+            return false;
+        }
+
+        private static List<Node> MakeNodes(long N, List<(long Base, long Term)> elevators, long A, long B)
+        {
+            var nodes = elevators.Select((e, i) => new Node(i + 1, e)).ToList();
+
+            nodes.ForEach(node1 =>
+            {
+                nodes.Where(node2 => node2 != node1)
+                    .Where(node2 => IsConnected(node1.Elevator, node2.Elevator, N))
+                    .ForEach(node2 =>
+                    {
+                        node1.Nodes.Add(node2);
+                        node2.Nodes.Add(node1);
+                    });
+
+                if (node1.Elevator.Base <= A)
+                {
+                    node1.IsStart = (A - node1.Elevator.Base) % node1.Elevator.Term == 0;
+                }
+                if (node1.Elevator.Base <= B)
+                {
+                    node1.IsGoal = (B - node1.Elevator.Base) % node1.Elevator.Term == 0;
+                }
+            });
+
+            return nodes;
         }
 
         /// <summary> N 층 안에서 e1과 e2가 만나는가?  </summary>
-        public static bool IsConnected((int Base, int Term) e1, (int Base, int Term) e2, int N)
+        public static bool IsConnected((long Base, long Term) e1, (long Base, long Term) e2, long N)
         {
-            var b = Math.Abs(e1.Base - e2.Base);
-            var t = Math.Abs(e1.Term - e2.Term);
-
-            if (e1.Term == e2.Term)
+            if (TryGetFirst(e1, e2, out var first))
             {
-                return e1.Base == e2.Base; // 완전 동일한 경우
-            }
+                var maxBase = Math.Max(e1.Base, e2.Base);
+                if (first > N)
+                    return false;
+                if (first >= maxBase)
+                    return true;
 
-            var termGcd = Ex.Gcd(e1.Term, e2.Term);
-            if (b % termGcd == 0)
-            {
-                // 만나긴 한다. N 이하에서 만나는지 체크해야함.
+                var lcm = Ex.Lcm(e1.Term, e2.Term);
+                var fixedFirst = ((maxBase - 1 - first) / lcm + 1) * lcm + first;
+
+                if (fixedFirst <= N)
+                    return true;
+
+                return false;
             }
             else
             {
                 return false;
             }
-            return false;
         }
 
-        public static bool TryGetFirstMeet((int Base, int Term) e1, (int Base, int Term) e2, out int firstMeet)
+        public static bool TryGetFirst((long Base, long Term) e1, (long Base, long Term) e2, out long first)
         {
-            firstMeet = 0;
-            if (e1.Term == e2.Term)
+            var m1 = e1.Term;
+            var m2 = e2.Term;
+            var a1 = e1.Base % m1;
+            var a2 = e2.Base % m2;
+
+            var gcd = Ex.Gcd(m1, m2);
+            var lcm = m1 / gcd * m2;
+            var aaa = Math.Abs(a1 - a2);
+
+            first = 0;
+            if (aaa % gcd != 0)
             {
-                firstMeet = e1.Base;
-                return e1.Base == e2.Base; // 완전 동일한 경우
+                return false;
             }
 
-            var termGcd = Ex.Gcd(e1.Term, e2.Term);
-            if (Math.Abs(e1.Base - e2.Base) % termGcd == 0)
+            if (m1 == m2)
             {
-                // e1과 e2를 같게하는 x의 수학적인 값. 음수일 수도 있다.
-                var minX = (e2.Base - e1.Base) / (e1.Term - e2.Term); // 항상 딱 떨어짐
-
-                // e1==e2 를 만족하게 하는 x 중에서 수식의 값이 0 이상인 경우
-                var e1X = minX % (e2.Term / termGcd);
-                var e2X = minX % (e1.Term / termGcd);
-
-                var value1 = e1.Term * e1X + e1.Base; // 양수여야 한다.
-                var value2 = e2.Term * e2X + e2.Base;
-
-                firstMeet = Math.Min(value1, value2);
-                return true;
+                first = a1;
+                if (aaa % m1 == 0)
+                {
+                    return true;
+                }
+                return false;
             }
-            return false;
+
+            var (_, x, y) = Ex.FindDiophantusEquation(m1 / gcd, m2 / gcd, 1);
+
+            var v1 = a1 * (m2 / gcd) * y % lcm;
+            var v2 = a2 * (m1 / gcd) * x % lcm;
+
+            var minValue = (v1 + v2) % lcm;
+            while (minValue < 0)
+            {
+                minValue += lcm;
+            }
+            first = minValue;
+            return true;
         }
     }
 
     public class Node
     {
+        public int Index { get; init; }
+        public (long Base, long Term) Elevator { get; init; }
+
         public List<Node> Nodes = new();
         public bool Mark = false;
 
-        public Node()
+        public bool IsStart = false;
+        public bool IsGoal = false;
+
+        public int Depth = 0;
+        public Node PrevNode = null;
+
+        public Node(int index, (long Base, long term) e)
         {
+            Index = index;
+            Elevator = e;
+        }
+
+        public void Clear()
+        {
+            Mark = false;
+            Depth = 0;
+            PrevNode = null;
         }
     }
 
     public static partial class Ex
     {
-        public static int Gcd(int a, int b)
+        public static long Gcd(long a, long b)
         {
             if (a == b) { return a; }
             else if (a > b && a % b == 0) { return b; }
             else if (b > a && b % a == 0) { return a; }
 
-            var _gcd = 0;
+            long _gcd = 0;
             while (b != 0)
             {
                 _gcd = b;
@@ -132,7 +259,7 @@ namespace ConsoleApp1
             return _gcd;
         }
 
-        public static int Lcm(int a, int b)
+        public static long Lcm(long a, long b)
         {
             var gcd = Gcd(a, b);
             var lcm = (a / gcd) * b;
@@ -251,6 +378,24 @@ namespace ConsoleApp1
 
         public static long[] GetLongList()
             => GetLine().Split(' ').Where(x => x.Length > 0).Select(x => x.ToLong()).ToArray();
+
+        public static (long, long) GetLongTuple2()
+        {
+            var arr = GetLine().Split(' ');
+            return (arr[0].ToLong(), arr[1].ToLong());
+        }
+
+        public static (long, long, long) GetLongTuple3()
+        {
+            var arr = GetLine().Split(' ');
+            return (arr[0].ToLong(), arr[1].ToLong(), arr[2].ToLong());
+        }
+
+        public static (long, long, long, long) GetLongTuple4()
+        {
+            var arr = GetLine().Split(' ');
+            return (arr[0].ToLong(), arr[1].ToLong(), arr[2].ToLong(), arr[3].ToLong());
+        }
 
         public static long GetLong()
             => GetLine().ToLong();
@@ -593,14 +738,14 @@ namespace ConsoleApp1
             return (b, a);
         }
 
-        public static (bool found, int x, int y) FindDiophantusEquation(int a, int b, int c)
+        public static (bool found, long x, long y) FindDiophantusEquation(long a, long b, long c)
         {
             // https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=beneys&logNo=221122957338
 
             var initA = a;
             var initB = b;
 
-            var list = new List<(int A, int B, int M, int R)>();
+            var list = new List<(long A, long B, long M, long R)>();
             do
             {
                 var m = a / b;
@@ -620,7 +765,7 @@ namespace ConsoleApp1
             list.Reverse();
 
             var first = list.First();
-            var list2 = new List<(int A, int X, int B, int Y)>
+            var list2 = new List<(long A, long X, long B, long Y)>
             {
                 (first.A, 1, first.B, -first.M)
             };
@@ -656,7 +801,7 @@ namespace ConsoleApp1
             return (true, x, y);
         }
 
-        public static int ChineseRemainderTheorem(List<(int A, int M)> arr)
+        public static long ChineseRemainderTheorem(List<(long A, long M)> arr)
         {
             // https://j1w2k3.tistory.com/1340
             var M = arr.Select(x => x.M).Aggregate((a, b) => a * b);
@@ -671,7 +816,7 @@ namespace ConsoleApp1
                 })
                 .ToList();
 
-            var x = 0;
+            long x = 0;
             foreach (var xxx in xxxList)
             {
                 x += (xxx.A * xxx.N * xxx.Dio.x) % M;

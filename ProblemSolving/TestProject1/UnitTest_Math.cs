@@ -37,7 +37,7 @@ namespace TestProject1
             }
         }
 
-        private void Base_중국인의_나머지_정리(List<(int A, int M)> arr)
+        private void Base_중국인의_나머지_정리(List<(long A, long M)> arr)
         {
             var x = Ex.ChineseRemainderTheorem(arr);
             foreach (var data in arr)
@@ -49,7 +49,7 @@ namespace TestProject1
         [Fact]
         public void Test_중국인의_나머지_정리1()
         {
-            var arr = new List<(int A, int M)>
+            var arr = new List<(long A, long M)>
             {
                 (2, 3),
                 (3, 5),
@@ -61,7 +61,7 @@ namespace TestProject1
         [Fact]
         public void Test_중국인의_나머지_정리2()
         {
-            var arr = new List<(int A, int M)>
+            var arr = new List<(long A, long M)>
             {
                 (2, 3),
                 (3, 5),
@@ -73,7 +73,7 @@ namespace TestProject1
         [Fact]
         public void Test_중국인의_나머지_정리3()
         {
-            var arr = new List<(int A, int M)>
+            var arr = new List<(long A, long M)>
             {
                 (1, 3),
                 (2, 5),
