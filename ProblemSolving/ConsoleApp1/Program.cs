@@ -180,7 +180,7 @@ namespace ConsoleApp1
 
             var gcd = Ex.Gcd(m1, m2);
             var lcm = m1 / gcd * m2;
-            var aaa = Math.Abs(a1 - a2);
+            var aaa = Math.Abs(e1.Base - e2.Base);
 
             first = 0;
             if (aaa % gcd != 0)
@@ -190,7 +190,7 @@ namespace ConsoleApp1
 
             if (m1 == m2)
             {
-                first = a1;
+                first = Math.Min(a1, a2);
                 if (aaa % m1 == 0)
                 {
                     return true;
@@ -198,10 +198,14 @@ namespace ConsoleApp1
                 return false;
             }
 
-            var (_, x, y) = Ex.FindDiophantusEquation(m1 / gcd, m2 / gcd, 1);
+            var (found, x, y) = Ex.FindDiophantusEquation(m1 / gcd, m2 / gcd, 1);
+            if (!found)
+            {
+                while (true) { }
+            }
 
-            var v1 = a1 * (m2 / gcd) * y % lcm;
-            var v2 = a2 * (m1 / gcd) * x % lcm;
+            var v1 = (a1 * (m2 / gcd) % lcm) * y % lcm;
+            var v2 = (a2 * (m1 / gcd) % lcm) * x % lcm;
 
             var minValue = (v1 + v2) % lcm;
             while (minValue < 0)
