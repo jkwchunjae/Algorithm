@@ -17,7 +17,7 @@ namespace TestProject1
         [InlineData(20, 112, 4)]
         public void Test_Gcd(int a, int b, int expectedGcd)
         {
-            var gcd = Ex.Gcd(a, b);
+            var gcd = MathEx.Gcd(a, b);
             Assert.Equal(expectedGcd, gcd);
         }
 
@@ -80,5 +80,41 @@ namespace TestProject1
             };
             Base_중국인의_나머지_정리(arr);
         }
+
+        [Theory]
+        [InlineData(1, 6, -4, 1, 0)]
+        [InlineData(2, 32, -24, 6, -4)]
+        [InlineData(3, 168, -128, 32, -24)]
+        [InlineData(4, 880, -672, 168, -128)]
+        public void Test_MatrixPow(int N, int a, int b, int c, int d)
+        {
+            var init = new Matrix(2, 2, 6, -4, 1, 0);
+            var m = init.Pow(N);
+            Assert.Equal(a, m[0][0]);
+            Assert.Equal(b, m[0][1]);
+            Assert.Equal(c, m[1][0]);
+            Assert.Equal(d, m[1][1]);
+        }
+
+        [Theory]
+        [InlineData(1, 6, -4, 1, 0)]
+        [InlineData(2, 32, -24, 6, -4)]
+        [InlineData(3, 168, -128, 32, -24)]
+        [InlineData(4, 880, -672, 168, -128)]
+        public void Test_MatrixPow2(int N, int a, int b, int c, int d)
+        {
+            var init = new Matrix(2, 2, 6, -4, 1, 0);
+            var m = init.Pow(N, (m1, m2) =>
+            {
+                var mm = m1 * m2;
+                mm.Row.For(r => mm.Column.For(c => mm[r][c] %= 1000));
+                return mm;
+            });
+            Assert.Equal(a, m[0][0]);
+            Assert.Equal(b, m[0][1]);
+            Assert.Equal(c, m[1][0]);
+            Assert.Equal(d, m[1][1]);
+        }
+
     }
 }

@@ -10,58 +10,42 @@ namespace TestProject1
 {
     public class UnitTest_Problem
     {
-        [Fact]
-        public void Test_GetLastIndex_BinarySearch1()
+        [Theory]
+        [InlineData(1, 5)]
+        [InlineData(2, 27)]
+        [InlineData(3, 143)]
+        [InlineData(4, 751)]
+        [InlineData(5, 935)]
+        [InlineData(6, 607)]
+        [InlineData(7, 903)]
+        [InlineData(8, 991)]
+        [InlineData(9, 335)]
+        [InlineData(10, 47)]
+        [InlineData(11, 943)]
+        [InlineData(12, 471)]
+        [InlineData(13, 55)]
+        [InlineData(14, 447)]
+        [InlineData(15, 463)]
+        [InlineData(16, 991)]
+        [InlineData(17, 95)]
+        public void Test_Solve(int N, int last3)
         {
-            var arr = new List<int> { 2, 3, 4, 5, 6 };
-            var value = 3;
-            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
-            Assert.Equal(1, lastIndex);
+            var result = Program.Solve(N);
+            Assert.Equal(last3, result);
         }
 
-        [Fact]
-        public void Test_GetLastIndex_BinarySearch2()
-        {
-            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 4, 5, 6 };
-            var value = 3;
-            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
-            Assert.Equal(5, lastIndex);
-        }
-
-        [Fact]
-        public void Test_GetLastIndex_BinarySearch3()
-        {
-            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 4, 5, 6 };
-            var value = 6;
-            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
-            Assert.Equal(8, lastIndex);
-        }
-
-        [Fact]
-        public void Test_GetLastIndex_BinarySearch4()
-        {
-            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 4, 5, 6, 6 };
-            var value = 6;
-            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
-            Assert.Equal(9, lastIndex);
-        }
-
-        [Fact]
-        public void Test_GetLastIndex_BinarySearch5()
-        {
-            var arr = new List<int> { 2, 2, 2, 3, 3, 3, 5, 6, 6 };
-            var value = 4;
-            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
-            Assert.Equal(5, lastIndex);
-        }
-
-        [Fact]
-        public void Test_GetLastIndex_BinarySearch6()
-        {
-            var arr = new List<int> { 425, 481, 578, 625, 1556, 2196, 2533, 2665, 2873, 3098, 5330 };
-            var value = 961;
-            var lastIndex = Program.GetLastIndex_BinarySearch(arr, value);
-            Assert.Equal(3, lastIndex);
-        }
+        //[Theory]
+        //[InlineData(1, 6, -4, 1, 0)]
+        //[InlineData(2, 32, -24, 6, -4)]
+        //[InlineData(3, 168, -128, 32, -24)]
+        //[InlineData(4, 880, -672, 168, -128)]
+        //public void Test_Matrix1(int N, int a, int b, int c, int d)
+        //{
+        //    var m = Program.GetMatrix(N);
+        //    Assert.Equal(a, m[0][0]);
+        //    Assert.Equal(b, m[0][1]);
+        //    Assert.Equal(c, m[1][0]);
+        //    Assert.Equal(d, m[1][1]);
+        //}
     }
 }

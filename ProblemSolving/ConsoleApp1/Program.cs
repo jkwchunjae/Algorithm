@@ -22,37 +22,20 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "5631";
+            var problemNumber = "12728";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var caseCount = 0;
-                while (true)
+                var T = IO.GetInt();
+                T.For(t =>
                 {
                     var N = IO.GetInt();
-                    if (N == 0)
-                        break;
-
-                    caseCount++;
-
-                    var list = N.MakeList(_ => IO.GetIntTuple2());
-                    var arr = IO.GetIntList();
-                    var info = new
-                    {
-                        Ax = arr[0],
-                        Ay = arr[1],
-                        Bx = arr[2],
-                        By = arr[3],
-                        Q = arr[4],
-                    };
-
-                    $"Case {caseCount}:".Dump();
-                    var r = info.Q.MakeList(_ => IO.GetIntTuple2());
-                    Solve(list, (info.Ax, info.Ay), (info.Bx, info.By), r);
-                }
+                    var last3 = Solve(N);
+                    $"Case #{t + 1}: {last3:000}".Dump();
+                });
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -68,79 +51,26 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static void Solve(List<(int X, int Y)> arr, (int X, int Y) aa, (int X, int Y) bb, List<(int R1, int R2)> rr)
+        public static long Solve(int N)
         {
-            var aList = arr
-                .Select(p => (p.X - aa.X) * (p.X - aa.X) + (p.Y - aa.Y) * (p.Y - aa.Y))
-                .OrderBy(x => x)
-                .ToList();
+            if (N == 1)
+                return 5;
 
-            var bList = arr
-                .Select(p => (p.X - bb.X) * (p.X - bb.X) + (p.Y - bb.Y) * (p.Y - bb.Y))
-                .OrderBy(x => x)
-                .ToList();
-
-            rr.ForEach(r =>
+            var matrix = new Matrix(2, 2, 6, -4, 1, 0).Pow(N - 2, (m1, m2) =>
             {
-                var aR = r.R1 * r.R1;
-                var bR = r.R2 * r.R2;
-
-                var aCount = GetLastIndex_BinarySearch(aList, aR) + 1;
-                var bCount = GetLastIndex_BinarySearch(bList, bR) + 1;
-
-                var result = Math.Max(0, arr.Count - aCount - bCount);
-
-                result.Dump();
+                var mm = m1 * m2;
+                mm.Row.For(r => mm.Column.For(c => mm[r][c] %= 1000));
+                return mm;
             });
-        }
 
-        public static int GetLastIndex_BinarySearch(List<int> arr, int value)
-        {
-            var a = 0;
-            var c = arr.Count;
+            var result = matrix[0][0] * 28 + matrix[0][1] * 6;
 
-            while (a < c)
-            {
-                var b = (a + c) / 2;
-
-                if (value >= arr[b])
-                {
-                    a = b + 1;
-                }
-                else
-                {
-                    c = b;
-                }
-            }
-            return a - 1;
+            return ((result - 1) % 1000 + 1000) % 1000;
         }
     }
 
-
     public static partial class Ex
     {
-        public static long Gcd(long a, long b)
-        {
-            if (a == b) { return a; }
-            else if (a > b && a % b == 0) { return b; }
-            else if (b > a && b % a == 0) { return a; }
-
-            long _gcd = 0;
-            while (b != 0)
-            {
-                _gcd = b;
-                b = a % b;
-                a = _gcd;
-            }
-            return _gcd;
-        }
-
-        public static long Lcm(long a, long b)
-        {
-            var gcd = Gcd(a, b);
-            var lcm = (a / gcd) * b;
-            return lcm;
-        }
     }
 
     public class IoInstance : IDisposable
@@ -372,43 +302,6 @@ namespace ConsoleApp1
             return long.Parse(str);
         }
 
-        /// <summary>
-        /// pow1의 exp제곱을 구한다. \n
-        /// 2^10 = 2.Pow(10, 1, (a, b) => a * b);
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="base">밑</param>
-        /// <param name="exp">지수</param>
-        /// <param name="pow0">밑의 0제곱</param>
-        /// <param name="fnMultifly">곱셈연산</param>
-        /// <returns></returns>
-        public static T Pow<T>(this T @base, int exp, T pow0, Func<T, T, T> fnMultifly)
-        {
-            // Addition-Chain exponentiation
-
-            var basee = @base;
-            var res = pow0;
-
-            while (exp > 0)
-            {
-                if ((exp & 1) != 0)
-                    res = fnMultifly(res, basee);
-                exp >>= 1;
-                basee = fnMultifly(basee, basee);
-            }
-
-            return res;
-        }
-
-        public static int Pow(this int @base, int exp)
-        {
-            return @base.Pow(exp, 1, (a, b) => a * b);
-        }
-
-        public static long Pow(this long @base, int exp)
-        {
-            return @base.Pow(exp, 1, (a, b) => a * b);
-        }
 
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
@@ -701,6 +594,135 @@ namespace ConsoleApp1
 
             return x;
         }
+    }
+
+    public class Matrix
+    {
+        private List<List<long>> Value;
+
+        public int Row => Value.Count;
+        public int Column => Value.First().Count;
+
+        public Matrix(int row, int column)
+        {
+            Value = row.MakeList(_ => column.MakeList(_ => 0L));
+        }
+
+        public Matrix(int row, int column, params int[] values)
+            : this(row, column)
+        {
+            var index = 0;
+            row.For(r => column.For(c => Value[r][c] = values[index++]));
+        }
+
+        public Matrix(List<List<long>> value)
+        {
+            Value = value;
+        }
+
+        public List<long> this[int row] => Value[row];
+
+        public static Matrix operator * (Matrix m1, Matrix m2)
+        {
+            var result = m1.Row.MakeList(r =>
+            {
+                return m2.Column.MakeList(c =>
+                {
+                    long sum = 0;
+                    m1.Column.For(k =>
+                    {
+                        sum += m1[r][k] * m2[k][c];
+                    });
+                    return sum;
+                });
+            });
+
+            return new Matrix(result);
+        }
+
+        public Matrix Pow(int N)
+        {
+            var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
+
+            var result = MathEx.Pow(this, N, 항등원, (m1, m2) => m1 * m2);
+
+            return result;
+        }
+
+        public Matrix Pow(int N, Func<Matrix, Matrix, Matrix> fnMultifly)
+        {
+            var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
+
+            var result = MathEx.Pow(this, N, 항등원, fnMultifly);
+
+            return result;
+        }
+
+    }
+
+    public static class MathEx
+    {
+
+        /// <summary>
+        /// pow1의 exp제곱을 구한다. \n
+        /// 2^10 = 2.Pow(10, 1, (a, b) => a * b);
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="base">밑</param>
+        /// <param name="exp">지수</param>
+        /// <param name="pow0">밑의 0제곱</param>
+        /// <param name="fnMultifly">곱셈연산</param>
+        /// <returns></returns>
+        public static T Pow<T>(this T @base, int exp, T pow0, Func<T, T, T> fnMultifly)
+        {
+            // Addition-Chain exponentiation
+
+            var basee = @base;
+            var res = pow0;
+
+            while (exp > 0)
+            {
+                if ((exp & 1) != 0)
+                    res = fnMultifly(res, basee);
+                exp >>= 1;
+                basee = fnMultifly(basee, basee);
+            }
+
+            return res;
+        }
+
+        public static int Pow(this int @base, int exp)
+        {
+            return @base.Pow(exp, 1, (a, b) => a * b);
+        }
+
+        public static long Pow(this long @base, int exp)
+        {
+            return @base.Pow(exp, 1, (a, b) => a * b);
+        }
+        public static long Gcd(long a, long b)
+        {
+            if (a == b) { return a; }
+            else if (a > b && a % b == 0) { return b; }
+            else if (b > a && b % a == 0) { return a; }
+
+            long _gcd = 0;
+            while (b != 0)
+            {
+                _gcd = b;
+                b = a % b;
+                a = _gcd;
+            }
+            return _gcd;
+        }
+
+        public static long Lcm(long a, long b)
+        {
+            var gcd = Gcd(a, b);
+            var lcm = (a / gcd) * b;
+            return lcm;
+        }
+
     }
 
     public class Line
