@@ -22,20 +22,20 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "12728";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
+            var problemNumber = "1289";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var T = IO.GetInt();
-                T.For(t =>
+                var N = IO.GetInt();
+                var nodeInfo = (N - 1).MakeList(_ =>
                 {
-                    var N = IO.GetInt();
-                    var last3 = Solve(N);
-                    $"Case #{t + 1}: {last3:000}".Dump();
+                    var info = IO.GetIntTuple3();
+                    return (info.Item1 - 1, info.Item2 - 1, info.Item3);
                 });
+                Solve(N, nodeInfo).Dump();
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -51,21 +51,99 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static long Solve(int N)
+        public static long Solve(int N, List<(int Node1, int Node2, int Weight)> nodeInfo)
         {
-            if (N == 1)
-                return 5;
+            var root = MakeTree(N, nodeInfo);
 
-            var matrix = new Matrix(2, 2, 6, -4, 1, 0).Pow(N - 2, (m1, m2) =>
+            return root.GetTreeWeight();
+        }
+
+        private static Node MakeTree(int N, List<(int Node1, int Node2, int Weight)> nodeInfo)
+        {
+            var nodes = N.MakeList(i => new Node(i));
+
+            nodeInfo.ForEach(info =>
             {
-                var mm = m1 * m2;
-                mm.Row.For(r => mm.Column.For(c => mm[r][c] %= 1000));
-                return mm;
+                var node1 = nodes[info.Node1];
+                var node2 = nodes[info.Node2];
+
+                node1.Children.Add((node2, info.Weight));
+                node2.Children.Add((node1, info.Weight));
             });
 
-            var result = matrix[0][0] * 28 + matrix[0][1] * 6;
+            nodes.First().SetParent(null);
 
-            return ((result - 1) % 1000 + 1000) % 1000;
+            return nodes.First();
+        }
+    }
+
+    public class Node
+    {
+        public int Index;
+        public long Sum = 0;
+        public int ChildCount = 0; // 나 빼고 전체 자손 수
+
+        public Node Parent;
+        public List<(Node Node, long Weight)> Children = new();
+
+        public Node(int index)
+        {
+            Index = index;
+        }
+
+        public void SetParent(Node parent)
+        {
+            Parent = parent;
+            var index = Children.FindIndex(x => x.Node == parent);
+            if (index != -1)
+            {
+                Children.RemoveAt(index);
+            }
+
+            Children.ForEach(child => child.Node.SetParent(this));
+        }
+
+        public long GetTreeWeight()
+        {
+            long M = 1_000_000_007;
+            var treeWeight = 0L;
+
+            Children.ForEach(child =>
+            {
+                treeWeight = (treeWeight + child.Node.GetTreeWeight()) % M;
+            });
+            for (var i = 0; i < Children.Count; i++)
+            {
+                var child1 = Children[i];
+
+                for (var j = i + 1; j < Children.Count; j++)
+                {
+                    var child2 = Children[j];
+                    // 자손들 끼리 거리
+                    var crossWeight = (((((child1.Node.Sum * child2.Node.Sum) % M) * child1.Weight) % M) * child2.Weight) % M;
+                    treeWeight = (treeWeight + crossWeight) % M;
+
+                    treeWeight = (treeWeight + child1.Weight * child2.Weight) % M;
+                }
+
+                // root 부터 child1밑의 자손들까지 거리
+                var rootWeight = (child1.Node.Sum * child1.Weight) % M;
+                treeWeight = (treeWeight + rootWeight) % M;
+
+                // root 부터 child1까지 거리
+                treeWeight = (treeWeight + child1.Weight) % M;
+            }
+
+            Children.ForEach(child1 =>
+            {
+                var childSum = (child1.Node.Sum * child1.Weight) % M;
+                Sum = (Sum + childSum) % M;
+                Sum = (Sum + child1.Weight) % M;
+
+                ChildCount += child1.Node.ChildCount + 1;
+            });
+
+            return treeWeight % M;
         }
     }
 
