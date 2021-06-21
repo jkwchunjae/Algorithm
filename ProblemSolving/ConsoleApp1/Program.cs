@@ -55,7 +55,9 @@ namespace ConsoleApp1
         {
             var root = MakeTree(N, nodeInfo);
 
-            return root.GetTreeWeight();
+            var treeWeight = root.GetTreeWeight();
+
+            return treeWeight;
         }
 
         private static Node MakeTree(int N, List<(int Node1, int Node2, int Weight)> nodeInfo)
@@ -81,7 +83,6 @@ namespace ConsoleApp1
     {
         public int Index;
         public long Sum = 0;
-        public int ChildCount = 0; // 나 빼고 전체 자손 수
 
         public Node Parent;
         public List<(Node Node, long Weight)> Children = new();
@@ -94,13 +95,14 @@ namespace ConsoleApp1
         public void SetParent(Node parent)
         {
             Parent = parent;
-            var index = Children.FindIndex(x => x.Node == parent);
-            if (index != -1)
-            {
-                Children.RemoveAt(index);
-            }
+            //var index = Children.FindIndex(x => x.Node == parent);
+            //if (index != -1)
+            //{
+            //    Children.RemoveAt(index);
+            //}
 
-            Children.ForEach(child => child.Node.SetParent(this));
+            Children.Where(child => child.Node != parent)
+                .ForEach(child => child.Node.SetParent(this));
         }
 
         public long GetTreeWeight()
@@ -108,22 +110,25 @@ namespace ConsoleApp1
             long M = 1_000_000_007;
             var treeWeight = 0L;
 
-            Children.ForEach(child =>
+            Children.Where(child => child.Node != Parent).ForEach(child =>
             {
                 treeWeight = (treeWeight + child.Node.GetTreeWeight()) % M;
             });
             for (var i = 0; i < Children.Count; i++)
             {
                 var child1 = Children[i];
+                if (child1.Node == Parent)
+                    continue;
 
                 for (var j = i + 1; j < Children.Count; j++)
                 {
                     var child2 = Children[j];
-                    // 자손들 끼리 거리
-                    var crossWeight = (((((child1.Node.Sum * child2.Node.Sum) % M) * child1.Weight) % M) * child2.Weight) % M;
-                    treeWeight = (treeWeight + crossWeight) % M;
+                    if (child2.Node == Parent)
+                        continue;
 
-                    treeWeight = (treeWeight + child1.Weight * child2.Weight) % M;
+                    // Child1과 Child2의 관계에서 나오는 Tree Weight.
+                    var crossWeight = (((((child1.Node.Sum * child2.Node.Sum + child1.Node.Sum + child2.Node.Sum + 1) % M) * child1.Weight) % M) * child2.Weight) % M;
+                    treeWeight = (treeWeight + crossWeight) % M;
                 }
 
                 // root 부터 child1밑의 자손들까지 거리
@@ -134,13 +139,11 @@ namespace ConsoleApp1
                 treeWeight = (treeWeight + child1.Weight) % M;
             }
 
-            Children.ForEach(child1 =>
+            Children.Where(child => child.Node != Parent).ForEach(child1 =>
             {
                 var childSum = (child1.Node.Sum * child1.Weight) % M;
-                Sum = (Sum + childSum) % M;
-                Sum = (Sum + child1.Weight) % M;
-
-                ChildCount += child1.Node.ChildCount + 1;
+                Sum = (Sum + childSum) % M; // root 부터 child1의 자손들까지 합
+                Sum = (Sum + child1.Weight) % M; // root 부터 child1 까지 거리
             });
 
             return treeWeight % M;
