@@ -22,20 +22,25 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1289";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
+            var problemNumber = "15994";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var nodeInfo = (N - 1).MakeList(_ =>
+                try
                 {
-                    var info = IO.GetIntTuple3();
-                    return (info.Item1 - 1, info.Item2 - 1, info.Item3);
-                });
-                Solve(N, nodeInfo).Dump();
+                    var (N, M) = IO.GetIntTuple2();
+                    var elevators = M.MakeList(_ => IO.GetLongTuple2());
+                    var (A, B) = IO.GetLongTuple2();
+
+                    Solve(N, elevators, A, B);
+                }
+                catch
+                {
+                    "Error".Dump();
+                }
 #if DEBUG // delete
                 var result = IO.IsCorrect().Dump();
                 checkAll = checkAll && result;
@@ -51,102 +56,216 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static long Solve(int N, List<(int Node1, int Node2, int Weight)> nodeInfo)
+        public static void Solve(long N, List<(long Base, long Term)> elevators, long A, long B)
         {
-            var root = MakeTree(N, nodeInfo);
+            var nodes = MakeNodes(N, elevators, A, B);
 
-            var treeWeight = root.GetTreeWeight();
-
-            return treeWeight;
-        }
-
-        private static Node MakeTree(int N, List<(int Node1, int Node2, int Weight)> nodeInfo)
-        {
-            var nodes = N.MakeList(i => new Node(i));
-
-            nodeInfo.ForEach(info =>
+            var minLength = long.MaxValue;
+            var nodeIndex = new List<long>();
+            nodes.Where(x => x.IsStart).ForEach(node =>
             {
-                var node1 = nodes[info.Node1];
-                var node2 = nodes[info.Node2];
+                nodes.ForEach(n => n.Clear());
 
-                node1.Children.Add((node2, info.Weight));
-                node2.Children.Add((node1, info.Weight));
+                if (BFS(node, out var goalNode))
+                {
+                    if (minLength > goalNode.Depth)
+                    {
+                        minLength = goalNode.Depth;
+                        nodeIndex.Clear();
+
+                        var tNode = goalNode;
+                        while (tNode != null)
+                        {
+                            nodeIndex.Add(tNode.Index);
+                            tNode = tNode.PrevNode;
+                        }
+                    }
+                }
             });
 
-            nodes.First().SetParent(null);
-
-            return nodes.First();
+            if (minLength == long.MaxValue)
+            {
+                (-1).Dump();
+            }
+            else
+            {
+                minLength.Dump();
+                nodeIndex.Reverse();
+                nodeIndex.ForEach(index => index.Dump());
+            }
         }
+
+        private static bool BFS(Node start, out Node goalNode)
+        {
+            var queue = new Queue<Node>();
+
+            start.Mark = true;
+            start.Depth = 1;
+            queue.Enqueue(start);
+
+            goalNode = null;
+            while (queue.Any())
+            {
+                var node = queue.Dequeue();
+                if (node.IsGoal)
+                {
+                    goalNode = node;
+                    return true;
+                }
+
+                node.Nodes.Where(target => !target.Mark)
+                    .ForEach(target =>
+                    {
+                        target.Depth = node.Depth + 1;
+                        target.Mark = true;
+                        target.PrevNode = node;
+                        queue.Enqueue(target);
+                    });
+            }
+
+            return false;
+        }
+
+        private static List<Node> MakeNodes(long N, List<(long Base, long Term)> elevators, long A, long B)
+        {
+            var nodes = elevators.Select((e, i) => new Node(i + 1, e)).ToList();
+
+            nodes.ForEach(node1 =>
+            {
+                nodes.Where(node2 => node2 != node1)
+                    .Where(node2 => IsConnected(node1.Elevator, node2.Elevator, N))
+                    .ForEach(node2 =>
+                    {
+                        node1.Nodes.Add(node2);
+                        node2.Nodes.Add(node1);
+                    });
+
+                if (node1.Elevator.Base <= A)
+                {
+                    node1.IsStart = (A - node1.Elevator.Base) % node1.Elevator.Term == 0;
+                }
+                if (node1.Elevator.Base <= B)
+                {
+                    node1.IsGoal = (B - node1.Elevator.Base) % node1.Elevator.Term == 0;
+                }
+            });
+
+            return nodes;
+        }
+
+        /// <summary> N 층 안에서 e1과 e2가 만나는가?  </summary>
+        public static bool IsConnected((long Base, long Term) e1, (long Base, long Term) e2, long N)
+        {
+            if (e1.Base + e1.Term * 100 >= N || e2.Base + e2.Term * 100 >= N)
+            {
+                var eInfo = e1.Base + e1.Term * 100 >= N ? e1 : e2;
+                var other = e1.Base + e1.Term * 100 >= N ? e2 : e1;
+
+                var x = eInfo.Base;
+                while (x <= N)
+                {
+                    if (x >= other.Base && (x - other.Base) % other.Term == 0)
+                    {
+                        return true;
+                    }
+                    x += eInfo.Term;
+                }
+                return false;
+            }
+            if (TryGetFirst(e1, e2, out var first))
+            {
+                var maxBase = Math.Max(e1.Base, e2.Base);
+                if (first > N)
+                    return false;
+                if (first >= maxBase)
+                    return true;
+
+                var lcm = MathEx.Lcm(e1.Term, e2.Term);
+
+                var xxx = ((maxBase - 1 - first) / lcm + 1);
+
+                if (Math.Log10(xxx) + Math.Log10(lcm) > 10)
+                    return false;
+
+                var fixedFirst = xxx * lcm + first;
+
+                if (fixedFirst <= N)
+                    return true;
+
+                return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool TryGetFirst((long Base, long Term) e1, (long Base, long Term) e2, out long first)
+        {
+            var m1 = e1.Term;
+            var m2 = e2.Term;
+            var a1 = e1.Base % m1;
+            var a2 = e2.Base % m2;
+
+            var gcd = MathEx.Gcd(m1, m2);
+            var lcm = MathEx.Lcm(m1, m2);
+            var aaa = Math.Abs(a1 - a2);
+
+            first = 0;
+            if (aaa % gcd != 0)
+            {
+                return false;
+            }
+
+            if (m1 == gcd || m2 == gcd)
+            {
+                first = Math.Min(a1, a2);
+                return true;
+            }
+
+            var M1 = m1 / gcd;
+            var M2 = m2 / gcd;
+            var (found, x, y) = Ex.FindDiophantusEquation(M1, M2, 1);
+
+            var v1 = a1 * M2 * y;
+            var v2 = a2 * M1 * x;
+
+            var minValue = (v1 + v2) % lcm;
+            while (minValue < 0)
+            {
+                minValue += lcm;
+            }
+            first = minValue;
+            return true;
+        }
+
     }
 
     public class Node
     {
-        public int Index;
-        public long Sum = 0;
+        public int Index { get; init; }
+        public (long Base, long Term) Elevator { get; init; }
 
-        public Node Parent;
-        public List<(Node Node, long Weight)> Children = new();
+        public List<Node> Nodes = new();
+        public bool Mark = false;
 
-        public Node(int index)
+        public bool IsStart = false;
+        public bool IsGoal = false;
+
+        public int Depth = 0;
+        public Node PrevNode = null;
+
+        public Node(int index, (long Base, long term) e)
         {
             Index = index;
+            Elevator = e;
         }
 
-        public void SetParent(Node parent)
+        public void Clear()
         {
-            Parent = parent;
-            //var index = Children.FindIndex(x => x.Node == parent);
-            //if (index != -1)
-            //{
-            //    Children.RemoveAt(index);
-            //}
-
-            Children.Where(child => child.Node != parent)
-                .ForEach(child => child.Node.SetParent(this));
-        }
-
-        public long GetTreeWeight()
-        {
-            long M = 1_000_000_007;
-            var treeWeight = 0L;
-
-            Children.Where(child => child.Node != Parent).ForEach(child =>
-            {
-                treeWeight = (treeWeight + child.Node.GetTreeWeight()) % M;
-            });
-            for (var i = 0; i < Children.Count; i++)
-            {
-                var child1 = Children[i];
-                if (child1.Node == Parent)
-                    continue;
-
-                for (var j = i + 1; j < Children.Count; j++)
-                {
-                    var child2 = Children[j];
-                    if (child2.Node == Parent)
-                        continue;
-
-                    // Child1과 Child2의 관계에서 나오는 Tree Weight.
-                    var crossWeight = (((((child1.Node.Sum * child2.Node.Sum + child1.Node.Sum + child2.Node.Sum + 1) % M) * child1.Weight) % M) * child2.Weight) % M;
-                    treeWeight = (treeWeight + crossWeight) % M;
-                }
-
-                // root 부터 child1밑의 자손들까지 거리
-                var rootWeight = (child1.Node.Sum * child1.Weight) % M;
-                treeWeight = (treeWeight + rootWeight) % M;
-
-                // root 부터 child1까지 거리
-                treeWeight = (treeWeight + child1.Weight) % M;
-            }
-
-            Children.Where(child => child.Node != Parent).ForEach(child1 =>
-            {
-                var childSum = (child1.Node.Sum * child1.Weight) % M;
-                Sum = (Sum + childSum) % M; // root 부터 child1의 자손들까지 합
-                Sum = (Sum + child1.Weight) % M; // root 부터 child1 까지 거리
-            });
-
-            return treeWeight % M;
+            Mark = false;
+            Depth = 0;
+            PrevNode = null;
         }
     }
 
@@ -605,8 +724,8 @@ namespace ConsoleApp1
                 b = r;
             } while (a % b != 0);
 
-            var gdc = list.Last().R;
-            if (c % gdc != 0)
+            var gcd = list.Last().R;
+            if (c % gcd != 0)
             {
                 return (false, 0, 0);
             }
@@ -641,7 +760,7 @@ namespace ConsoleApp1
             }
             //list2.Dump();
 
-            var mm = c / gdc;
+            var mm = c / gcd;
             var last = list2.Last();
             var x = (initA == last.A ? last.X : last.Y) * mm;
             var y = (initA == last.A ? last.Y : last.X) * mm;
@@ -703,7 +822,7 @@ namespace ConsoleApp1
 
         public List<long> this[int row] => Value[row];
 
-        public static Matrix operator * (Matrix m1, Matrix m2)
+        public static Matrix operator *(Matrix m1, Matrix m2)
         {
             var result = m1.Row.MakeList(r =>
             {
