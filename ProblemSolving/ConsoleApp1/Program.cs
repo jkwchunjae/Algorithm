@@ -22,7 +22,7 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "15994";
+            var problemNumber = "1000";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
@@ -31,11 +31,9 @@ namespace ConsoleApp1
 #endif
                 try
                 {
-                    var (N, M) = IO.GetIntTuple2();
-                    var elevators = M.MakeList(_ => IO.GetLongTuple2());
-                    var (A, B) = IO.GetLongTuple2();
+                    var (A, B) = IO.GetIntTuple2();
 
-                    Solve(N, elevators, A, B);
+                    Solve(A, B).Dump();
                 }
                 catch
                 {
@@ -56,216 +54,9 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static void Solve(long N, List<(long Base, long Term)> elevators, long A, long B)
+        public static int Solve(int A, int B)
         {
-            var nodes = MakeNodes(N, elevators, A, B);
-
-            var minLength = long.MaxValue;
-            var nodeIndex = new List<long>();
-            nodes.Where(x => x.IsStart).ForEach(node =>
-            {
-                nodes.ForEach(n => n.Clear());
-
-                if (BFS(node, out var goalNode))
-                {
-                    if (minLength > goalNode.Depth)
-                    {
-                        minLength = goalNode.Depth;
-                        nodeIndex.Clear();
-
-                        var tNode = goalNode;
-                        while (tNode != null)
-                        {
-                            nodeIndex.Add(tNode.Index);
-                            tNode = tNode.PrevNode;
-                        }
-                    }
-                }
-            });
-
-            if (minLength == long.MaxValue)
-            {
-                (-1).Dump();
-            }
-            else
-            {
-                minLength.Dump();
-                nodeIndex.Reverse();
-                nodeIndex.ForEach(index => index.Dump());
-            }
-        }
-
-        private static bool BFS(Node start, out Node goalNode)
-        {
-            var queue = new Queue<Node>();
-
-            start.Mark = true;
-            start.Depth = 1;
-            queue.Enqueue(start);
-
-            goalNode = null;
-            while (queue.Any())
-            {
-                var node = queue.Dequeue();
-                if (node.IsGoal)
-                {
-                    goalNode = node;
-                    return true;
-                }
-
-                node.Nodes.Where(target => !target.Mark)
-                    .ForEach(target =>
-                    {
-                        target.Depth = node.Depth + 1;
-                        target.Mark = true;
-                        target.PrevNode = node;
-                        queue.Enqueue(target);
-                    });
-            }
-
-            return false;
-        }
-
-        private static List<Node> MakeNodes(long N, List<(long Base, long Term)> elevators, long A, long B)
-        {
-            var nodes = elevators.Select((e, i) => new Node(i + 1, e)).ToList();
-
-            nodes.ForEach(node1 =>
-            {
-                nodes.Where(node2 => node2 != node1)
-                    .Where(node2 => IsConnected(node1.Elevator, node2.Elevator, N))
-                    .ForEach(node2 =>
-                    {
-                        node1.Nodes.Add(node2);
-                        node2.Nodes.Add(node1);
-                    });
-
-                if (node1.Elevator.Base <= A)
-                {
-                    node1.IsStart = (A - node1.Elevator.Base) % node1.Elevator.Term == 0;
-                }
-                if (node1.Elevator.Base <= B)
-                {
-                    node1.IsGoal = (B - node1.Elevator.Base) % node1.Elevator.Term == 0;
-                }
-            });
-
-            return nodes;
-        }
-
-        /// <summary> N 층 안에서 e1과 e2가 만나는가?  </summary>
-        public static bool IsConnected((long Base, long Term) e1, (long Base, long Term) e2, long N)
-        {
-            if (e1.Base + e1.Term * 100 >= N || e2.Base + e2.Term * 100 >= N)
-            {
-                var eInfo = e1.Base + e1.Term * 100 >= N ? e1 : e2;
-                var other = e1.Base + e1.Term * 100 >= N ? e2 : e1;
-
-                var x = eInfo.Base;
-                while (x <= N)
-                {
-                    if (x >= other.Base && (x - other.Base) % other.Term == 0)
-                    {
-                        return true;
-                    }
-                    x += eInfo.Term;
-                }
-                return false;
-            }
-            if (TryGetFirst(e1, e2, out var first))
-            {
-                var maxBase = Math.Max(e1.Base, e2.Base);
-                if (first > N)
-                    return false;
-                if (first >= maxBase)
-                    return true;
-
-                var lcm = MathEx.Lcm(e1.Term, e2.Term);
-
-                var xxx = ((maxBase - 1 - first) / lcm + 1);
-
-                if (Math.Log10(xxx) + Math.Log10(lcm) > 10)
-                    return false;
-
-                var fixedFirst = xxx * lcm + first;
-
-                if (fixedFirst <= N)
-                    return true;
-
-                return false;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static bool TryGetFirst((long Base, long Term) e1, (long Base, long Term) e2, out long first)
-        {
-            var m1 = e1.Term;
-            var m2 = e2.Term;
-            var a1 = e1.Base % m1;
-            var a2 = e2.Base % m2;
-
-            var gcd = MathEx.Gcd(m1, m2);
-            var lcm = MathEx.Lcm(m1, m2);
-            var aaa = Math.Abs(a1 - a2);
-
-            first = 0;
-            if (aaa % gcd != 0)
-            {
-                return false;
-            }
-
-            if (m1 == gcd || m2 == gcd)
-            {
-                first = Math.Min(a1, a2);
-                return true;
-            }
-
-            var M1 = m1 / gcd;
-            var M2 = m2 / gcd;
-            var (found, x, y) = Ex.FindDiophantusEquation(M1, M2, 1);
-
-            var v1 = a1 * M2 * y;
-            var v2 = a2 * M1 * x;
-
-            var minValue = (v1 + v2) % lcm;
-            while (minValue < 0)
-            {
-                minValue += lcm;
-            }
-            first = minValue;
-            return true;
-        }
-
-    }
-
-    public class Node
-    {
-        public int Index { get; init; }
-        public (long Base, long Term) Elevator { get; init; }
-
-        public List<Node> Nodes = new();
-        public bool Mark = false;
-
-        public bool IsStart = false;
-        public bool IsGoal = false;
-
-        public int Depth = 0;
-        public Node PrevNode = null;
-
-        public Node(int index, (long Base, long term) e)
-        {
-            Index = index;
-            Elevator = e;
-        }
-
-        public void Clear()
-        {
-            Mark = false;
-            Depth = 0;
-            PrevNode = null;
+            return A + B;
         }
     }
 
