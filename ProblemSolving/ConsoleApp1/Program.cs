@@ -22,7 +22,7 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1000";
+            var problemNumber = "9015";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
@@ -31,9 +31,13 @@ namespace ConsoleApp1
 #endif
                 try
                 {
-                    var (A, B) = IO.GetIntTuple2();
-
-                    Solve(A, B).Dump();
+                    var T = IO.GetInt();
+                    T.For(_ =>
+                    {
+                        var N = IO.GetInt();
+                        var list = N.MakeList(_ => IO.GetIntTuple2());
+                        Solve(list).Dump();
+                    });
                 }
                 catch
                 {
@@ -54,9 +58,80 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static int Solve(int A, int B)
+        private static HashSet<Point> _cache;
+
+        public static long Solve(List<(int X, int Y)> list)
         {
-            return A + B;
+            var arr = list.Select(x => new Point(x.X, x.Y)).ToList();
+            _cache = arr.ToHashSet();
+
+            long result = 0;
+            for (var i = 0; i < arr.Count; i++)
+            {
+                var p1 = arr[i];
+                for (var j = i + 1; j < arr.Count; j++)
+                {
+                    var p2 = arr[j];
+                    var s = CalcSquare(p1, p2);
+                    result = Math.Max(result, s);
+                }
+            }
+
+            return result;
+        }
+
+        public static long CalcSquare(Point p1, Point p2)
+        {
+            if (p1.X == p2.X)
+            {
+                long len = Math.Abs(p1.Y - p2.Y);
+                var p3 = new Point(p1.X - len, p1.Y);
+                var p4 = new Point(p2.X - len, p2.Y);
+                if (_cache.Contains(p3) && _cache.Contains(p4))
+                {
+                    return len * len;
+                }
+                p3 = new Point(p1.X + len, p1.Y);
+                p4 = new Point(p2.X + len, p2.Y);
+                if (_cache.Contains(p3) && _cache.Contains(p4))
+                {
+                    return len * len;
+                }
+            }
+            else if (p1.Y == p2.Y)
+            {
+                long len = Math.Abs(p1.X - p2.X);
+                var p3 = new Point(p1.X, p1.Y - len);
+                var p4 = new Point(p2.X, p2.Y - len);
+                if (_cache.Contains(p3) && _cache.Contains(p4))
+                {
+                    return len * len;
+                }
+                p3 = new Point(p1.X, p1.Y + len);
+                p4 = new Point(p2.X, p2.Y + len);
+                if (_cache.Contains(p3) && _cache.Contains(p4))
+                {
+                    return len * len;
+                }
+            }
+            else
+            {
+                var dX = p1.X - p2.X;
+                var dY = p1.Y - p2.Y;
+                var p3 = new Point(p1.X + dY, p1.Y - dX);
+                var p4 = new Point(p2.X + dY, p2.Y - dX);
+                if (_cache.Contains(p3) && _cache.Contains(p4))
+                {
+                    return dX * dX + dY * dY;
+                }
+                p3 = new Point(p1.X - dY, p1.Y + dX);
+                p4 = new Point(p2.X - dY, p2.Y + dX);
+                if (_cache.Contains(p3) && _cache.Contains(p4))
+                {
+                    return dX * dX + dY * dY;
+                }
+            }
+            return 0;
         }
     }
 
@@ -761,11 +836,6 @@ namespace ConsoleApp1
         public static bool operator >=(Point a, Point b)
         {
             return !(a < b);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
         }
     }
 
