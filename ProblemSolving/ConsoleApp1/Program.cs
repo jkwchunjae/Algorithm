@@ -65,71 +65,28 @@ namespace ConsoleApp1
             var arr = list.Select(x => new Point(x.X, x.Y)).ToList();
             _cache = arr.ToHashSet();
 
-            long result = 0;
-            for (var i = 0; i < arr.Count; i++)
-            {
-                var p1 = arr[i];
-                for (var j = i + 1; j < arr.Count; j++)
-                {
-                    var p2 = arr[j];
-                    var s = CalcSquare(p1, p2);
-                    result = Math.Max(result, s);
-                }
-            }
+            var result = arr.AllPairs()
+                .Select(x => CalcSquare(x.Item1, x.Item2))
+                .Max();
 
             return result;
         }
 
         public static long CalcSquare(Point p1, Point p2)
         {
-            if (p1.X == p2.X)
+            var dX = p1.X - p2.X;
+            var dY = p1.Y - p2.Y;
+            var p3 = new Point(p1.X + dY, p1.Y - dX);
+            var p4 = new Point(p2.X + dY, p2.Y - dX);
+            if (_cache.Contains(p3) && _cache.Contains(p4))
             {
-                long len = Math.Abs(p1.Y - p2.Y);
-                var p3 = new Point(p1.X - len, p1.Y);
-                var p4 = new Point(p2.X - len, p2.Y);
-                if (_cache.Contains(p3) && _cache.Contains(p4))
-                {
-                    return len * len;
-                }
-                p3 = new Point(p1.X + len, p1.Y);
-                p4 = new Point(p2.X + len, p2.Y);
-                if (_cache.Contains(p3) && _cache.Contains(p4))
-                {
-                    return len * len;
-                }
+                return dX * dX + dY * dY;
             }
-            else if (p1.Y == p2.Y)
+            p3 = new Point(p1.X - dY, p1.Y + dX);
+            p4 = new Point(p2.X - dY, p2.Y + dX);
+            if (_cache.Contains(p3) && _cache.Contains(p4))
             {
-                long len = Math.Abs(p1.X - p2.X);
-                var p3 = new Point(p1.X, p1.Y - len);
-                var p4 = new Point(p2.X, p2.Y - len);
-                if (_cache.Contains(p3) && _cache.Contains(p4))
-                {
-                    return len * len;
-                }
-                p3 = new Point(p1.X, p1.Y + len);
-                p4 = new Point(p2.X, p2.Y + len);
-                if (_cache.Contains(p3) && _cache.Contains(p4))
-                {
-                    return len * len;
-                }
-            }
-            else
-            {
-                var dX = p1.X - p2.X;
-                var dY = p1.Y - p2.Y;
-                var p3 = new Point(p1.X + dY, p1.Y - dX);
-                var p4 = new Point(p2.X + dY, p2.Y - dX);
-                if (_cache.Contains(p3) && _cache.Contains(p4))
-                {
-                    return dX * dX + dY * dY;
-                }
-                p3 = new Point(p1.X - dY, p1.Y + dX);
-                p4 = new Point(p2.X - dY, p2.Y + dX);
-                if (_cache.Contains(p3) && _cache.Contains(p4))
-                {
-                    return dX * dX + dY * dY;
-                }
+                return dX * dX + dY * dY;
             }
             return 0;
         }
@@ -535,6 +492,32 @@ namespace ConsoleApp1
             }
 
             return value;
+        }
+
+        public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this List<TItem> source)
+        {
+            for (var i = 0; i < source.Count(); i++)
+            {
+                var item1 = source[i];
+                for (var j = i + 1; j < source.Count(); j++)
+                {
+                    var item2 = source[j];
+                    yield return (item1, item2);
+                }
+            }
+        }
+
+        public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this TItem[] source)
+        {
+            for (var i = 0; i < source.Count(); i++)
+            {
+                var item1 = source[i];
+                for (var j = i + 1; j < source.Count(); j++)
+                {
+                    var item2 = source[j];
+                    yield return (item1, item2);
+                }
+            }
         }
     }
 
