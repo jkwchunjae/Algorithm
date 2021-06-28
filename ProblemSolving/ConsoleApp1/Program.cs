@@ -22,30 +22,21 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "9015";
+            var problemNumber = "2505";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                try
-                {
-                    var T = IO.GetInt();
-                    T.For(_ =>
-                    {
-                        var N = IO.GetInt();
-                        var list = N.MakeList(_ => IO.GetIntTuple2());
-                        Solve(list).Dump();
-                    });
-                }
-                catch
-                {
-                    "Error".Dump();
-                }
+                var N = IO.GetInt();
+                var arr = IO.GetIntList().Select(x => x - 1).ToList();
+
+                var result = Solve(arr);
+                result.ForEach(diff => $"{diff.Begin + 1} {diff.End + 1}".Dump());
 #if DEBUG // delete
-                var result = IO.IsCorrect().Dump();
-                checkAll = checkAll && result;
+                var correct = IO.IsCorrect().Dump();
+                checkAll = checkAll && correct;
                 Console.WriteLine();
             }
             DebugUtils.CopyCode();
@@ -58,37 +49,115 @@ namespace ConsoleApp1
             return 0;
         }
 
-        private static HashSet<Point> _cache;
-
-        public static long Solve(List<(int X, int Y)> list)
+        public static List<(int Begin, int End)> Solve(List<int> arr)
         {
-            var arr = list.Select(x => new Point(x.X, x.Y)).ToList();
-            _cache = arr.ToHashSet();
+            var diffs = FindDiff(arr);
+            var splited = diffs.SelectMany(diff => Split3(arr, diff.Begin, diff.End)).ToList();
+            var points = splited.SelectMany(x => new[] { x.Begin, x.End }).Distinct().ToList();
 
-            var result = arr.AllPairs()
-                .Select(x => CalcSquare(x.Item1, x.Item2))
-                .Max();
+            foreach (var range1 in points.AllPairs(true))
+            {
+                var r1 = Reverse(arr, range1.Item1, range1.Item2);
 
+                var diffs2 = FindDiff(r1);
+                var splited2 = diffs2.SelectMany(diff => Split3(r1, diff.Begin, diff.End)).ToList();
+                var points2 = splited2.SelectMany(x => new[] { x.Begin, x.End }).Distinct().ToList();
+
+                foreach (var range2 in points2.AllPairs(true))
+                {
+                    var r2 = Reverse(r1, range2.Item1, range2.Item2);
+                    if (IsAllRight(r2))
+                    {
+                        return new() { range1, range2 };
+                    }
+                }
+            }
+
+            return new() { (0, 0), (1, 1) };
+        }
+
+        /// <summary> arr에서 begin ~ end 를 뒤집어서 새로운 list를 반환 </summary>
+        public static List<int> Reverse(List<int> arr, int begin, int end)
+        {
+            return arr
+                .Select((num, i) =>
+                {
+                    if (i >= begin && i <= end)
+                    {
+                        var j = end - (i - begin);
+                        return arr[j];
+                    }
+                    else
+                    {
+                        return num;
+                    }
+                })
+                .ToList();
+        }
+
+        public static bool IsAllRight(List<int> arr)
+        {
+            var result = true;
+            arr.Count.For(i => result &= (arr[i] == i));
             return result;
         }
 
-        public static long CalcSquare(Point p1, Point p2)
+        /// <summary> 배열에서 제자리에 있지 않은 자리들 목록 </summary>
+        public static List<(int Begin, int End)> FindDiff(List<int> arr)
         {
-            var dX = p1.X - p2.X;
-            var dY = p1.Y - p2.Y;
-            var p3 = new Point(p1.X + dY, p1.Y - dX);
-            var p4 = new Point(p2.X + dY, p2.Y - dX);
-            if (_cache.Contains(p3) && _cache.Contains(p4))
+            var result = new List<(int, int)>();
+            var find = false;
+            var begin = 0;
+            arr.Count.For(i =>
             {
-                return dX * dX + dY * dY;
-            }
-            p3 = new Point(p1.X - dY, p1.Y + dX);
-            p4 = new Point(p2.X - dY, p2.Y + dX);
-            if (_cache.Contains(p3) && _cache.Contains(p4))
+                if (arr[i] != i)
+                {
+                    if (find == false)
+                    {
+                        find = true;
+                        begin = i;
+                    }
+                }
+                else // (arr[i] == i)
+                {
+                    if (find == true)
+                    {
+                        find = false;
+                        // end = i - 1;
+                        result.Add((begin, i - 1));
+                        begin = 0;
+                    }
+                }
+            });
+
+            if (find == true)
             {
-                return dX * dX + dY * dY;
+                result.Add((begin, arr.Count - 1));
             }
-            return 0;
+            return result;
+        }
+
+        public static List<(int Begin, int End)> Split3(List<int> arr, int beginIndex, int endIndex)
+        {
+            var result = new List<(int, int)>();
+            var begin = 0;
+            for (var i = beginIndex; i <= endIndex; i++)
+            {
+                if (i == beginIndex)
+                {
+                    begin = i;
+                    continue;
+                }
+                var last = arr[i - 1];
+                var curr = arr[i];
+                if (Math.Abs(curr - last) != 1)
+                {
+                    result.Add((begin, i - 1));
+                    begin = i;
+                }
+            }
+            result.Add((begin, endIndex));
+            return result;
         }
     }
 
@@ -494,12 +563,12 @@ namespace ConsoleApp1
             return value;
         }
 
-        public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this List<TItem> source)
+        public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this List<TItem> source, bool includeDuplicate = false)
         {
             for (var i = 0; i < source.Count(); i++)
             {
                 var item1 = source[i];
-                for (var j = i + 1; j < source.Count(); j++)
+                for (var j = i + (includeDuplicate ? 0 : 1); j < source.Count(); j++)
                 {
                     var item2 = source[j];
                     yield return (item1, item2);
@@ -507,17 +576,27 @@ namespace ConsoleApp1
             }
         }
 
-        public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this TItem[] source)
+        public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this TItem[] source, bool includeDuplicate = false)
         {
             for (var i = 0; i < source.Count(); i++)
             {
                 var item1 = source[i];
-                for (var j = i + 1; j < source.Count(); j++)
+                for (var j = i + (includeDuplicate ? 0 : 1); j < source.Count(); j++)
                 {
                     var item2 = source[j];
                     yield return (item1, item2);
                 }
             }
+        }
+
+        public static bool Empty<TSource>(this IEnumerable<TSource> source)
+        {
+            return !source.Any();
+        }
+
+        public static bool Empty<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
+        {
+            return !source.Any(predicate);
         }
     }
 
