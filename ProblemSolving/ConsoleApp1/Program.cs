@@ -22,18 +22,19 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2505";
+            var problemNumber = "3678";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var arr = IO.GetIntList().Select(x => x - 1).ToList();
-
-                var result = Solve(arr);
-                result.ForEach(diff => $"{diff.Begin + 1} {diff.End + 1}".Dump());
+                var T = IO.GetInt();
+                while (T-- > 0)
+                {
+                    var N = IO.GetInt();
+                    Solve(N).Dump();
+                }
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -49,115 +50,84 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static List<(int Begin, int End)> Solve(List<int> arr)
+        public static int Solve(int N)
         {
-            var diffs = FindDiff(arr);
-            var splited = diffs.SelectMany(diff => Split3(arr, diff.Begin, diff.End)).ToList();
-            var points = splited.SelectMany(x => new[] { x.Begin, x.End }).Distinct().ToList();
+            var COLORS = Enumerable.Range(1, 5).ToList();
 
-            foreach (var range1 in points.AllPairs(true))
+            var count = new int[6];
+            var cache = new Dictionary<Point, int>();
+
+            var n = N;
+            foreach (var p in GetPoints(N))
             {
-                var r1 = Reverse(arr, range1.Item1, range1.Item2);
+                var nearColors = GetNears(p)
+                    .Where(nearPoint => cache.ContainsKey(nearPoint))
+                    .Select(nearPoint => cache[nearPoint])
+                    .Distinct()
+                    .ToList();
 
-                var diffs2 = FindDiff(r1);
-                var splited2 = diffs2.SelectMany(diff => Split3(r1, diff.Begin, diff.End)).ToList();
-                var points2 = splited2.SelectMany(x => new[] { x.Begin, x.End }).Distinct().ToList();
+                var pick = COLORS
+                    .Where(color => !nearColors.Contains(color)) // 인접하지 않는 자원
+                    .OrderBy(color => count[color]) // 보드에 가장 적게 나타난 자원
+                    .ThenBy(color => color) // 번호가 작은 것
+                    .First();
 
-                foreach (var range2 in points2.AllPairs(true))
-                {
-                    var r2 = Reverse(r1, range2.Item1, range2.Item2);
-                    if (IsAllRight(r2))
-                    {
-                        return new() { range1, range2 };
-                    }
-                }
+                cache[p] = pick;
+                count[pick]++;
+
+                if (--n == 0)
+                    return pick;
             }
-
-            return new() { (0, 0), (1, 1) };
+            return 0;
         }
 
-        /// <summary> arr에서 begin ~ end 를 뒤집어서 새로운 list를 반환 </summary>
-        public static List<int> Reverse(List<int> arr, int begin, int end)
+        // 이거 한 사이클 돌면 육각형 한번 도는거
+        static List<(Point D, Func<int, int> GetCount)> ddd = new()
         {
-            return arr
-                .Select((num, i) =>
-                {
-                    if (i >= begin && i <= end)
-                    {
-                        var j = end - (i - begin);
-                        return arr[j];
-                    }
-                    else
-                    {
-                        return num;
-                    }
-                })
-                .ToList();
-        }
+            (new Point(1, 0), cycle => cycle), // 오른쪽
+            (new Point(0, 1), cycle => cycle - 1), // 위
+            (new Point(-1, 1), cycle => cycle), // 왼쪽 위
+            (new Point(-1, 0), cycle => cycle), // 왼쪽
+            (new Point(0, -1), cycle => cycle), // 아래
+            (new Point(1, -1), cycle => cycle), // 오른쪽 아래
+        };
 
-        public static bool IsAllRight(List<int> arr)
+        public static IEnumerable<Point> GetPoints(int N)
         {
-            var result = true;
-            arr.Count.For(i => result &= (arr[i] == i));
-            return result;
-        }
+            var returnCount = 1;
 
-        /// <summary> 배열에서 제자리에 있지 않은 자리들 목록 </summary>
-        public static List<(int Begin, int End)> FindDiff(List<int> arr)
-        {
-            var result = new List<(int, int)>();
-            var find = false;
-            var begin = 0;
-            arr.Count.For(i =>
+            var p = new Point(0, 0);
+            yield return p;
+
+            for (var i = 1; i < 10000; i++)
             {
-                if (arr[i] != i)
+                foreach (var ddItem in ddd)
                 {
-                    if (find == false)
+                    var loopCount = ddItem.GetCount(i);
+                    for (var j = 0; j < loopCount; j++)
                     {
-                        find = true;
-                        begin = i;
+                        p = p + ddItem.D;
+                        returnCount++;
+                        yield return p;
                     }
                 }
-                else // (arr[i] == i)
-                {
-                    if (find == true)
-                    {
-                        find = false;
-                        // end = i - 1;
-                        result.Add((begin, i - 1));
-                        begin = 0;
-                    }
-                }
-            });
-
-            if (find == true)
-            {
-                result.Add((begin, arr.Count - 1));
+                if (returnCount > N)
+                    yield break;
             }
-            return result;
         }
 
-        public static List<(int Begin, int End)> Split3(List<int> arr, int beginIndex, int endIndex)
+        static List<Point> dd = new()
         {
-            var result = new List<(int, int)>();
-            var begin = 0;
-            for (var i = beginIndex; i <= endIndex; i++)
-            {
-                if (i == beginIndex)
-                {
-                    begin = i;
-                    continue;
-                }
-                var last = arr[i - 1];
-                var curr = arr[i];
-                if (Math.Abs(curr - last) != 1)
-                {
-                    result.Add((begin, i - 1));
-                    begin = i;
-                }
-            }
-            result.Add((begin, endIndex));
-            return result;
+            new Point(1, 0),
+            new Point(0, 1),
+            new Point(-1, 1),
+            new Point(-1, 0),
+            new Point(0, -1),
+            new Point(1, -1),
+        };
+        public static IEnumerable<Point> GetNears(Point p)
+        {
+            return dd.Select(d => p + d);
         }
     }
 
@@ -898,6 +868,11 @@ namespace ConsoleApp1
         public static bool operator >=(Point a, Point b)
         {
             return !(a < b);
+        }
+
+        public static Point operator +(Point a, Point b)
+        {
+            return new Point(a.X + b.X, a.Y + b.Y);
         }
     }
 
