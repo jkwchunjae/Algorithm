@@ -22,22 +22,15 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2162";
+            var problemNumber = "1629";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var lines = N.MakeList(_ =>
-                {
-                    var arr = IO.GetIntList();
-                    var point1 = new Point(arr[0], arr[1]);
-                    var point2 = new Point(arr[2], arr[3]);
-                    return new Line { P1 = point1, P2 = point2, };
-                });
-                Solve(lines);
+                var (A, B, C) = IO.GetIntTuple3();
+                Solve(A, B, C).Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -53,32 +46,9 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static void Solve(List<Line> lines)
+        public static long Solve(long A, int B, long C)
         {
-            var group = new List<List<Line>>();
-            foreach (var line in lines)
-            {
-                var matched = group
-                    .Where(g => g.Any(line2 => Ex.IsIntersect(line2, line)))
-                    .ToList();
-
-                if (matched.Any())
-                {
-                    matched.First().Add(line);
-
-                    foreach (var m in matched.Skip(1))
-                    {
-                        matched.First().AddRange(m);
-                        group.Remove(m);
-                    }
-                }
-                else
-                {
-                    group.Add(new() { line });
-                }
-            }
-            group.Count.Dump();
-            group.Max(g => g.Count).Dump();
+            return A.Pow(B, 1, (a, b) => a * b % C);
         }
     }
 
