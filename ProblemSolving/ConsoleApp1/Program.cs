@@ -22,19 +22,16 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "3678";
+            var problemNumber = "2295";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var T = IO.GetInt();
-                while (T-- > 0)
-                {
-                    var N = IO.GetInt();
-                    Solve(N).Dump();
-                }
+                var N = IO.GetInt();
+                var arr = N.MakeList(_ => IO.GetInt());
+                Solve(arr).Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -50,84 +47,30 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static int Solve(int N)
+        public static int Solve(List<int> arr)
         {
-            var COLORS = Enumerable.Range(1, 5).ToList();
+            arr = arr.Distinct().OrderBy(x => x).ToList();
 
-            var count = new int[6];
-            var cache = new Dictionary<Point, int>();
+            var pairs = arr.AllPairs(true).ToList();
 
-            var n = N;
-            foreach (var p in GetPoints(N))
-            {
-                var nearColors = GetNears(p)
-                    .Where(nearPoint => cache.ContainsKey(nearPoint))
-                    .Select(nearPoint => cache[nearPoint])
-                    .Distinct()
-                    .ToList();
+            var sum2List = pairs
+                .Select(pair => new { Sum2 = pair.Item1 + pair.Item2, pair.Item1, pair.Item2 })
+                .ToList();
 
-                var pick = COLORS
-                    .Where(color => !nearColors.Contains(color)) // 인접하지 않는 자원
-                    .OrderBy(color => count[color]) // 보드에 가장 적게 나타난 자원
-                    .ThenBy(color => color) // 번호가 작은 것
-                    .First();
+            var sum3Dic = pairs
+                .Select(pair => new { Diff = pair.Item2 - pair.Item1, pair.Item1 })
+                .GroupBy(x => x.Diff)
+                .ToDictionary(x => x.Key, x => x.Max(e => e.Item1));
 
-                cache[p] = pick;
-                count[pick]++;
+            var list = sum2List
+                .Where(sum2 => sum3Dic.ContainsKey(sum2.Sum2))
+                .Select(sum2 => new { Sum3 = sum2.Sum2 + sum3Dic[sum2.Sum2], sum2.Item1, sum2.Item2, Item3 = sum3Dic[sum2.Sum2] })
+                .OrderByDescending(x => x.Sum3)
+                .ToList();
 
-                if (--n == 0)
-                    return pick;
-            }
-            return 0;
-        }
+            var result = list.First();
 
-        // 이거 한 사이클 돌면 육각형 한번 도는거
-        static List<(Point D, Func<int, int> GetCount)> ddd = new()
-        {
-            (new Point(1, 0), cycle => cycle), // 오른쪽
-            (new Point(0, 1), cycle => cycle - 1), // 위
-            (new Point(-1, 1), cycle => cycle), // 왼쪽 위
-            (new Point(-1, 0), cycle => cycle), // 왼쪽
-            (new Point(0, -1), cycle => cycle), // 아래
-            (new Point(1, -1), cycle => cycle), // 오른쪽 아래
-        };
-
-        public static IEnumerable<Point> GetPoints(int N)
-        {
-            var returnCount = 1;
-
-            var p = new Point(0, 0);
-            yield return p;
-
-            for (var i = 1; i < 10000; i++)
-            {
-                foreach (var ddItem in ddd)
-                {
-                    var loopCount = ddItem.GetCount(i);
-                    for (var j = 0; j < loopCount; j++)
-                    {
-                        p = p + ddItem.D;
-                        returnCount++;
-                        yield return p;
-                    }
-                }
-                if (returnCount > N)
-                    yield break;
-            }
-        }
-
-        static List<Point> dd = new()
-        {
-            new Point(1, 0),
-            new Point(0, 1),
-            new Point(-1, 1),
-            new Point(-1, 0),
-            new Point(0, -1),
-            new Point(1, -1),
-        };
-        public static IEnumerable<Point> GetNears(Point p)
-        {
-            return dd.Select(d => p + d);
+            return result.Sum3;
         }
     }
 
