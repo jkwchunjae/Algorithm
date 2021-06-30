@@ -22,7 +22,7 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2295";
+            var problemNumber = "2162";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
@@ -30,8 +30,14 @@ namespace ConsoleApp1
                 IO.SetInputOutput(inputOutput);
 #endif
                 var N = IO.GetInt();
-                var arr = N.MakeList(_ => IO.GetInt());
-                Solve(arr).Dump();
+                var lines = N.MakeList(_ =>
+                {
+                    var arr = IO.GetIntList();
+                    var point1 = new Point(arr[0], arr[1]);
+                    var point2 = new Point(arr[2], arr[3]);
+                    return new Line { P1 = point1, P2 = point2, };
+                });
+                Solve(lines);
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -47,30 +53,32 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static int Solve(List<int> arr)
+        public static void Solve(List<Line> lines)
         {
-            arr = arr.Distinct().OrderBy(x => x).ToList();
+            var group = new List<List<Line>>();
+            foreach (var line in lines)
+            {
+                var matched = group
+                    .Where(g => g.Any(line2 => Ex.IsIntersect(line2, line)))
+                    .ToList();
 
-            var pairs = arr.AllPairs(true).ToList();
+                if (matched.Any())
+                {
+                    matched.First().Add(line);
 
-            var sum2List = pairs
-                .Select(pair => new { Sum2 = pair.Item1 + pair.Item2, pair.Item1, pair.Item2 })
-                .ToList();
-
-            var sum3Dic = pairs
-                .Select(pair => new { Diff = pair.Item2 - pair.Item1, pair.Item1 })
-                .GroupBy(x => x.Diff)
-                .ToDictionary(x => x.Key, x => x.Max(e => e.Item1));
-
-            var list = sum2List
-                .Where(sum2 => sum3Dic.ContainsKey(sum2.Sum2))
-                .Select(sum2 => new { Sum3 = sum2.Sum2 + sum3Dic[sum2.Sum2], sum2.Item1, sum2.Item2, Item3 = sum3Dic[sum2.Sum2] })
-                .OrderByDescending(x => x.Sum3)
-                .ToList();
-
-            var result = list.First();
-
-            return result.Sum3;
+                    foreach (var m in matched.Skip(1))
+                    {
+                        matched.First().AddRange(m);
+                        group.Remove(m);
+                    }
+                }
+                else
+                {
+                    group.Add(new() { line });
+                }
+            }
+            group.Count.Dump();
+            group.Max(g => g.Count).Dump();
         }
     }
 
