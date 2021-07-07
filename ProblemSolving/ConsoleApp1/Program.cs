@@ -167,7 +167,7 @@ namespace ConsoleApp1
                 if (activeCells.Empty())
                     return;
 
-                var offset = 1;
+                var offset = 0;
                 while (true)
                 {
                     // 바닥에 닿으면 더 못간다.

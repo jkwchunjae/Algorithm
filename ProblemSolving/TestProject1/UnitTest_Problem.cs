@@ -294,6 +294,36 @@ namespace TestProject1
         }
 
         [Fact]
+        public void Test_Active조각을_바닥으로내린다3()
+        {
+            var input = new string[]
+            {
+                "  2 ",
+                "  2 ",
+                " 11 ",
+                "11  ",
+                " 11 ",
+                "11  ",
+            };
+            var expected = new string[]
+            {
+                "  1 ",
+                "  1 ",
+                " 11 ",
+                "11  ",
+                " 11 ",
+                "11  ",
+            };
+
+            var board = MakeBoard(input);
+            board.DropActivePiece();
+
+            var output = board.ToStr();
+
+            Assert.Equal(expected, output);
+        }
+
+        [Fact]
         public void Test_Simulation1()
         {
             var board = new TetrisBoard(4, 6);
@@ -510,6 +540,19 @@ namespace TestProject1
                 "11  ",
             };
             score += board.SetPiece(CellType.B, 1);
+            Assert.Equal(expected, board.ToStr());
+            Assert.Equal(0, score);
+
+            expected = new string[]
+            {
+                "    ",
+                "    ",
+                "  1 ",
+                "  1 ",
+                " 11 ",
+                "11  ",
+            };
+            score += board.SetPiece(CellType.C, 2);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
         }
