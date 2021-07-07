@@ -22,15 +22,16 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1629";
+            var problemNumber = "19235";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var (A, B, C) = IO.GetIntTuple3();
-                Solve(A, B, C).Dump();
+                var N = IO.GetInt();
+                var pieceList = N.MakeList(_ => IO.GetIntTuple3());
+                Solve(pieceList);
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -46,14 +47,307 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static long Solve(long A, int B, long C)
+        public static void Solve(List<(int t, int x, int y)> pieceList)
         {
-            return A.Pow(B, 1, (a, b) => a * b % C);
+            var board1 = new TetrisBoard(4, 6); // 왼쪽 테트리스 (새로)
+            var board2 = new TetrisBoard(4, 6); // 오른쪽 테트리스 (가로)
+
+            var score = 0;
+            pieceList.ForEach(piece =>
+            {
+                if (piece.t == 1)
+                {
+                    score += board1.SetPiece(CellType.A, piece.y);
+                    score += board2.SetPiece(CellType.A, 3 - piece.x);
+                }
+                else if (piece.t == 2)
+                {
+                    score += board1.SetPiece(CellType.B, piece.y);
+                    score += board2.SetPiece(CellType.C, 3 - piece.x);
+                }
+                else if (piece.t == 3)
+                {
+                    score += board1.SetPiece(CellType.C, piece.y);
+                    score += board2.SetPiece(CellType.B, 3 - (piece.x + 1));
+                }
+            });
+
+            var remain1 = board1.Cells.SelectMany(x => x).Count(x => x.IsFill);
+            var remain2 = board2.Cells.SelectMany(x => x).Count(x => x.IsFill);
+
+            score.Dump();
+            (remain1 + remain2).Dump();
         }
+    }
+
+    public class TetrisBoard
+    {
+        public List<List<Cell>> Cells { get; set; }
+        public int Rows => Cells.Count;
+        public int Columns => Cells.First().Count;
+
+        public TetrisBoard(int width, int height)
+        {
+            Cells = height.MakeList(row => width.MakeList(column => new Cell() { Row = row, Column = column }));
+        }
+
+        public int SetPiece(CellType cellType, int column)
+        {
+            var row = Cells.Count - 1;
+            switch (cellType)
+            {
+                case CellType.A:
+                    Cells[row][column].Status = CellStatus.Active;
+                    break;
+                case CellType.B:
+                    Cells[row][column].Status = CellStatus.Active;
+                    Cells[row][column + 1].Status = CellStatus.Active;
+                    break;
+                case CellType.C:
+                    Cells[row][column].Status = CellStatus.Active;
+                    Cells[row - 1][column].Status = CellStatus.Active;
+                    break;
+            }
+
+            var removeCount = 0;
+            while (true)
+            {
+                DropActivePiece();
+                var count = RemoveFullFillLine();
+                if (count == 0)
+                    break;
+                ChangeLevitationCellState();
+                removeCount += count;
+            }
+
+            // 문제의 특수한 경우 처리 5,6 번 째 행에 뭐 있으면 shift
+            ShiftCells();
+
+            return removeCount;
+        }
+
+        public void ShiftCells()
+        {
+            // 문제의 특수한 경우 처리 5,6 번 째 행에 뭐 있으면 shift
+            var shiftCount = 0;
+            if (Cells[5].Any(cell => cell.IsFill))
+            {
+                shiftCount = 2;
+            }
+            else if (Cells[4].Any(cell => cell.IsFill))
+            {
+                shiftCount = 1;
+            }
+            if (shiftCount > 0)
+            {
+                for (var row = 0; row < 4; row++)
+                {
+                    for (var column = 0; column < Columns; column++)
+                    {
+                        Cells[row][column].Status = Cells[row + shiftCount][column].Status;
+                    }
+                }
+                for (var row = 4; row < Rows; row++)
+                {
+                    for (var column = 0; column < Columns; column++)
+                    {
+                        Cells[row][column].Status = CellStatus.Empty;
+                    }
+                }
+            }
+        }
+
+        /// <summary> Active 한 조각들을 찾아서 그룹핑을 한 뒤 아래로 내린다.  </summary>
+        public void DropActivePiece()
+        {
+            while (true)
+            {
+                List<Cell> activeCells = FindActiveCells();
+
+                if (activeCells.Empty())
+                    return;
+
+                var offset = 1;
+                while (true)
+                {
+                    // 바닥에 닿으면 더 못간다.
+                    if (activeCells.Any(cell => cell.Row - offset == 0))
+                        break;
+
+                    // 아래 셀이 하나라도 차있으면 더 못간다.
+                    if (activeCells.Any(cell => Cells[cell.Row - offset - 1][cell.Column].IsFill))
+                        break;
+
+                    offset++;
+                }
+
+                // 더 이상 못 내려가는 상태. Fill 로 바꾼다.
+                var activePoints = activeCells.Select(cell => new Point(cell.Column, cell.Row)).ToList();
+                activeCells.ForEach(cell => cell.Status = CellStatus.Empty);
+                activePoints.ForEach(p => Cells[p.Y - offset][p.X].Status = CellStatus.Fill);
+            }
+        }
+
+        /// <summary> 지금 이 상태에서 꽉 찬 줄을 제거한다.  </summary>
+        public int RemoveFullFillLine(int beginRow = 0)
+        {
+            var fullCount = 0;
+            // 맨 아랫줄 부터 빈 칸 검사한다.
+            for (var row = beginRow; row < Rows; row++)
+            {
+                var rowCells = Cells[row];
+                if (rowCells.All(cell => cell.IsFill))
+                {
+                    // 한 줄이 꽉 찬 경우. 한 줄 씩 아래로 밀자.
+                    fullCount++;
+                    row--; // 밀었으니까 여기부터 다시
+                    var currRows = rowCells;
+                    while (true)
+                    {
+                        if (currRows.First().Row + 1 == Rows)
+                        {
+                            currRows.ForEach(cell => cell.Status = CellStatus.Empty);
+                            break;
+                        }
+                        else
+                        {
+                            var currRowsRow = currRows.First().Row;
+                            var nextRows = Cells[currRows.First().Row + 1];
+                            var currRowStr = currRows.ToStr();
+                            var nextRowStr = nextRows.ToStr();
+                            currRows.ForEach(cell => cell.Status = nextRows[cell.Column].Status);
+                            currRows = nextRows;
+                            if (currRows.All(cell => cell.IsEmpty))
+                                break;
+                        }
+                    }
+                }
+            }
+            return fullCount;
+        }
+
+        /// <summary> 공중에 떠있는 셀의 상태를 Active로 바꾼다.  </summary>
+        public void ChangeLevitationCellState()
+        {
+            List<Cell> groundCells = new();
+
+            while (true)
+            {
+                var groundCell = Cells.First().FirstOrDefault(x => x.IsFill && !groundCells.Any(gCell => gCell.Row == x.Row && gCell.Column == x.Column));
+
+                if (groundCell == null)
+                    break;
+
+                groundCells.AddRange(FindAdjacencyCells(groundCell));
+            }
+
+            Cells.SelectMany(row => row)
+                .Where(x => x.IsFill)
+                .Where(cell => !groundCells.Any(gCell => gCell.Row == cell.Row && gCell.Column == cell.Column))
+                .ForEach(cell =>
+                {
+                    cell.Status = CellStatus.Active;
+                });
+        }
+
+        public List<Cell> FindActiveCells()
+        {
+            var firstActiveCell = Cells.SelectMany(row => row)
+                .FirstOrDefault(x => x.Status == CellStatus.Active);
+
+            if (firstActiveCell == null)
+            {
+                return new();
+            }
+
+            var activeCells = FindAdjacencyCells(firstActiveCell);
+
+            return activeCells;
+        }
+
+        public List<Cell> FindAdjacencyCells(Cell beginCell)
+        {
+            List<Cell> cells = new();
+
+            Cells.ForEach(row => row.ForEach(cell => cell.Visited = false));
+            beginCell.Visited = true;
+            cells.Add(beginCell);
+            var dd = new List<Point>
+            {
+                new Point(-1, 0),
+                new Point(1, 0),
+                new Point(0, -1),
+                new Point(0, 1),
+            };
+
+            Queue<Cell> queue = new();
+            queue.Enqueue(beginCell);
+            while (queue.Any())
+            {
+                var cell = queue.Dequeue();
+                dd
+                    .Where(d => (cell.Row + d.Y).Between(0, Rows))
+                    .Where(d => (cell.Column + d.X).Between(0, Columns))
+                    .Select(d => Cells[cell.Row + d.Y][cell.Column + d.X])
+                    .Where(next => next.Status == cell.Status)
+                    .Where(next => !next.Visited)
+                    .ForEach(next =>
+                    {
+                        next.Visited = true;
+                        cells.Add(next);
+                        queue.Enqueue(next);
+                    });
+            }
+
+            return cells;
+        }
+
+        public string[] ToStr()
+        {
+            return Cells
+                .Select(cells => cells.ToStr())
+                .Reverse()
+                .ToArray();
+        }
+    }
+
+    public class Cell
+    {
+        public CellStatus Status { get; set; } = CellStatus.Empty;
+        public int Row { get; set; }
+        public int Column { get; set; }
+        public bool Visited { get; set; }
+
+        public bool IsEmpty => Status == CellStatus.Empty;
+        public bool IsActive => Status == CellStatus.Active;
+        public bool IsFill => Status == CellStatus.Fill;
+
+        public char Chr => Status == CellStatus.Active ? '2' : Status == CellStatus.Fill ? '1' : ' ';
+    }
+
+    public enum CellStatus
+    {
+        Empty,
+        Fill,
+        Active,
+    }
+
+    public enum CellType
+    {
+        /// <summary> ㅁ </summary>
+        A, // 1*1
+        /// <summary> ㅁㅁ </summary>
+        B, // 1*2
+        /// <summary> ㅁ\nㅁ </summary>
+        C, // 2*1
     }
 
     public static partial class Ex
     {
+        public static string ToStr(this List<Cell> cells)
+        {
+            return new string(cells.Select(c => c.Chr).ToArray());
+        }
     }
 
     public class IoInstance : IDisposable
@@ -742,6 +1036,11 @@ namespace ConsoleApp1
             return lcm;
         }
 
+        /// <summary> [a, b) 인지 판단한다.  </summary>
+        public static bool Between(this int value, int a, int b)
+        {
+            return value >= a && value < b;
+        }
     }
 
     public class Line
@@ -754,10 +1053,10 @@ namespace ConsoleApp1
 
     public record Point
     {
-        public long X;
-        public long Y;
+        public int X;
+        public int Y;
         public Point() { }
-        public Point(long x, long y)
+        public Point(int x, int y)
         {
             X = x;
             Y = y;
