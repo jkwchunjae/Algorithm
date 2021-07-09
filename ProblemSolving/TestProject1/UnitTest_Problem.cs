@@ -20,7 +20,7 @@ namespace TestProject1
             {
                 board.Columns.For(column =>
                 {
-                    board.Cells[row][column].Status = reversed[row][column] == '2' ? CellStatus.Active : reversed[row][column] == '1' ? CellStatus.Fill : CellStatus.Empty;
+                    board.Cells[row][column].Block = reversed[row][column] == ' ' ? 0 : (reversed[row][column] - '0');
                 });
             });
 
@@ -42,8 +42,8 @@ namespace TestProject1
             var expected = new string[]
             {
                 "     ",
-                "     ",
                 " 111 ",
+                "     ",
                 "   11",
                 " 111 ",
             };
@@ -71,10 +71,10 @@ namespace TestProject1
             var expected = new string[]
             {
                 "     ",
-                "     ",
-                "     ",
                 " 111 ",
+                "     ",
                 "   11",
+                "     ",
             };
 
             var board = MakeBoard(input);
@@ -99,11 +99,11 @@ namespace TestProject1
 
             var expected = new string[]
             {
-                "     ",
-                "     ",
                 "111  ",
                 "11   ",
+                "     ",
                 "   11",
+                "     ",
             };
 
             var board = MakeBoard(input);
@@ -129,12 +129,12 @@ namespace TestProject1
 
             var expected = new string[]
             {
-                "     ",
-                "     ",
-                "     ",
                 "111  ",
                 "11   ",
+                "     ",
+                "     ",
                 "   11",
+                "     ",
             };
 
             var board = MakeBoard(input);
@@ -164,103 +164,25 @@ namespace TestProject1
         }
 
         [Fact]
-        public void Test_공중에_떠있는조각_찾는다1()
-        {
-            var input = new string[]
-            {
-                "      11",
-                "111     ",
-                "11      ",
-                "   11 11",
-            };
-            var expected = new string[]
-            {
-                "      22",
-                "222     ",
-                "22      ",
-                "   11 11",
-            };
-
-            var board = MakeBoard(input);
-            board.ChangeLevitationCellState();
-
-            var output = board.ToStr();
-
-            Assert.Equal(expected, output);
-        }
-
-        [Fact]
-        public void Test_공중에_떠있는조각_찾는다2()
-        {
-            var input = new string[]
-            {
-                "     11",
-                "111  11",
-                "11   11",
-                "   11  ",
-            };
-            var expected = new string[]
-            {
-                "     22",
-                "222  22",
-                "22   22",
-                "   11  ",
-            };
-
-            var board = MakeBoard(input);
-            board.ChangeLevitationCellState();
-
-            var output = board.ToStr();
-
-            Assert.Equal(expected, output);
-        }
-
-        [Fact]
-        public void Test_공중에_떠있는조각_찾는다3()
-        {
-            var input = new string[]
-            {
-                "     11",
-                "111  11",
-                "11  111",
-                "   11  ",
-            };
-            var expected = new string[]
-            {
-                "     11",
-                "222  11",
-                "22  111",
-                "   11  ",
-            };
-
-            var board = MakeBoard(input);
-            board.ChangeLevitationCellState();
-
-            var output = board.ToStr();
-
-            Assert.Equal(expected, output);
-        }
-
-        [Fact]
         public void Test_Active조각을_바닥으로내린다1()
         {
             var input = new string[]
             {
-                "     11",
-                "222  11",
-                "22  111",
-                "   11  ",
+                "    ",
+                "    ",
+                "11  ",
+                "    ",
             };
             var expected = new string[]
             {
-                "     11",
-                "     11",
-                "111 111",
-                "11 11  ",
+                "    ",
+                "    ",
+                "    ",
+                "11  ",
             };
 
             var board = MakeBoard(input);
-            board.DropActivePiece();
+            board.DropLevitationBlock();
 
             var output = board.ToStr();
 
@@ -272,62 +194,63 @@ namespace TestProject1
         {
             var input = new string[]
             {
-                "      22",
-                "222     ",
-                "22      ",
-                "   11 11",
+                " 23 ",
+                " 23 ",
+                "11  ",
+                "    ",
             };
             var expected = new string[]
             {
-                "        ",
-                "        ",
-                "111   11",
-                "11 11 11",
+                "    ",
+                " 2  ",
+                " 23 ",
+                "113 ",
             };
 
             var board = MakeBoard(input);
-            board.DropActivePiece();
+            board.DropLevitationBlock();
 
             var output = board.ToStr();
 
             Assert.Equal(expected, output);
         }
 
-        [Fact]
-        public void Test_Active조각을_바닥으로내린다3()
-        {
-            var input = new string[]
-            {
-                "  2 ",
-                "  2 ",
-                " 11 ",
-                "11  ",
-                " 11 ",
-                "11  ",
-            };
-            var expected = new string[]
-            {
-                "  1 ",
-                "  1 ",
-                " 11 ",
-                "11  ",
-                " 11 ",
-                "11  ",
-            };
+        //[Fact]
+        //public void Test_Active조각을_바닥으로내린다3()
+        //{
+        //    var input = new string[]
+        //    {
+        //        "  2 ",
+        //        "  2 ",
+        //        " 11 ",
+        //        "11  ",
+        //        " 11 ",
+        //        "11  ",
+        //    };
+        //    var expected = new string[]
+        //    {
+        //        "  1 ",
+        //        "  1 ",
+        //        " 11 ",
+        //        "11  ",
+        //        " 11 ",
+        //        "11  ",
+        //    };
 
-            var board = MakeBoard(input);
-            board.DropActivePiece();
+        //    var board = MakeBoard(input);
+        //    board.DropActivePiece();
 
-            var output = board.ToStr();
+        //    var output = board.ToStr();
 
-            Assert.Equal(expected, output);
-        }
+        //    Assert.Equal(expected, output);
+        //}
 
         [Fact]
         public void Test_Simulation1()
         {
             var board = new TetrisBoard(4, 6);
             var score = 0;
+            var blockNumber = 1;
 
             var expected = new string[]
             {
@@ -338,7 +261,7 @@ namespace TestProject1
                 "    ",
                 " 1  ",
             };
-            score += board.SetPiece(CellType.A, 1);
+            score += board.SetPiece(CellType.A, 1, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -348,10 +271,10 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "11  ",
+                "22  ",
                 " 1  ",
             };
-            score += board.SetPiece(CellType.B, 0);
+            score += board.SetPiece(CellType.B, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -361,10 +284,10 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "111 ",
-                " 11 ",
+                "223 ",
+                " 13 ",
             };
-            score += board.SetPiece(CellType.C, 2);
+            score += board.SetPiece(CellType.C, 2, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -375,9 +298,9 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                " 111",
+                " 134",
             };
-            score += board.SetPiece(CellType.C, 3);
+            score += board.SetPiece(CellType.C, 3, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(1, score);
 
@@ -386,11 +309,11 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "   1",
-                "   1",
-                " 111",
+                "   5",
+                "   5",
+                " 134",
             };
-            score += board.SetPiece(CellType.C, 3);
+            score += board.SetPiece(CellType.C, 3, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(1, score);
 
@@ -399,11 +322,11 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "   1",
-                "11 1",
-                " 111",
+                "   5",
+                "66 5",
+                " 134",
             };
-            score += board.SetPiece(CellType.B, 0);
+            score += board.SetPiece(CellType.B, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(1, score);
 
@@ -411,12 +334,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                "1   ",
-                "1  1",
-                "11 1",
-                " 111",
+                "7   ",
+                "7  5",
+                "66 5",
+                " 134",
             };
-            score += board.SetPiece(CellType.C, 0);
+            score += board.SetPiece(CellType.C, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(1, score);
 
@@ -427,17 +350,19 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "1 11",
+                "7 85",
             };
-            score += board.SetPiece(CellType.C, 2);
+            score += board.SetPiece(CellType.C, 2, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(3, score);
         }
+
         [Fact]
         public void Test_Simulation2()
         {
             var board = new TetrisBoard(4, 6);
             var score = 0;
+            var blockNumber = 1;
 
             var expected = new string[]
             {
@@ -448,7 +373,7 @@ namespace TestProject1
                 "    ",
                 "  1 ",
             };
-            score += board.SetPiece(CellType.A, 2);
+            score += board.SetPiece(CellType.A, 2, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -458,10 +383,10 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "1   ",
-                "1 1 ",
+                "2   ",
+                "2 1 ",
             };
-            score += board.SetPiece(CellType.C, 0);
+            score += board.SetPiece(CellType.C, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -470,11 +395,11 @@ namespace TestProject1
                 "    ",
                 "    ",
                 "    ",
-                "11  ",
-                "1   ",
-                "1 1 ",
+                "33  ",
+                "2   ",
+                "2 1 ",
             };
-            score += board.SetPiece(CellType.B, 0);
+            score += board.SetPiece(CellType.B, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -482,12 +407,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                "11  ",
-                "11  ",
-                "1   ",
-                "1 1 ",
+                "44  ",
+                "33  ",
+                "2   ",
+                "2 1 ",
             };
-            score += board.SetPiece(CellType.B, 0);
+            score += board.SetPiece(CellType.B, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -495,12 +420,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                " 11 ",
-                "11  ",
-                "11  ",
-                "1   ",
+                " 55 ",
+                "44  ",
+                "33  ",
+                "2   ",
             };
-            score += board.SetPiece(CellType.B, 1);
+            score += board.SetPiece(CellType.B, 1, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -508,12 +433,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                " 11 ",
-                "11  ",
-                "11 1",
-                "1  1",
+                " 55 ",
+                "44  ",
+                "33 6",
+                "2  6",
             };
-            score += board.SetPiece(CellType.C, 3);
+            score += board.SetPiece(CellType.C, 3, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -521,12 +446,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                "11  ",
-                " 11 ",
-                "11  ",
-                "11 1",
+                "77  ",
+                " 55 ",
+                "44  ",
+                "33 6",
             };
-            score += board.SetPiece(CellType.B, 0);
+            score += board.SetPiece(CellType.B, 0, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -534,12 +459,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                " 11 ",
-                "11  ",
-                " 11 ",
-                "11  ",
+                " 88 ",
+                "77  ",
+                " 55 ",
+                "44  ",
             };
-            score += board.SetPiece(CellType.B, 1);
+            score += board.SetPiece(CellType.B, 1, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
 
@@ -547,12 +472,12 @@ namespace TestProject1
             {
                 "    ",
                 "    ",
-                "  1 ",
-                "  1 ",
-                " 11 ",
-                "11  ",
+                "  9 ",
+                "  9 ",
+                " 88 ",
+                "77  ",
             };
-            score += board.SetPiece(CellType.C, 2);
+            score += board.SetPiece(CellType.C, 2, blockNumber++);
             Assert.Equal(expected, board.ToStr());
             Assert.Equal(0, score);
         }
