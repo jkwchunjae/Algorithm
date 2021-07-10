@@ -22,7 +22,7 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "19235";
+            var problemNumber = "2415";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
@@ -30,8 +30,10 @@ namespace ConsoleApp1
                 IO.SetInputOutput(inputOutput);
 #endif
                 var N = IO.GetInt();
-                var pieceList = N.MakeList(_ => IO.GetIntTuple3());
-                Solve(pieceList);
+                var points= N.MakeList(_ => IO.GetIntTuple2())
+                    .Select(x => new Point(x.Item1, x.Item2))
+                    .ToList();
+                Solve(points).Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -47,247 +49,160 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static void Solve(List<(int t, int x, int y)> pieceList)
+        static Dictionary<Point, Dictionary<Slope, List<Point>>> _slopeInfo;
+        static HashSet<Point> _cache;
+
+        public static long Solve(List<Point> points)
         {
-            var board1 = new TetrisBoard(4, 6); // 왼쪽 테트리스 (새로)
-            var board2 = new TetrisBoard(4, 6); // 오른쪽 테트리스 (가로)
+            _cache = points.ToHashSet();
+            _slopeInfo = points.MakeSlopeInfo2();
 
-            var score = 0;
-            pieceList
-                .Select((piece, i) => new { Type = piece.t, X = piece.x, Y = piece.y, BlockNumber = i + 1 })
-                .ForEach(piece =>
+            var maximum = points.AllPairs()
+                .Select(pair => MaximumRectangleArea(pair.Item1, pair.Item2))
+                .Max();
+
+            return maximum;
+        }
+
+        /// <summary> p1, p2로 만들 수 있는 최대 직사각형 넓이 </summary>
+        public static long MaximumRectangleArea(Point p1, Point p2)
+        {
+            var slope = new Slope(p1, p2);
+            var slope2 = slope.수직Slope();
+
+            // p1 기준으로 p1-p2 선분과 수직인 점들을 구한다.
+            // 점을 찾으면 반대편에 점이 있는지 확인한다.
+
+            long maximum = 0;
+
+            var slopeInfo = _slopeInfo[p1];
+            if (slopeInfo.TryGetValue(slope2, out var points))
+            {
+                var line1 = new Line { P1 = p1, P2 = p2 };
+                foreach (var p3 in points)
                 {
-                    if (piece.Type == 1)
+                    var line2 = new Line { P1 = p1, P2 = p3 };
+                    // line1과 line2는 수직이고, p1을 공유한다.
+                    var p4 = new Point(p2.X + (p3.X - p1.X), p2.Y + (p3.Y - p1.Y));
+                    if (_cache.Contains(p4))
                     {
-                        score += board1.SetPiece(CellType.A, piece.Y, piece.BlockNumber);
-                        score += board2.SetPiece(CellType.A, 3 - piece.X, piece.BlockNumber);
+                        var s = CalcRectangleArea(line1, line2);
+                        maximum = Math.Max(maximum, s);
                     }
-                    else if (piece.Type == 2)
-                    {
-                        score += board1.SetPiece(CellType.B, piece.Y, piece.BlockNumber);
-                        score += board2.SetPiece(CellType.C, 3 - piece.X, piece.BlockNumber);
-                    }
-                    else if (piece.Type == 3)
-                    {
-                        score += board1.SetPiece(CellType.C, piece.Y, piece.BlockNumber);
-                        score += board2.SetPiece(CellType.B, 3 - (piece.X + 1), piece.BlockNumber);
-                    }
-                });
+                }
+            }
 
-            var remain1 = board1.Cells.SelectMany(x => x).Count(x => x.IsFill);
-            var remain2 = board2.Cells.SelectMany(x => x).Count(x => x.IsFill);
+            return maximum;
+        }
 
-            score.Dump();
-            (remain1 + remain2).Dump();
+        /// <summary> 가로 line1, 세로 line2일 때 직사각형 넓이 </summary>
+        public static long CalcRectangleArea(Line line1, Line line2)
+        {
+            if (line1.IsVertical && line2.IsHorizontal)
+            {
+                var len1 = Math.Abs(line1.P1.Y - line1.P2.Y);
+                var len2 = Math.Abs(line2.P1.X - line2.P2.X);
+                return len1 * len2;
+            }
+            else if (line1.IsHorizontal && line2.IsVertical)
+            {
+                var len1 = Math.Abs(line1.P1.X - line1.P2.X);
+                var len2 = Math.Abs(line2.P1.Y - line2.P2.Y);
+                return len1 * len2;
+            }
+            else
+            {
+                var x1 = Math.Abs(line1.P1.X - line1.P2.X);
+                var x2 = Math.Abs(line2.P1.X - line2.P2.X);
+                var y1 = Math.Abs(line1.P1.Y - line1.P2.Y);
+                var y2 = Math.Abs(line2.P1.Y - line2.P2.Y);
+
+                var large = (x1 + x2) * (y1 + y2);
+                return large - (x1 * y1) - (x2 * y2);
+            }
         }
     }
 
-    public class TetrisBoard
+    public record Slope
     {
-        public List<List<Cell>> Cells { get; set; }
-        public IEnumerable<Cell> AllCells => Cells.SelectMany(row => row);
-        public int Rows => Cells.Count;
-        public int Columns => Cells.First().Count;
+        private bool IsPositive;
+        private long A; // 분자
+        private long B; // 분모
 
-        public TetrisBoard(int width, int height)
+        public bool IsVertical => IsPositive && A == 0 && B == 1;
+        public bool IsHorizontal => IsPositive && A == 1 && B == 0;
+
+        public Slope() { }
+
+        public Slope(Point p1, Point p2)
         {
-            Cells = height.MakeList(row => width.MakeList(column => new Cell() { Row = row, Column = column }));
+            A = p1.Y - p2.Y;
+            B = p1.X - p2.X;
+
+            Normalize();
         }
 
-        public int SetPiece(CellType cellType, int column, int blockNumber)
+        private void Normalize()
         {
-            var row = Cells.Count - 1;
-            switch (cellType)
+            if (A == 0) // 가로선
             {
-                case CellType.A:
-                    Cells[row][column].Block = blockNumber;
-                    break;
-                case CellType.B:
-                    Cells[row][column].Block = blockNumber;
-                    Cells[row][column + 1].Block = blockNumber;
-                    break;
-                case CellType.C:
-                    Cells[row][column].Block = blockNumber;
-                    Cells[row - 1][column].Block = blockNumber;
-                    break;
+                IsPositive = true;
+                B = 1;
             }
-
-            var dropCell = Cells[row][column];
-
-            var removeCount = 0;
-            while (true)
+            else if (B == 0) // 세로선
             {
-                DropLevitateCell(dropCell);
-                var count = RemoveFullFillLine();
-                if (count == 0)
-                    break;
-                DropLevitationBlock();
-                removeCount += count;
+                IsPositive = true;
+                A = 1;
             }
-
-            // 문제의 특수한 경우 처리 5,6 번 째 행에 뭐 있으면 shift
-            ShiftCells();
-
-            return removeCount;
-        }
-
-        public void ShiftCells()
-        {
-            // 문제의 특수한 경우 처리 5,6 번 째 행에 뭐 있으면 shift
-            var shiftCount = 0;
-            if (Cells[5].Any(cell => cell.IsFill))
+            else
             {
-                shiftCount = 2;
-            }
-            else if (Cells[4].Any(cell => cell.IsFill))
-            {
-                shiftCount = 1;
-            }
-            if (shiftCount > 0)
-            {
-                for (var row = 0; row < 4; row++)
-                {
-                    for (var column = 0; column < Columns; column++)
-                    {
-                        Cells[row][column].Block = Cells[row + shiftCount][column].Block;
-                    }
-                }
-                for (var row = 4; row < Rows; row++)
-                {
-                    for (var column = 0; column < Columns; column++)
-                    {
-                        Cells[row][column].Block = 0;
-                    }
-                }
+                IsPositive = (A > 0) == (B > 0);
+                A = Math.Abs(A);
+                B = Math.Abs(B);
+                var gcd = MathEx.Gcd(A, B);
+                A /= gcd;
+                B /= gcd;
             }
         }
 
-        public int RemoveFullFillLine()
+        public Slope 수직Slope()
         {
-            var removeCount = 0;
-            for (var row = 0; row < Rows; row++)
+            return new Slope
             {
-                if (Cells[row].All(cell => cell.IsFill))
-                {
-                    Cells[row].ForEach(cell => cell.Block = 0);
-                    removeCount++;
-                }
-            }
-
-            return removeCount;
+                IsPositive = IsVertical || IsHorizontal ? true : !IsPositive,
+                A = B,
+                B = A,
+            };
         }
-
-        /// <summary> 붕 떠있는 블럭을 아래로 내린다. </summary>
-        public void DropLevitationBlock()
-        {
-            var checkBlocks = new List<int>();
-
-            Rows.For(row => Columns.For(column =>
-            {
-                var cell = Cells[row][column];
-                if (cell.IsFill && !checkBlocks.Contains(cell.Block))
-                {
-                    DropLevitateCell(cell);
-                    checkBlocks.Add(cell.Block);
-                }
-            }));
-        }
-
-        public void DropLevitateCell(Cell beginCell)
-        {
-            var cells = FindAdjacencyCells(beginCell);
-
-            var offset = 0;
-            while (true)
-            {
-                if (cells.Any(cell => cell.Row - offset == 0))
-                    break;
-
-                var nexts = cells.Select(cell => Cells[cell.Row - offset - 1][cell.Column]).ToList();
-                if (nexts.All(next => next.IsEmpty || next.Block == beginCell.Block))
-                {
-                    offset++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            if (offset > 0)
-            {
-                cells.ForEach(cell =>
-                {
-                    Cells[cell.Row - offset][cell.Column].Block = cell.Block;
-                    cell.Block = 0;
-                });
-            }
-        }
-
-        static List<Point> dd = new()
-        {
-            new Point(-1, 0),
-            new Point(1, 0),
-            new Point(0, -1),
-            new Point(0, 1),
-        };
-        public List<Cell> FindAdjacencyCells(Cell beginCell)
-        {
-            var cell = beginCell;
-            var friends = dd
-                .Where(d => (cell.Row + d.Y).Between(0, Rows))
-                .Where(d => (cell.Column + d.X).Between(0, Columns))
-                .Select(d => Cells[cell.Row + d.Y][cell.Column + d.X])
-                .Where(next => next.Block == cell.Block)
-                .ToList();
-
-            friends.Add(cell);
-            return friends.OrderBy(x => x.Row).ToList();
-        }
-
-        public string[] ToStr()
-        {
-            return Cells
-                .Select(cells => cells.ToStr())
-                .Reverse()
-                .ToArray();
-        }
-    }
-
-    public class Cell
-    {
-        public int Block; // 블럭의 종류
-        public CellStatus Status => Block == 0 ? CellStatus.Empty : CellStatus.Fill;
-        public int Row;
-        public int Column;
-
-        public bool IsEmpty => Status == CellStatus.Empty;
-        public bool IsFill => Status == CellStatus.Fill;
-
-        public char Chr => Status == CellStatus.Empty ? ' ' : Block.ToString()[0];
-    }
-
-    public enum CellStatus
-    {
-        Empty,
-        Fill,
-    }
-
-    public enum CellType
-    {
-        /// <summary> ㅁ </summary>
-        A, // 1*1
-        /// <summary> ㅁㅁ </summary>
-        B, // 1*2
-        /// <summary> ㅁ\nㅁ </summary>
-        C, // 2*1
     }
 
     public static partial class Ex
     {
-        public static string ToStr(this List<Cell> cells)
+        public static Dictionary<Slope, List<(Point, Point)>> MakeSlopeInfo(this List<Point> points)
         {
-            return new string(cells.Select(c => c.Chr).ToArray());
+            var slopeList = points.AllPairs()
+                .GroupBy(x => new Slope(x.Item1, x.Item2))
+                .ToDictionary(x => x.Key, x => x.Select(e => (P1: e.Item1, P2: e.Item2)).ToList());
+            return slopeList;
+        }
+
+        public static Dictionary<Point, Dictionary<Slope, List<Point>>> MakeSlopeInfo2(this List<Point> points)
+        {
+            var info1 = points.AllPairs()
+                .Select(x => new { P1 = x.Item1, P2 = x.Item2, Slope = new Slope(x.Item1, x.Item2) })
+                .ToList();
+
+            var info2 = info1
+                .Select(x => new { P1 = x.P2, P2 = x.P1, x.Slope })
+                .ToList();
+
+            var info = info1.Concat(info2)
+                .GroupBy(x => x.P1)
+                .ToDictionary(x => x.Key, x => x
+                    .GroupBy(e => e.Slope)
+                    .ToDictionary(e => e.Key, e => e.Select(t => t.P2).ToList()));
+
+            return info;
         }
     }
 
@@ -989,7 +904,8 @@ namespace ConsoleApp1
         public Point P1;
         public Point P2;
 
-        public long Length => Math.Abs(P1.X - P2.X) + Math.Abs(P1.Y - P2.Y);
+        public bool IsVertical => P1.X == P2.X;
+        public bool IsHorizontal => P1.Y == P2.Y;
     }
 
     public record Point
