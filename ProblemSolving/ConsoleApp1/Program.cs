@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 #if DEBUG // delete
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using WinFormsLibrary1;
 using System.Diagnostics;
@@ -22,18 +22,20 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2415";
+            var problemNumber = "2757";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var points= N.MakeList(_ => IO.GetIntTuple2())
-                    .Select(x => new Point(x.Item1, x.Item2))
-                    .ToList();
-                Solve(points).Dump();
+                while (true)
+                {
+                    var rcAddress = IO.GetString();
+                    if (rcAddress == "R0C0")
+                        break;
+                    Solve(rcAddress).Dump();
+                }
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -49,161 +51,67 @@ namespace ConsoleApp1
             return 0;
         }
 
-        static Dictionary<Point, Dictionary<Slope, List<Point>>> _slopeInfo;
-        static HashSet<Point> _cache;
-
-        public static long Solve(List<Point> points)
+        public static string Solve(string rcAddress)
         {
-            _cache = points.ToHashSet();
-            _slopeInfo = points.MakeSlopeInfo2();
+            var pattern = @"R(\d+)C(\d+)";
+            var match = Regex.Match(rcAddress, pattern);
+            if (match.Success)
+            {
+                var row = match.Groups[1].Value.ToInt();
+                var column = match.Groups[2].Value.ToInt();
 
-            var maximum = points.AllPairs()
-                .Select(pair => MaximumRectangleArea(pair.Item1, pair.Item2))
-                .Max();
+                var columnText = ConvertColumnNumToStr(column);
 
-            return maximum;
+                return $"{columnText}{row}";
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
 
-        /// <summary> p1, p2로 만들 수 있는 최대 직사각형 넓이 </summary>
-        public static long MaximumRectangleArea(Point p1, Point p2)
+        public static string ConvertColumnNumToStr(int column)
         {
-            var slope = new Slope(p1, p2);
-            var slope2 = slope.수직Slope();
-
-            // p1 기준으로 p1-p2 선분과 수직인 점들을 구한다.
-            // 점을 찾으면 반대편에 점이 있는지 확인한다.
-
-            long maximum = 0;
-
-            var slopeInfo = _slopeInfo[p1];
-            if (slopeInfo.TryGetValue(slope2, out var points))
+            column--;
+            var limit = 26L;
+            for (var length = 1; length < 10; length++)
             {
-                var line1 = new Line { P1 = p1, P2 = p2 };
-                foreach (var p3 in points)
+                if (column < limit)
                 {
-                    var line2 = new Line { P1 = p1, P2 = p3 };
-                    // line1과 line2는 수직이고, p1을 공유한다.
-                    var p4 = new Point(p2.X + (p3.X - p1.X), p2.Y + (p3.Y - p1.Y));
-                    if (_cache.Contains(p4))
+                    var result = new List<char>();
+                    for (var i = 0; i < length; i++)
                     {
-                        var s = CalcRectangleArea(line1, line2);
-                        maximum = Math.Max(maximum, s);
+                        result.Add((char)(column % 26 + 'A'));
+                        column /= 26;
                     }
+                    result.Reverse();
+                    return new string(result.ToArray());
+                }
+                else
+                {
+                    column -= (int)limit;
+                    limit *= 26;
                 }
             }
-
-            return maximum;
+            return "";
         }
 
-        /// <summary> 가로 line1, 세로 line2일 때 직사각형 넓이 </summary>
-        public static long CalcRectangleArea(Line line1, Line line2)
+        public static int ConvertColumnStrToNum(string columnStr)
         {
-            if (line1.IsVertical && line2.IsHorizontal)
-            {
-                var len1 = Math.Abs(line1.P1.Y - line1.P2.Y);
-                var len2 = Math.Abs(line2.P1.X - line2.P2.X);
-                return len1 * len2;
-            }
-            else if (line1.IsHorizontal && line2.IsVertical)
-            {
-                var len1 = Math.Abs(line1.P1.X - line1.P2.X);
-                var len2 = Math.Abs(line2.P1.Y - line2.P2.Y);
-                return len1 * len2;
-            }
-            else
-            {
-                var x1 = Math.Abs(line1.P1.X - line1.P2.X);
-                var x2 = Math.Abs(line2.P1.X - line2.P2.X);
-                var y1 = Math.Abs(line1.P1.Y - line1.P2.Y);
-                var y2 = Math.Abs(line2.P1.Y - line2.P2.Y);
+            var result = Enumerable.Range(1, columnStr.Length - 1)
+                .Sum(i => (int)Math.Pow(26, i));
 
-                var large = (x1 + x2) * (y1 + y2);
-                return large - (x1 * y1) - (x2 * y2);
-            }
+            result += columnStr.ToUpper().Reverse()
+                .Select((chr, i) => new { Chr = chr, Index = i })
+                .Sum(x => (x.Chr - 'A') * (int)Math.Pow(26, x.Index));
+
+            return result + 1;
         }
     }
 
-    public record Slope
-    {
-        private bool IsPositive;
-        private long A; // 분자
-        private long B; // 분모
-
-        public bool IsVertical => IsPositive && A == 0 && B == 1;
-        public bool IsHorizontal => IsPositive && A == 1 && B == 0;
-
-        public Slope() { }
-
-        public Slope(Point p1, Point p2)
-        {
-            A = p1.Y - p2.Y;
-            B = p1.X - p2.X;
-
-            Normalize();
-        }
-
-        private void Normalize()
-        {
-            if (A == 0) // 가로선
-            {
-                IsPositive = true;
-                B = 1;
-            }
-            else if (B == 0) // 세로선
-            {
-                IsPositive = true;
-                A = 1;
-            }
-            else
-            {
-                IsPositive = (A > 0) == (B > 0);
-                A = Math.Abs(A);
-                B = Math.Abs(B);
-                var gcd = MathEx.Gcd(A, B);
-                A /= gcd;
-                B /= gcd;
-            }
-        }
-
-        public Slope 수직Slope()
-        {
-            return new Slope
-            {
-                IsPositive = IsVertical || IsHorizontal ? true : !IsPositive,
-                A = B,
-                B = A,
-            };
-        }
-    }
 
     public static partial class Ex
     {
-        public static Dictionary<Slope, List<(Point, Point)>> MakeSlopeInfo(this List<Point> points)
-        {
-            var slopeList = points.AllPairs()
-                .GroupBy(x => new Slope(x.Item1, x.Item2))
-                .ToDictionary(x => x.Key, x => x.Select(e => (P1: e.Item1, P2: e.Item2)).ToList());
-            return slopeList;
-        }
-
-        public static Dictionary<Point, Dictionary<Slope, List<Point>>> MakeSlopeInfo2(this List<Point> points)
-        {
-            var info1 = points.AllPairs()
-                .Select(x => new { P1 = x.Item1, P2 = x.Item2, Slope = new Slope(x.Item1, x.Item2) })
-                .ToList();
-
-            var info2 = info1
-                .Select(x => new { P1 = x.P2, P2 = x.P1, x.Slope })
-                .ToList();
-
-            var info = info1.Concat(info2)
-                .GroupBy(x => x.P1)
-                .ToDictionary(x => x.Key, x => x
-                    .GroupBy(e => e.Slope)
-                    .ToDictionary(e => e.Key, e => e.Select(t => t.P2).ToList()));
-
-            return info;
-        }
     }
 
     public class IoInstance : IDisposable
