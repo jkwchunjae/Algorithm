@@ -72,6 +72,7 @@ namespace ConsoleApp1
 
         public static string ConvertColumnNumToStr(int column)
         {
+            return ColumnNumberToName(column);
             column--;
             var limit = 26L;
             for (var length = 1; length < 10; length++)
@@ -95,6 +96,24 @@ namespace ConsoleApp1
             }
             return "";
         }
+
+        public static string ColumnNumberToName(int columnNumber, string result = null)
+        {
+            // https://www.acmicpc.net/source/23785600 paraworld
+            columnNumber--;
+            result = result != null ? result : string.Empty;
+            result = result.Insert(0, new string(new[] { (char)(columnNumber % 26 + 'A') }));
+
+            if (columnNumber < 26)
+            {
+                return result;
+            }
+            else
+            {
+                return ColumnNumberToName(columnNumber / 26, result);
+            }
+        }
+
 
         public static int ConvertColumnStrToNum(string columnStr)
         {
