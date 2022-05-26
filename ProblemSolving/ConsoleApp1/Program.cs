@@ -22,20 +22,20 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2757";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
+            var problemNumber = "5615";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                while (true)
-                {
-                    var rcAddress = IO.GetString();
-                    if (rcAddress == "R0C0")
-                        break;
-                    Solve(rcAddress).Dump();
-                }
+                var N = IO.GetInt();
+                var list = Enumerable.Range(0, N)
+                    .Select(_ => IO.GetLong())
+                    .ToList();
+
+                var impossible = Solve(list);
+                impossible.Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -51,80 +51,84 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static string Solve(string rcAddress)
+        static int Solve(List<long> list)
         {
-            var pattern = @"R(\d+)C(\d+)";
-            var match = Regex.Match(rcAddress, pattern);
-            if (match.Success)
-            {
-                var row = match.Groups[1].Value.ToInt();
-                var column = match.Groups[2].Value.ToInt();
-
-                var columnText = ConvertColumnNumToStr(column);
-
-                return $"{columnText}{row}";
-            }
-            else
-            {
-                return string.Empty;
-            }
+            MakePrimes();
+            return list.Count(size => !Possible(size));
         }
 
-        public static string ConvertColumnNumToStr(int column)
+        static bool Possible(long size)
         {
-            return ColumnNumberToName(column);
-            column--;
-            var limit = 26L;
-            for (var length = 1; length < 10; length++)
+            if (size < 4)
+                return false;
+
+            foreach (var prime in primes)
             {
-                if (column < limit)
+                var first = GetFirst(prime);
+                var center = GetCenter(prime);
+
+                if ((size - first) % prime == 0)
                 {
-                    var result = new List<char>();
-                    for (var i = 0; i < length; i++)
-                    {
-                        result.Add((char)(column % 26 + 'A'));
-                        column /= 26;
-                    }
-                    result.Reverse();
-                    return new string(result.ToArray());
+                    $"{size} {prime} {first} {center}".Dump();
+                    return true;
                 }
-                else
+
+                if (center > size)
+                    break;
+            }
+            return false;
+        }
+
+        static long GetIndex(long prime)
+        {
+            return (prime - 1) / 2;
+        }
+
+        static long GetFirst(long prime)
+        {
+            var index = GetIndex(prime);
+            return index * 3 + 1;
+        }
+
+        static long GetCenter(long prime)
+        {
+            var index = GetIndex(prime);
+            var start = GetFirst(prime);
+            return start + prime * (index - 1);
+        }
+
+        static List<long> primes = new();
+        static List<long> MakePrimes()
+        {
+            var p = 1;
+            while (p < 100000)
+            {
+                p += 2;
+                if (IsPrime(p))
                 {
-                    column -= (int)limit;
-                    limit *= 26;
+                    primes.Add(p);
                 }
+                var center = GetCenter(p);
+
+                if (center > int.MaxValue)
+                    break;
             }
-            return "";
-        }
 
-        public static string ColumnNumberToName(int columnNumber, string result = null)
-        {
-            // https://www.acmicpc.net/source/23785600 paraworld
-            columnNumber--;
-            result = result != null ? result : string.Empty;
-            result = result.Insert(0, new string(new[] { (char)(columnNumber % 26 + 'A') }));
+            return primes;
 
-            if (columnNumber < 26)
+            bool IsPrime(long n)
             {
-                return result;
+                foreach (var prime in primes)
+                {
+                    if (n % prime == 0)
+                        return false;
+
+                    if (prime * prime >= n)
+                        return true;
+
+                }
+                return true;
             }
-            else
-            {
-                return ColumnNumberToName(columnNumber / 26, result);
-            }
-        }
-
-
-        public static int ConvertColumnStrToNum(string columnStr)
-        {
-            var result = Enumerable.Range(1, columnStr.Length - 1)
-                .Sum(i => (int)Math.Pow(26, i));
-
-            result += columnStr.ToUpper().Reverse()
-                .Select((chr, i) => new { Chr = chr, Index = i })
-                .Sum(x => (x.Chr - 'A') * (int)Math.Pow(26, x.Index));
-
-            return result + 1;
         }
     }
 
