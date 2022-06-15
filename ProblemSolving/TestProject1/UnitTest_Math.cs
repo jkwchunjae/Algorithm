@@ -116,5 +116,24 @@ namespace TestProject1
             Assert.Equal(d, m[1][1]);
         }
 
+        [Theory]
+        [InlineData(0, 0)]
+        [InlineData(1, 1)]
+        [InlineData(2, 1)]
+        [InlineData(3, 1)]
+        [InlineData(4, 2)]
+        [InlineData(5, 2)]
+        [InlineData(8, 2)]
+        [InlineData(9, 3)]
+        [InlineData(15, 3)]
+        [InlineData(16, 4)]
+        [InlineData(24, 4)]
+        [InlineData(25, 5)]
+        [InlineData(long.MaxValue, 3037000499)]
+        public void Test_LongSqrt(long value, long expectedSqrt)
+        {
+            var sqrt = MathEx.Sqrt(value);
+            Assert.Equal(expectedSqrt, sqrt);
+        }
     }
 }

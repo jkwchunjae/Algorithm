@@ -22,20 +22,17 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "5615";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
+            var problemNumber = "16133";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var list = Enumerable.Range(0, N)
-                    .Select(_ => IO.GetLong())
-                    .ToList();
+                var input = IO.GetLine();
 
-                var impossible = Solve(list);
-                impossible.Dump();
+                var result = Solve(input);
+                result.Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -51,87 +48,323 @@ namespace ConsoleApp1
             return 0;
         }
 
-        static int Solve(List<long> list)
+        static long Solve(string inputText)
         {
-            MakePrimes();
-            return list.Count(size => !Possible(size));
+            var tokens = new Tokens(inputText);
+            ICalculator input = new Input(tokens);
+            var result = input.Calculate();
+
+            return result;
+        }
+    }
+
+    public class Tokens : List<char>
+    {
+        public int Index;
+        public char Current => this[Index];
+        public char Next => this[Index + 1];
+
+        public Tokens(string tokens)
+        {
+            AddRange(tokens);
+            Index = 0;
         }
 
-        static bool Possible(long size)
+        public char GetCurrent()
         {
-            if (size < 4)
-                return false;
+            var curr = Current;
+            Index++;
+            return curr;
+        }
+    }
 
-            foreach (var prime in primes)
+    public interface ICalculator
+    {
+        long Calculate();
+    }
+
+    public class Input : ICalculator
+    {
+        private Expr _expr;
+        public Input(Tokens tokens)
+        {
+            _expr = new Expr(tokens);
+            var equal = tokens.GetCurrent(); // "="
+        }
+
+        public long Calculate()
+        {
+            return _expr.Calculate();
+        }
+    }
+
+    public class Expr : ICalculator
+    {
+        private Term _term;
+        private char _operator = default;
+        private Expr _expr = null;
+        public Expr(Tokens tokens)
+        {
+            _term = new Term(tokens);
+            if (tokens.Current == '+' || tokens.Current == '-')
             {
-                var first = GetFirst(prime);
-                var center = GetCenter(prime);
-
-                if ((size - first) % prime == 0)
-                {
-                    $"{size} {prime} {first} {center}".Dump();
-                    return true;
-                }
-
-                if (center > size)
-                    break;
+                _operator = tokens.GetCurrent();
+                _expr = new Expr(tokens);
             }
-            return false;
         }
 
-        static long GetIndex(long prime)
+        public long Calculate()
         {
-            return (prime - 1) / 2;
-        }
-
-        static long GetFirst(long prime)
-        {
-            var index = GetIndex(prime);
-            return index * 3 + 1;
-        }
-
-        static long GetCenter(long prime)
-        {
-            var index = GetIndex(prime);
-            var start = GetFirst(prime);
-            return start + prime * (index - 1);
-        }
-
-        static List<long> primes = new();
-        static List<long> MakePrimes()
-        {
-            var p = 1;
-            while (p < 100000)
+            long left = _term.Calculate();
+            if (_operator == default)
             {
-                p += 2;
-                if (IsPrime(p))
-                {
-                    primes.Add(p);
-                }
-                var center = GetCenter(p);
-
-                if (center > int.MaxValue)
-                    break;
+                return left;
             }
-
-            return primes;
-
-            bool IsPrime(long n)
+            else
             {
-                foreach (var prime in primes)
-                {
-                    if (n % prime == 0)
-                        return false;
+                return _expr.CalcExpr(left, _operator);
+            }
+        }
 
-                    if (prime * prime >= n)
-                        return true;
-
-                }
-                return true;
+        public long CalcExpr(long prevLeft, char op)
+        {
+            var left = _term.Calculate();
+            var newLeft = op == '+' ? prevLeft + left : prevLeft - left;
+            if (_operator == default)
+            {
+                return newLeft;
+            }
+            else
+            {
+                return _expr.CalcExpr(newLeft, _operator);
             }
         }
     }
 
+    public class Term : ICalculator
+    {
+        private Factor _factor;
+        private char _operator = default;
+        private Term _term = null;
+        public Term(Tokens tokens)
+        {
+            _factor = new Factor(tokens);
+            if (tokens.Current == '*' || tokens.Current == '/')
+            {
+                _operator = tokens.GetCurrent();
+                _term = new Term(tokens);
+            }
+        }
+
+        public long Calculate()
+        {
+            long left = _factor.Calculate();
+            if (_operator == default)
+            {
+                return left;
+            }
+            else
+            {
+                return _term.CalcTerm(left, _operator);
+            }
+        }
+
+        public long CalcTerm(long prevLeft, char op)
+        {
+            var left = _factor.Calculate();
+            var newLeft = op == '*' ? prevLeft * left : prevLeft / left;
+            if (_operator == default)
+            {
+                return newLeft;
+            }
+            else
+            {
+                return _term.CalcTerm(newLeft, _operator);
+            }
+
+        }
+    }
+
+    public class Factor : ICalculator
+    {
+        private Power _power;
+        private char _operator = default;
+        private Factor _factor;
+        public Factor(Tokens tokens)
+        {
+            _power = new Power(tokens);
+            if (tokens.Current == '^')
+            {
+                _operator = tokens.GetCurrent();
+                _factor = new Factor(tokens);
+            }
+        }
+
+        public long Calculate()
+        {
+            long basee = _power.Calculate();
+            if (_operator != default)
+            {
+                long aaa = _factor.Calculate();
+                return basee.Pow((int)aaa);
+            }
+            return basee;
+        }
+    }
+
+    public class Power : ICalculator
+    {
+        private char _operator = default;
+        private Power _power;
+        private Root _root;
+        public Power(Tokens tokens)
+        {
+            if (tokens.Current == '#')
+            {
+                _operator = tokens.GetCurrent();
+                _power = new Power(tokens);
+            }
+            else
+            {
+                _root = new Root(tokens);
+            }
+        }
+
+        public long Calculate()
+        {
+            if (_operator != default)
+            {
+                long value = _power.Calculate();
+                return MathEx.Sqrt(value);
+            }
+            else
+            {
+                return _root.Calculate();
+            }
+        }
+    }
+
+    public class Root : ICalculator
+    {
+        private Num _num;
+        private Expr _expr;
+        public Root(Tokens tokens)
+        {
+            if (tokens.Current == '(')
+            {
+                tokens.GetCurrent(); // "("
+                _expr = new Expr(tokens);
+                tokens.GetCurrent(); // ")"
+            }
+            else
+            {
+                _num = new Num(tokens);
+            }
+        }
+
+        public long Calculate()
+        {
+            return _num?.Calculate() ?? _expr.Calculate();
+        }
+    }
+
+    public class Num : ICalculator
+    {
+        private char _zero = default;
+        private NonZero _nonZero;
+        private List<Digit> _digits = new();
+        public Num(Tokens tokens)
+        {
+            if (tokens.Current == '0')
+            {
+                _zero = tokens.GetCurrent();
+            }
+            else
+            {
+                _nonZero = new NonZero(tokens);
+                while (Digit.IsDigit(tokens.Current))
+                {
+                    var digit = new Digit(tokens);
+                    _digits.Add(digit);
+                }
+            }
+        }
+
+        public long Calculate()
+        {
+            if (_zero != default)
+            {
+                return 0;
+            }
+            else
+            {
+                long value = _nonZero.Calculate();
+                foreach (var digit in _digits)
+                {
+                    value *= 10;
+                    value += digit.Calculate();
+                }
+                return value;
+            }
+        }
+    }
+
+    public class Digit : ICalculator
+    {
+        private char _zero = default;
+        private NonZero _nonZero;
+        public Digit(Tokens tokens)
+        {
+            if (tokens.Current == '0')
+            {
+                _zero = tokens.GetCurrent();
+            }
+            else
+            {
+                _nonZero = new NonZero(tokens);
+            }
+        }
+
+        public long Calculate()
+        {
+            if (_zero != default)
+            {
+                return 0;
+            }
+            else
+            {
+                return _nonZero.Calculate();
+            }
+        }
+
+        public static bool IsDigit(char token)
+        {
+            return token == '0'
+                || token == '1'
+                || token == '2'
+                || token == '3'
+                || token == '4'
+                || token == '5'
+                || token == '6'
+                || token == '7'
+                || token == '8'
+                || token == '9';
+        }
+    }
+
+    public class NonZero : ICalculator
+    {
+        private char _digit = default;
+        public NonZero(Tokens tokens)
+        {
+            _digit = tokens.GetCurrent();
+        }
+
+        public long Calculate()
+        {
+            return _digit - '0';
+        }
+    }
 
     public static partial class Ex
     {
@@ -827,6 +1060,33 @@ namespace ConsoleApp1
         public static bool Between(this int value, int a, int b)
         {
             return value >= a && value < b;
+        }
+
+        public static long Sqrt(long value)
+        {
+            long a = 0;
+            long c = 3037000499;
+
+            while (a <= c)
+            {
+                long b = (a + c) / 2;
+                long square = b * b;
+
+                if (value == square)
+                {
+                    return b;
+                }
+                else if (value < square)
+                {
+                    c = b - 1;
+                }
+                else
+                {
+                    a = b + 1;
+                }
+            }
+
+            return c;
         }
     }
 
