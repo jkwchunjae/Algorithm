@@ -973,11 +973,39 @@ namespace ConsoleApp1
             return new Matrix(result);
         }
 
+        private Matrix Multiply(Matrix m2, long mod)
+        {
+            var m1 = this;
+            var result = m1.Row.MakeList(r =>
+            {
+                return m2.Column.MakeList(c =>
+                {
+                    long sum = 0;
+                    m1.Column.For(k =>
+                    {
+                        sum += m1[r][k] * m2[k][c];
+                    });
+                    return sum % mod;
+                });
+            });
+
+            return new Matrix(result);
+        }
+
         public Matrix Pow(int N)
         {
             var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
 
             var result = MathEx.Pow(this, N, 항등원, (m1, m2) => m1 * m2);
+
+            return result;
+        }
+
+        public Matrix Pow(int N, int mod)
+        {
+            var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
+
+            var result = MathEx.Pow(this, N, 항등원, (m1, m2) => m1.Multiply(m2, mod));
 
             return result;
         }
