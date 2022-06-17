@@ -121,13 +121,13 @@ namespace TestProject1
         [InlineData(2, 32, -24, 6, -4)]
         [InlineData(3, 168, -128, 32, -24)]
         [InlineData(4, 880, -672, 168, -128)]
-        [InlineData(5, 4608 % 1009, (-3520) % 1009, 880, -672)]
-        [InlineData(6, 24128 % 1009, (-18432) % 1009, 4608 % 1009, (-3520) % 1009)]
-        [InlineData(7, 126336 % 1009, (-96512) % 1009, 24128 % 1009, (-18432) % 1009)]
+        [InlineData(5, 4608, (-3520), 880, -672)]
+        [InlineData(6, 24128, (-18432), 4608, (-3520))]
+        [InlineData(7, 126336, (-96512), 24128, (-18432))]
         public void Test_MatrixPow3(int N, int a, int b, int c, int d)
         {
             var init = new Matrix(2, 2, 6, -4, 1, 0);
-            var m = init.Pow(N, 1009);
+            var m = init.Pow(N, 1000000007);
             Assert.Equal(a, m[0][0]);
             Assert.Equal(b, m[0][1]);
             Assert.Equal(c, m[1][0]);

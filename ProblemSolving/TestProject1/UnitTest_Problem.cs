@@ -10,29 +10,33 @@ namespace TestProject1
 {
     public class UnitTest_Problem
     {
-        [Theory]
-        [InlineData("1=", 1)]
-        [InlineData("0-123=", -123)]
-        [InlineData("0-123+124=", 1)]
-        [InlineData("0=", 0)]
-        [InlineData("(((((1123)))))=", 1123)]
-        [InlineData("1*(0-123)=", -123)]
-        [InlineData("#9+2*3+1=", 10)]
-        [InlineData("#(7^2-34+5*2)^3/8+7*23=", 176)]
-        [InlineData("(2*(3+6/2)+2)/4+3*(2*(3+6/2)+2)/4+3=", 16)]
-        [InlineData("####4611686018427387904=", 14)]
-        [InlineData("####4294967296=", 4)]
-        [InlineData("100/20*2=", 10)]
-        [InlineData("100/#400*2=", 10)]
-        [InlineData("100/##160000*2=", 10)]
-        [InlineData("2^3^2=", 512)]
-        public void CalculatorTest(string inputText, long expected)
+        [Fact]
+        public void 행렬_곱셈_일반연산()
         {
-            Tokens token = new Tokens(inputText);
-            ICalculator input = new Input(token);
-            long result = input.Calculate();
+            var m1 = new Matrix(2, 2, 4, -1, 1, 0);
+            var m2 = new Matrix(2, 1, 11, 3);
 
-            Assert.Equal(expected, result);
+            var m3 = m1 * m2;
+
+            Assert.Equal(41, m3[0][0]);
+            Assert.Equal(11, m3[1][0]);
+        }
+
+        [Theory]
+        [InlineData(1, 0)]
+        [InlineData(2, 3)]
+        [InlineData(4, 11)]
+        [InlineData(6, 41)]
+        [InlineData(16, 29681)]
+        [InlineData(28, 80198051)]
+        [InlineData(32, 117014746)]
+        [InlineData(36, 558008386)]
+        [InlineData(68, 42141203)]
+        [InlineData(100, 436252889)]
+        [InlineData(1000000000000000000, 558008386)]
+        public void Test(long N, long expected)
+        {
+            Assert.Equal(expected, Program.Solve(N));
         }
     }
 }
