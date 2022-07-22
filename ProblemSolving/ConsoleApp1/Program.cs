@@ -638,9 +638,9 @@ namespace ConsoleApp1
             DefenseValue = defenseValue;
         }
 
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipArmor(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
@@ -664,57 +664,57 @@ namespace ConsoleApp1
 
     public class OrnamentHpRegeneration : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
     public class OrnamentReincarnation : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
     public class OrnamentCourage : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
     public class OrnamentExperience : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
     public class OrnamentDexterity : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
     public class OrnamentHunter : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
     public class OrnamentCursed : IOrnament
     {
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipOrnament(this);
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
     #endregion
