@@ -440,7 +440,7 @@ namespace ConsoleApp1
         
         public InteractResult Interact(IPlayer player)
         {
-            bool ownDexterity = player.Ornaments.Any(o => o is OrnamentDexterity);
+            bool ownDexterity = player.Ornaments?.Any(o => o is OrnamentDexterity) ?? false;
 
             if (ownDexterity)
             {
@@ -519,7 +519,7 @@ namespace ConsoleApp1
         public int Experience { get; set; } = 0;
         public int Level { get; set; } = 1;
         public int MaxHP { get; set; } = 20;
-        public int CurrentHP { get; private set; } = 20;
+        public int CurrentHP { get; set; } = 20;
         public int AttackValue { get; set; } = 2;
         public int DefenseValue { get; set; } = 2;
         public IWeapon Weapon { get; set; }
