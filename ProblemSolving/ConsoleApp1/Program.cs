@@ -209,6 +209,10 @@ namespace ConsoleApp1
             monsters.ForEach(data =>
             {
                 var (position, monster) = data;
+                if (_cells[position.Row][position.Column].Interactable is Monster prevMonster)
+                {
+                    monster.IsBoss = prevMonster?.IsBoss ?? false;
+                }
                 _cells[position.Row][position.Column].Interactable = monster;
             });
         }
@@ -328,7 +332,7 @@ namespace ConsoleApp1
 
     public class Monster : IMonster
     {
-        public bool IsBoss { get; init; }
+        public bool IsBoss { get; set; }
         /// <summary>
         /// 
         /// </summary>
