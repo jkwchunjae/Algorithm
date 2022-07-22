@@ -209,7 +209,7 @@ namespace ConsoleApp1
 
         IInteractable Interactable { get; set; }
 
-        void Interact(IPlayer player);
+        bool Interact(IPlayer player);
 
         static ICell Create(int row, int column, char chr)
         {
@@ -222,7 +222,7 @@ namespace ConsoleApp1
         public Position Position { get; init; }
         public IInteractable Interactable { get; set; }
 
-        public void Interact(IPlayer player)
+        public bool Interact(IPlayer player)
         {
             throw new NotImplementedException();
         }
@@ -263,7 +263,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            return new InteractResult(false, false);
         }
     }
 
@@ -275,7 +275,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            return new InteractResult(false, false);
         }
     }
 
@@ -333,19 +333,31 @@ namespace ConsoleApp1
 
     public interface ITrap : IInteractable
     {
+        public int Damage { get; init; }
     }
 
     public class Trap : ITrap
     {
+        public int Damage { get; init; }
+        
         public InteractResult Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+
+            var dead = player.DeadAfterTrap(this);
+
+            return new InteractResult(dead, false);
         }
     }
 
     public class InteractResult
     {
-        bool Dead { get; } // 장신구 없음
+        public InteractResult(bool dead, bool changeToBlank)
+        {
+            Dead = dead;
+            ChangeToBlank = changeToBlank;
+        }
+
+        bool Dead { get; } // 부활까지 포함해서 최종적으로 죽었는지
         bool ChangeToBlank { get; }
     }
     #endregion
@@ -367,20 +379,34 @@ namespace ConsoleApp1
         IWeapon Weapon { get; set; }
         IArmor Armor { get; set; }
         IOrnament[] Ornaments { get; set; }
+
+        bool DeadAfterTrap(ITrap trap);
+        bool DeadAfterMonster(IMonster monster);
+
     }
 
     public class Player : IPlayer
     {
-        public Position Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int Experience { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int Level { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int MaxHP { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int CurrentHP { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int AttackValue { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int DefenseValue { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IWeapon Weapon { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IArmor Armor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IOrnament[] Ornaments { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public Position Position { get; set; }
+        public int Experience { get; set; }
+        public int Level { get; set; }
+        public int MaxHP { get; set; }
+        public int CurrentHP { get; set; }
+        public int AttackValue { get; set; }
+        public int DefenseValue { get; set; }
+        public IWeapon Weapon { get; set; }
+        public IArmor Armor { get; set; }
+        public IOrnament[] Ornaments { get; set; }
+
+        public bool DeadAfterMonster(IMonster monster)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool DeadAfterTrap(ITrap trap)
+        {
+            throw new NotImplementedException();
+        }
     }
     #endregion
 
