@@ -52,8 +52,10 @@ namespace ConsoleApp1
 
             var map = CreateMapFromInput(out var moves, out var player);
 
+            int turnCount = 0;
             foreach (var move in moves)
             {
+                turnCount++;
                 // 여기에 로직을 채운다.
                 Position nextPosition = player.Position.GetNext(move);
                 if (map.Movable(nextPosition))
@@ -65,13 +67,19 @@ namespace ConsoleApp1
 
                 if (result.Win)
                 {
+                    outputResult.Add(map.ToString(player));
+                    outputResult.Add($"Passed Turns : {turnCount}");
+                    outputResult.Add(player.ToString());
                     outputResult.Add("YOU WIN!");
                     return outputResult.StringJoin(Environment.NewLine);
                 }
                 else if (result.Dead)
                 {
                     // deadby
-                    outputResult.Add("YOU WIN!");
+                    outputResult.Add(map.ToString(player: null));
+                    outputResult.Add($"Passed Turns : {turnCount}");
+                    outputResult.Add(player.ToString());
+                    outputResult.Add($"YOU HAVE BEEN KILLED BY {result.DeadBy}..");
                     return outputResult.StringJoin(Environment.NewLine);
                 }
                 else
@@ -80,6 +88,9 @@ namespace ConsoleApp1
                 }
             }
 
+            outputResult.Add(map.ToString(player));
+            outputResult.Add($"Passed Turns : {turnCount}");
+            outputResult.Add(player.ToString());
             outputResult.Add("Press any key to continue.");
             return outputResult.StringJoin(Environment.NewLine);
         }
@@ -470,6 +481,7 @@ namespace ConsoleApp1
         void EquipWeapon(IWeapon weapon);
         void EquipArmor(IArmor armor);
         void EquipOrnament(IOrnament ornament);
+        string ToString();
     }
 
     public class Player : IPlayer
@@ -583,6 +595,10 @@ namespace ConsoleApp1
             }
         }
 
+        public override string ToString()
+        {
+            return base.ToString();
+        }
     }
     #endregion
 
