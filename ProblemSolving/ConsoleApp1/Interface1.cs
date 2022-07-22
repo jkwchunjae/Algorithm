@@ -108,4 +108,16 @@ namespace ConsoleApp1
 		IArmor Armor { get; set; }
 		IOrnament[] Ornaments { get; set; }
 	}
+
+	public interface IWeapon
+	{
+	}
+
+	public interface IArmor
+	{
+	}
+
+	public interface IOrnament
+	{
+	}
 }
