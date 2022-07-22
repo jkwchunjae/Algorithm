@@ -386,8 +386,7 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
-            Item.Interact(player);
-            return InteractResult.CreateChangeToBlankResult();
+            return Item.Interact(player);
         }
     }
 
@@ -505,7 +504,7 @@ namespace ConsoleApp1
         int Level { get; set; }
 
         int MaxHP { get; set; }
-        int CurrentHP { get; }
+        int CurrentHP { get; set; }
 
         int AttackValue { get; set; }
         int DefenseValue { get; set; }
@@ -515,7 +514,6 @@ namespace ConsoleApp1
         IOrnament[] Ornaments { get; set; }
 
         bool DeadAfterMonster(IMonster monster);
-        void EquipWeapon(IWeapon weapon);
         void EquipArmor(IArmor armor);
         void EquipOrnament(IOrnament ornament);
         string ToString();
@@ -600,9 +598,8 @@ namespace ConsoleApp1
     #endregion
 
     #region Item
-    public interface IItem
+    public interface IItem : IInteractable
     {
-        public void Interact(IPlayer player);
     }
 
     public interface IWeapon : IItem
@@ -619,9 +616,11 @@ namespace ConsoleApp1
             AttackValue = attackValue;
         }
 
-        public void Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
-            player.EquipWeapon(this);
+            player.AttackValue = AttackValue;
+            
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
