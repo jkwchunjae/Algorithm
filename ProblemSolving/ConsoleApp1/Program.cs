@@ -48,7 +48,18 @@ namespace ConsoleApp1
 
         public static string Solve()
         {
+            var map = CreateMap();
             return string.Empty;
+        }
+
+        public static IMap CreateMap()
+        {
+            var (height, width) = IO.GetIntTuple2();
+            var lines = Enumerable.Range(0, height)
+                .Select(_ => IO.GetLine())
+                .ToList();
+
+            return new Map(height, width, lines);
         }
     }
 
@@ -69,7 +80,7 @@ namespace ConsoleApp1
 
     public interface IMap
     {
-        // (int Height, int Width) Size { get; }
+        (int Height, int Width) Size { get; }
         // IEnumerable<IEnumerable<ICell>> Cells { get; }
 
         bool Movable(Position position);
@@ -82,8 +93,15 @@ namespace ConsoleApp1
     {
         public Map(int height, int width, List<string> input)
         {
-            
+            Size = (height, width);
+            _cells = input
+                .Select(line => line.Select(chr => CreateCell(chr)).ToList())
+                .ToList();
         }
+
+        public (int Height, int Width) Size { get; set; }
+
+        private List<List<ICell>> _cells;
 
         public ICell GetCell(Position position)
         {
@@ -97,12 +115,42 @@ namespace ConsoleApp1
 
         public string ToString(IPlayer player)
         {
-            throw new NotImplementedException();
+            return _cells
+                .Select(row => row.Select(cell =>
+                {
+                    if (cell.Position == player.Position)
+                    {
+                        return "@";
+                    }
+                    else
+                    {
+                        return cell.ToText();
+                    }
+                }).StringJoin(""))
+                .StringJoin(Environment.NewLine);
+        }
+
+        private ICell CreateCell(char chr)
+        {
+            chr = chr == '@' ? '.' : chr; // 맵 만들땐 빈칸으로 만들어야 함.
+            return null;
         }
     }
 
     public static partial class Ex
     {
+        public static string ToText(this ICell cell)
+        {
+            switch (cell.Interatable)
+            {
+                case IBlank: return ".";
+                case IWall: return "#";
+                case IItemBox: return "B";
+                case IMonster: return "&";
+                case ITrap: return "^";
+                default: return ".";
+            }
+        }
     }
 
     public class IoInstance : IDisposable
