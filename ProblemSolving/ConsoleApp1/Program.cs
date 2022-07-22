@@ -442,7 +442,7 @@ namespace ConsoleApp1
         int Level { get; set; }
 
         int MaxHP { get; set; }
-        int CurrentHP { get; set; }
+        int CurrentHP { get; }
 
         int AttackValue { get; set; }
         int DefenseValue { get; set; }
@@ -464,7 +464,7 @@ namespace ConsoleApp1
         public int Experience { get; set; }
         public int Level { get; set; }
         public int MaxHP { get; set; }
-        public int CurrentHP { get; set; }
+        public int CurrentHP { get; private set; }
         public int AttackValue { get; set; }
         public int DefenseValue { get; set; }
         public IWeapon Weapon { get; set; }
@@ -478,7 +478,32 @@ namespace ConsoleApp1
 
         public bool DeadAfterTrap(ITrap trap)
         {
-            throw new NotImplementedException();
+            bool ownDexterity = false;
+
+            foreach (var item in Ornaments)
+            {
+                if (item.GetType() == typeof(OrnamentDexterity))
+                {
+                    ownDexterity = true;
+                    break;
+                }
+            }
+
+            if (ownDexterity)
+            {
+                DecreaseHP(1);
+            }
+            else
+            {
+                DecreaseHP(trap.Damage);
+            }
+
+            return CurrentHP <= 0;
+        }
+
+        private void DecreaseHP(int damage)
+        {
+            CurrentHP -= damage;
         }
 
         public void EquipWeapon(IWeapon weapon)
