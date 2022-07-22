@@ -504,16 +504,7 @@ namespace ConsoleApp1
 
         public bool DeadAfterTrap(ITrap trap)
         {
-            bool ownDexterity = false;
-
-            foreach (var item in Ornaments)
-            {
-                if (item.GetType() == typeof(OrnamentDexterity))
-                {
-                    ownDexterity = true;
-                    break;
-                }
-            }
+            bool ownDexterity = Ornaments.Any(o => o is OrnamentDexterity);
 
             if (ownDexterity)
             {
@@ -559,29 +550,12 @@ namespace ConsoleApp1
 
         private bool IsOrnamentsFull()
         {
-            int count = 0;
-            foreach (var ornament in Ornaments)
-            {
-                if (ornament is not null)
-                {
-                    count += 1;
-                }
-            }
-
-            return count == Ornaments.Length;
+            return Ornaments.All(o => o is not null);
         }
 
         private bool IsDuplicateOrnament(IOrnament ornament)
         {
-            foreach(var stored in Ornaments)
-            {
-                if (ornament.GetType() == stored.GetType())
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return Ornaments.Any(o => o.GetType() == ornament.GetType());
         }
 
         private void AddOrnament(IOrnament ornament)
@@ -591,6 +565,7 @@ namespace ConsoleApp1
                 if (Ornaments[i] is null)
                 {
                     Ornaments[i] = ornament;
+                    break;
                 }
             }
         }
@@ -759,6 +734,7 @@ namespace ConsoleApp1
                 MoveType.Right => new Position(position.Row, position.Column + 1),
                 MoveType.Up => new Position(position.Row - 1, position.Column),
                 MoveType.Down => new Position(position.Row + 1, position.Column),
+                _ => throw new ArgumentException(),
             };
         }
     }
