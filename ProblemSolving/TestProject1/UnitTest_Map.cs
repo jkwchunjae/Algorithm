@@ -108,7 +108,7 @@ namespace TestProject1
 
             var result = map.ToString(player);
 
-            Assert.Equal(_input1.Select(x => x.Replace("@", ".")).StringJoin(Environment.NewLine), result);
+            Assert.Equal(_input1.StringJoin(Environment.NewLine), result);
         }
 
         [Fact]
