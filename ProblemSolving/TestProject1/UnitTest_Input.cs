@@ -35,7 +35,7 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
 6 6 W 3".Replace("\r", "");
         IO.SetInputOutput(new InputOutput { Input = input });
 
-        var map = Program.CreateMapFromInput();
+        var map = Program.CreateMapFromInput(out var moves);
         var height1 = input.Split('\n').First().Split(' ')[0].ToInt();
         var width1 = input.Split('\n').First().Split(' ')[1].ToInt();
         var input1 = input.Split('\n').Skip(1).Take(map.Size.Height).ToList();

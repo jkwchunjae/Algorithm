@@ -48,18 +48,24 @@ namespace ConsoleApp1
 
         public static string Solve()
         {
-            var map = CreateMapFromInput();
+            var map = CreateMapFromInput(out var moves);
+
+            moves.ForEach(move =>
+            {
+                // 여기에 로직을 채운다.
+
+            });
 
             return string.Empty;
         }
 
-        public static IMap CreateMapFromInput()
+        public static IMap CreateMapFromInput(out List<MoveType> moves)
         {
             var (height, width) = IO.GetIntTuple2();
             var lines = height.MakeList(_ => IO.GetLine());
             var map = IMap.Create(height, width, lines);
 
-            var moves = IO.GetLine().Select(chr => Ex.ToMoveType(chr)).ToList();
+            moves = IO.GetLine().Select(chr => Ex.ToMoveType(chr)).ToList();
 
             var monsters = map.MonsterCount.MakeList(_ =>
             {
