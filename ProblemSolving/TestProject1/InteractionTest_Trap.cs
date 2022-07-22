@@ -8,7 +8,7 @@ using Xunit;
 
 namespace TestProject1;
 
-public class UnitTest_Trap
+public class InteractionTest_Trap
 {
     [Fact]
     public void Trap을밟으면체력이줄어든다()
