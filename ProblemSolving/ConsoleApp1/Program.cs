@@ -455,6 +455,7 @@ namespace ConsoleApp1
         bool DeadAfterMonster(IMonster monster);
         void EquipWeapon(IWeapon weapon);
         void EquipArmor(IArmor armor);
+        void EquipOrnament(IOrnament ornament);
     }
 
     public class Player : IPlayer
@@ -480,14 +481,67 @@ namespace ConsoleApp1
             throw new NotImplementedException();
         }
 
+        public void EquipWeapon(IWeapon weapon)
+        {
+            Weapon = weapon;
+        }
+
         public void EquipArmor(IArmor armor)
         {
             Armor = armor;
         }
 
-        public void EquipWeapon(IWeapon weapon)
+        public void EquipOrnament(IOrnament ornament)
         {
-            Weapon = weapon;
+            if (IsOrnamentsFull())
+            {
+                return;
+            }
+
+            if (IsDuplicateOrnament(ornament))
+            {
+                return;
+            }
+
+            AddOrnament(ornament);
+        }
+
+        private bool IsOrnamentsFull()
+        {
+            int count = 0;
+            foreach (var ornament in Ornaments)
+            {
+                if (ornament is not null)
+                {
+                    count += 1;
+                }
+            }
+
+            return count == Ornaments.Length;
+        }
+
+        private bool IsDuplicateOrnament(IOrnament ornament)
+        {
+            foreach(var stored in Ornaments)
+            {
+                if (ornament.GetType() == stored.GetType())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void AddOrnament(IOrnament ornament)
+        {
+            for (int i = 0; i < Ornaments.Length; i++)
+            {
+                if (Ornaments[i] is null)
+                {
+                    Ornaments[i] = ornament;
+                }
+            }
         }
 
     }
@@ -561,7 +615,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
 
@@ -569,7 +623,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
 
@@ -577,7 +631,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
 
@@ -585,7 +639,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
 
@@ -593,7 +647,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
 
@@ -601,7 +655,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
 
@@ -609,7 +663,7 @@ namespace ConsoleApp1
     {
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipOrnament(this);
         }
     }
     #endregion
