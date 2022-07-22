@@ -48,18 +48,41 @@ namespace ConsoleApp1
 
         public static string Solve()
         {
-            var map = CreateMapFromInput(out var moves);
+            var outputResult = new List<string>();
 
-            moves.ForEach(move =>
+            var map = CreateMapFromInput(out var moves, out var player);
+
+            foreach (var move in moves)
             {
                 // 여기에 로직을 채운다.
+                Position nextPosition = player.Position.GetNext(move);
+                if (map.Movable(nextPosition))
+                {
+                    player.Position = nextPosition;
+                }
+                var nextCell = map.GetCell(player.Position);
+                var result = nextCell.Interact(player);
 
-            });
+                if (result)
+                {
+                    // continue
+                }
+                else if ()
+                {
+                    outputResult.Add("YOU WIN!");
+                    return outputResult.StringJoin(Environment.NewLine);
+                }
+                else
+                {
+                    // 죽었으면 여기
+                }
+            }
 
-            return string.Empty;
+            outputResult.Add("Press any key to continue.");
+            return outputResult.StringJoin(Environment.NewLine);
         }
 
-        public static IMap CreateMapFromInput(out List<MoveType> moves)
+        public static IMap CreateMapFromInput(out List<MoveType> moves, out IPlayer player)
         {
             var (height, width) = IO.GetIntTuple2();
             var lines = height.MakeList(_ => IO.GetLine());
