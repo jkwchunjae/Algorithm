@@ -503,7 +503,6 @@ namespace ConsoleApp1
         IOrnament[] Ornaments { get; set; }
 
         bool DeadAfterMonster(IMonster monster);
-        void EquipArmor(IArmor armor);
         void EquipOrnament(IOrnament ornament);
         string ToString();
         void DecreaseHP(int damage);
@@ -535,11 +534,6 @@ namespace ConsoleApp1
         public void EquipWeapon(IWeapon weapon)
         {
             Weapon = weapon;
-        }
-
-        public void EquipArmor(IArmor armor)
-        {
-            Armor = armor;
         }
 
         public void EquipOrnament(IOrnament ornament)
@@ -629,6 +623,7 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
+            player.DefenseValue = DefenseValue;
             return InteractResult.CreateChangeToBlankResult();
         }
     }
