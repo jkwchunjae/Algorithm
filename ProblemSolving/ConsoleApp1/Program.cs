@@ -159,7 +159,20 @@ namespace ConsoleApp1
 
         public bool Movable(Position position)
         {
-            throw new NotImplementedException();
+            if (position.Row < 0 || position.Column < 0)
+                return false;
+            if (position.Row >= Size.Height || position.Column >= Size.Width)
+                return false;
+
+            var cell = _cells[position.Row][position.Column];
+            if (cell.Interactable is Wall)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         public override string ToString()

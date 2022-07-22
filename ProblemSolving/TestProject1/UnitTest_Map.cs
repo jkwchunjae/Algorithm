@@ -111,8 +111,14 @@ namespace TestProject1
             Assert.Equal(_input1.StringJoin(Environment.NewLine), result);
         }
 
-        [Fact]
-        void movable_returns_correctly()
+        [Theory]
+        [InlineData(-1, 0, false)]
+        [InlineData(0, -1, false)]
+        [InlineData(-1, -1, false)]
+        [InlineData(3 /*_height3*/, 0, false)]
+        [InlineData(0, 3 /*_width3*/, false)]
+        [InlineData(3 /*_height3*/, 3 /*_width3*/, false)]
+        void movable_returns_correctly(int positionRow, int positionColumn, bool result)
         {
             var map = IMap.Create(_height3, _width3, _input3);
 
@@ -132,12 +138,14 @@ namespace TestProject1
                 }
             }
 
-            Assert.False(map.Movable(new Position(-1, 0)));
-            Assert.False(map.Movable(new Position(0, -1)));
-            Assert.False(map.Movable(new Position(-1, -1)));
-            Assert.False(map.Movable(new Position(_height3, 0)));
-            Assert.False(map.Movable(new Position(0, _width3)));
-            Assert.False(map.Movable(new Position(_height3, _width3)));
+            if (result)
+            {
+                Assert.True(map.Movable(new Position(positionRow, positionColumn)));
+            }
+            else
+            {
+                Assert.False(map.Movable(new Position(positionRow, positionColumn)));
+            }
         }
 
         #region Input
