@@ -49,10 +49,45 @@ namespace ConsoleApp1
         public static string Solve()
         {
             var (height, width) = IO.GetIntTuple2();
-            var lines = Enumerable.Range(0, height)
-                .Select(_ => IO.GetLine())
-                .ToList();
+            var lines = height.MakeList(_ => IO.GetLine());
             var map = IMap.Create(height, width, lines);
+
+            var moves = IO.GetLine().Select(chr => Ex.ToMoveType(chr)).ToList();
+
+            var monsters = map.MonsterCount.MakeList(_ =>
+            {
+                var arr = IO.GetStringList();
+                var row = arr[0].ToInt();
+                var column = arr[1].ToInt();
+                var name = arr[2];
+                var w = arr[3].ToInt();
+                var a = arr[4].ToInt();
+                var h = arr[5].ToInt();
+                var e = arr[6].ToInt();
+
+                var position = new Position(row, column);
+                var monster = new Monster($"{name} {w} {a} {h} {e}");
+
+                return (position, monster);
+            });
+            var items = map.ItemCount.MakeList(_ =>
+            {
+                var arr = IO.GetStringList();
+                var row = arr[0].ToInt();
+                var column = arr[1].ToInt();
+
+                var t = arr[2];
+                var s = arr[3];
+
+                var position = new Position(row, column);
+                var item = new ItemBox($"{t} {s}");
+
+                return (position, item);
+            });
+
+            map.UpdateMonsters(monsters);
+            map.UpdateItems(items);
+
             return string.Empty;
         }
     }
@@ -81,6 +116,12 @@ namespace ConsoleApp1
         bool Movable(Position position);
         ICell GetCell(Position position);
 
+        int MonsterCount { get; }
+        int ItemCount { get; }
+
+        void UpdateMonsters(List<(Position, Monster)> monsters);
+        void UpdateItems(List<(Position, ItemBox)> items);
+
         string ToString();
 
         string ToString(IPlayer player);
@@ -102,6 +143,12 @@ namespace ConsoleApp1
         }
 
         public (int Height, int Width) Size { get; set; }
+
+        public int MonsterCount => _cells
+                .Sum(cells => cells.Count(cell => cell.Interactable is IMonster));
+
+        public int ItemCount => _cells
+                .Sum(cells => cells.Count(cell => cell.Interactable is IItemBox));
 
         private List<List<ICell>> _cells;
 
@@ -136,13 +183,31 @@ namespace ConsoleApp1
                 }).StringJoin(""))
                 .StringJoin(Environment.NewLine);
         }
+
+        public void UpdateMonsters(List<(Position, Monster)> monsters)
+        {
+            monsters.ForEach(data =>
+            {
+                var (position, monster) = data;
+                _cells[position.Row][position.Column].Interactable = monster;
+            });
+        }
+
+        public void UpdateItems(List<(Position, ItemBox)> items)
+        {
+            items.ForEach(data =>
+            {
+                var (position, itembox) = data;
+                _cells[position.Row][position.Column].Interactable = itembox;
+            });
+        }
     }
 
     public interface ICell
     {
         Position Position { get; init; }
 
-        IInteractable Interactable { get; init; }
+        IInteractable Interactable { get; set; }
 
         void Interact(IPlayer player);
 
@@ -155,7 +220,7 @@ namespace ConsoleApp1
     public class Cell : ICell
     {
         public Position Position { get; init; }
-        public IInteractable Interactable { get; init; }
+        public IInteractable Interactable { get; set; }
 
         public void Interact(IPlayer player)
         {
@@ -387,6 +452,18 @@ namespace ConsoleApp1
                 case ITrap: return "^";
                 default: return ".";
             }
+        }
+
+        public static MoveType ToMoveType(char chr)
+        {
+            return chr switch
+            {
+                'L' => MoveType.Left,
+                'R' => MoveType.Right,
+                'U' => MoveType.Up,
+                'D' => MoveType.Down,
+                _ => throw new Exception($"LRUD말고 다른 값이 들어왔음: {chr}"),
+            };
         }
     }
     #endregion
