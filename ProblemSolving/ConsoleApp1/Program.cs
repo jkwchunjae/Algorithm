@@ -95,7 +95,7 @@ namespace ConsoleApp1
         {
             Size = (height, width);
             _cells = input
-                .Select(line => line.Select(chr => CreateCell(chr)).ToList())
+                .Select(line => line.Select(chr => ICell.Create(string.Empty)).ToList())
                 .ToList();
         }
 
@@ -135,6 +135,204 @@ namespace ConsoleApp1
             chr = chr == '@' ? '.' : chr; // 맵 만들땐 빈칸으로 만들어야 함.
             return null;
         }
+    }
+
+    public interface ICell
+    {
+        Position Position { get; init; }
+
+        IInteractable Interatable { get; }
+
+        void Interact(IPlayer player);
+
+        static ICell Create(string str)
+        {
+            return null;
+        }
+    }
+
+    public class Cell : ICell
+    {
+        public Position Position { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
+
+        public IInteractable Interatable => throw new NotImplementedException();
+
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public interface IInteractable
+    {
+        InteractResult Interact(IPlayer player);
+    }
+
+    public interface IBlank : IInteractable
+    {
+
+    }
+
+    public class Blank : IBlank
+    {
+        public InteractResult Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public interface IWall : IInteractable
+    {
+    }
+
+    public class Wall : IWall
+    {
+        public InteractResult Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public interface IItemBox : IInteractable
+    {
+    }
+
+    public class ItemBox : IItemBox
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input">1 3 O DX 중 "O DX" 가 들어온다</param>
+        public ItemBox(string input)
+        {
+        }
+
+        public InteractResult Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public interface IMonster : IInteractable
+    {
+    }
+
+    public class Monster : IMonster
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input">One 4 2 10 3 이 들어온다</param>
+        public Monster(string input)
+        {
+
+        }
+        public InteractResult Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public interface ITrap : IInteractable
+    {
+    }
+
+    public class Trap : ITrap
+    {
+        public InteractResult Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class InteractResult
+    {
+        bool Dead { get; } // 장신구 없음
+        bool ChangeToBlank { get; }
+    }
+
+    public interface IPlayer
+    {
+        Position Position { get; set; }
+
+        int Experience { get; set; }
+        int Level { get; set; }
+
+        int MaxHP { get; set; }
+        int CurrentHP { get; set; }
+
+        int AttackValue { get; set; }
+        int DefenseValue { get; set; }
+
+        IWeapon Weapon { get; set; }
+        IArmor Armor { get; set; }
+        IOrnament[] Ornaments { get; set; }
+    }
+
+    public class Player : IPlayer
+    {
+        public Position Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int Experience { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int Level { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int MaxHP { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int CurrentHP { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int AttackValue { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int DefenseValue { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IWeapon Weapon { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IArmor Armor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IOrnament[] Ornaments { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    }
+
+    public interface IItem
+    {
+    }
+
+    public interface IWeapon : IItem
+    {
+    }
+
+    public class Weapon : IWeapon
+    {
+    }
+
+    public interface IArmor : IItem
+    {
+    }
+
+    public class Armor : IArmor
+    {
+    }
+
+    public interface IOrnament : IItem
+    {
+    }
+
+    public class OrnamentHpRegeneration : IOrnament
+    {
+    }
+
+    public class OrnamentReincarnation : IOrnament
+    {
+    }
+
+    public class OrnamentCourage : IOrnament
+    {
+    }
+
+    public class OrnamentExperience : IOrnament
+    {
+    }
+
+    public class OrnamentDexterity : IOrnament
+    {
+    }
+
+    public class OrnamentHunter : IOrnament
+    {
+    }
+
+    public class OrnamentCursed : IOrnament
+    {
     }
 
     public static partial class Ex

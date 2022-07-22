@@ -6,10 +6,6 @@ using System.Threading.Tasks;
 
 namespace ConsoleApp1
 {
-    internal interface Interface1
-    {
-    }
-
 	// IMap이 추상화하는 것
 
 	// ICell이 추상화하는 것
@@ -42,82 +38,4 @@ namespace ConsoleApp1
 
 
 
-	public interface ICell
-	{
-		Position Position {get; init;}
-
-		IInteractable Interatable { get; }
-
-		void Interact(IPlayer player);
-	}
-
-	public interface IItem
-	{
-
-	}
-
-	public interface IInteractable
-	{
-		InteractResult Interact(IPlayer player);
-	}
-
-	public interface IBlank : IInteractable
-	{
-
-	}
-
-	public interface IWall : IInteractable
-	{
-
-	}
-
-	public interface IItemBox : IInteractable
-	{
-
-	}
-
-	public interface IMonster : IInteractable
-	{
-	}
-
-	public interface ITrap : IInteractable
-	{
-		
-	}
-
-	public class InteractResult
-	{
-		bool Dead { get; } // 장신구 없음
-		bool ChangeToBlank { get; }
-	}
-
-	public interface IPlayer
-	{
-		Position Position { get; set; }
-
-		int Experience { get; set; }
-		int Level { get; set; }
-		
-		int MaxHP { get; set; }
-		int CurrentHP { get; set; }
-
-		int AttackValue { get; set; }
-		int DefenseValue { get; set; }
-		
-		IWeapon Weapon { get; set; }
-		IArmor Armor { get; set; }
-		IOrnament[] Ornaments { get; set; }
-	}
-
-	public interface IWeapon
-	{
-	}
-
-	public interface IArmor
-	{
-	}
-
-	public interface IOrnament
-	{
-	}
 }
