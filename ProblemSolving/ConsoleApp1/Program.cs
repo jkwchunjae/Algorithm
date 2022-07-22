@@ -52,7 +52,7 @@ namespace ConsoleApp1
             var lines = Enumerable.Range(0, height)
                 .Select(_ => IO.GetLine())
                 .ToList();
-            var map = IMap.CreateMap(height, width, lines);
+            var map = IMap.Create(height, width, lines);
             return string.Empty;
         }
     }
@@ -72,6 +72,7 @@ namespace ConsoleApp1
             => (row, column) = (Row, Column);
     }
 
+    #region Map
     public interface IMap
     {
         (int Height, int Width) Size { get; }
@@ -82,7 +83,7 @@ namespace ConsoleApp1
 
         string ToString(IPlayer player);
 
-        static IMap CreateMap(int height, int width, List<string> input)
+        static IMap Create(int height, int width, List<string> input)
         {
             return new Map(height, width, input);
         }
@@ -94,7 +95,7 @@ namespace ConsoleApp1
         {
             Size = (height, width);
             _cells = input
-                .Select(line => line.Select(chr => ICell.Create(string.Empty)).ToList())
+                .Select((line, row) => line.Select((chr, column) => ICell.Create(row, column, chr)).ToList())
                 .ToList();
         }
 
@@ -128,43 +129,56 @@ namespace ConsoleApp1
                 }).StringJoin(""))
                 .StringJoin(Environment.NewLine);
         }
-
-        private ICell CreateCell(char chr)
-        {
-            chr = chr == '@' ? '.' : chr; // 맵 만들땐 빈칸으로 만들어야 함.
-            return null;
-        }
     }
 
     public interface ICell
     {
         Position Position { get; init; }
 
-        IInteractable Interatable { get; }
+        IInteractable Interatable { get; init; }
 
         void Interact(IPlayer player);
 
-        static ICell Create(string str)
+        static ICell Create(int row, int column, char chr)
         {
-            return null;
+            return new Cell(new Position(row, column), chr);
         }
     }
 
     public class Cell : ICell
     {
         public Position Position { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
-
-        public IInteractable Interatable => throw new NotImplementedException();
+        public IInteractable Interatable { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
 
         public void Interact(IPlayer player)
         {
             throw new NotImplementedException();
         }
-    }
 
+        public Cell(Position position, char chr)
+        {
+            Position = position;
+            Interatable = IInteractable.Create(chr);
+        }
+    }
+    #endregion
+
+    #region Interatable
     public interface IInteractable
     {
         InteractResult Interact(IPlayer player);
+        static IInteractable Create(char chr)
+        {
+            return chr switch
+            {
+                '.' => new Blank(),
+                '#' => new Wall(),
+                'B' => new ItemBox(),
+                '&' => new Monster(),
+                '^' => new Trap(),
+                _ => new Blank(),
+            };
+        }
     }
 
     public interface IBlank : IInteractable
@@ -206,6 +220,8 @@ namespace ConsoleApp1
         {
         }
 
+        public ItemBox() { }
+
         public InteractResult Interact(IPlayer player)
         {
             throw new NotImplementedException();
@@ -224,8 +240,9 @@ namespace ConsoleApp1
         /// <param name="input">One 4 2 10 3 이 들어온다</param>
         public Monster(string input)
         {
-
         }
+        public Monster() { }
+
         public InteractResult Interact(IPlayer player)
         {
             throw new NotImplementedException();
@@ -249,7 +266,9 @@ namespace ConsoleApp1
         bool Dead { get; } // 장신구 없음
         bool ChangeToBlank { get; }
     }
+    #endregion
 
+    #region Player
     public interface IPlayer
     {
         Position Position { get; set; }
@@ -281,7 +300,9 @@ namespace ConsoleApp1
         public IArmor Armor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public IOrnament[] Ornaments { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
     }
+    #endregion
 
+    #region Item
     public interface IItem
     {
     }
@@ -333,7 +354,9 @@ namespace ConsoleApp1
     public class OrnamentCursed : IOrnament
     {
     }
+    #endregion
 
+    #region Ex
     public static partial class Ex
     {
         public static string ToText(this ICell cell)
@@ -349,7 +372,9 @@ namespace ConsoleApp1
             }
         }
     }
+    #endregion
 
+    #region IO
     public class IoInstance : IDisposable
     {
         public void Dispose()
@@ -516,7 +541,9 @@ namespace ConsoleApp1
         }
 #endif
     }
+    #endregion
 
+    #region Extensions
     public enum LoopResult
     {
         Void,
@@ -766,7 +793,9 @@ namespace ConsoleApp1
             return !source.Any(predicate);
         }
     }
+    #endregion
 
+    #region Utils
 #if DEBUG // delete
 
     public static class DebugUtils
@@ -960,4 +989,5 @@ namespace ConsoleApp1
     #endregion
 
 #endif
+    #endregion
 }
