@@ -142,7 +142,7 @@ namespace ConsoleApp1
     {
         Position Position { get; init; }
 
-        IInteractable Interatable { get; init; }
+        IInteractable Interactable { get; init; }
 
         void Interact(IPlayer player);
 
@@ -155,7 +155,7 @@ namespace ConsoleApp1
     public class Cell : ICell
     {
         public Position Position { get; init; }
-        public IInteractable Interatable { get; init; }
+        public IInteractable Interactable { get; init; }
 
         public void Interact(IPlayer player)
         {
@@ -165,7 +165,7 @@ namespace ConsoleApp1
         public Cell(Position position, char chr)
         {
             Position = position;
-            Interatable = IInteractable.Create(chr);
+            Interactable = IInteractable.Create(chr);
         }
     }
     #endregion
@@ -378,7 +378,7 @@ namespace ConsoleApp1
     {
         public static string ToText(this ICell cell)
         {
-            switch (cell.Interatable)
+            switch (cell.Interactable)
             {
                 case IBlank: return ".";
                 case IWall: return "#";

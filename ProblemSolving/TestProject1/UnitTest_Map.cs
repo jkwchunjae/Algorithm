@@ -8,7 +8,7 @@ using Xunit;
 
 namespace TestProject1
 {
-    public class UnitTest_Problem
+    public class UnitTest_Map
     {
         [Fact]
         void input_correctly_mapped_to_cells_1()
@@ -89,7 +89,6 @@ namespace TestProject1
             Assert.Equal(_height2, map.Size.Height);
             Assert.Equal(_width2, map.Size.Width);
         }
-
 
         [Fact]
         void tostring_correctly_change_input_to_output()
