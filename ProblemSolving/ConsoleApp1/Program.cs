@@ -63,18 +63,20 @@ namespace ConsoleApp1
                 var nextCell = map.GetCell(player.Position);
                 var result = nextCell.Interact(player);
 
-                if (result)
+                if (result.Win)
                 {
-                    // continue
+                    outputResult.Add("YOU WIN!");
+                    return outputResult.StringJoin(Environment.NewLine);
                 }
-                else if ()
+                else if (result.Dead)
                 {
+                    // deadby
                     outputResult.Add("YOU WIN!");
                     return outputResult.StringJoin(Environment.NewLine);
                 }
                 else
                 {
-                    // 죽었으면 여기
+                    // continue
                 }
             }
 
@@ -123,6 +125,8 @@ namespace ConsoleApp1
 
             map.UpdateMonsters(monsters);
             map.UpdateItems(items);
+
+            player = null;
 
             return map;
         }
@@ -262,7 +266,7 @@ namespace ConsoleApp1
 
         IInteractable Interactable { get; set; }
 
-        bool Interact(IPlayer player);
+        InteractResult Interact(IPlayer player);
 
         static ICell Create(int row, int column, char chr)
         {
@@ -275,7 +279,7 @@ namespace ConsoleApp1
         public Position Position { get; init; }
         public IInteractable Interactable { get; set; }
 
-        public bool Interact(IPlayer player)
+        public InteractResult Interact(IPlayer player)
         {
             throw new NotImplementedException();
         }
@@ -410,8 +414,10 @@ namespace ConsoleApp1
             ChangeToBlank = changeToBlank;
         }
 
-        bool Dead { get; } // 부활까지 포함해서 최종적으로 죽었는지
-        bool ChangeToBlank { get; }
+        public bool Dead { get; init; } // 부활까지 포함해서 최종적으로 죽었는지
+        public bool ChangeToBlank { get; init; }
+        public bool Win { get; init; }
+        public string DeadBy { get; init; }
     }
     #endregion
 
@@ -542,6 +548,17 @@ namespace ConsoleApp1
                 'U' => MoveType.Up,
                 'D' => MoveType.Down,
                 _ => throw new Exception($"LRUD말고 다른 값이 들어왔음: {chr}"),
+            };
+        }
+
+        public static Position GetNext(this Position position, MoveType move)
+        {
+            return move switch
+            {
+                MoveType.Left => new Position(position.Row, position.Column - 1),
+                MoveType.Right => new Position(position.Row, position.Column + 1),
+                MoveType.Up => new Position(position.Row - 1, position.Column),
+                MoveType.Down => new Position(position.Row + 1, position.Column),
             };
         }
     }
