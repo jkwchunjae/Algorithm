@@ -11,27 +11,16 @@ namespace TestProject1
     public class UnitTest_Problem
     {
         [Fact]
-        void input_correctly_mapped_to_cells()
+        void input_correctly_mapped_to_cells_1()
         {
-            var input1 = new List<string>
-            {
-                ".&....&.",
-                "..B.&..&",
-                "B...&...",
-                ".B@.B#..",
-                ".&....M.",
-                ".B...B..",
-                "..B^^&..",
-            };
-
-            var map1 = IMap.Create(7, 8, input1);
+            var map = IMap.Create(_height1, _width1, _input1);
             
-            for (int row = 0; row < 7; row++)
+            for (int row = 0; row < _height1; row++)
             {
-                for (int col = 0; col < 8; col++)
+                for (int col = 0; col < _width1; col++)
                 {
-                    var cell = map1.GetCell(new Position(row, col));
-                    switch (input1[row][col])
+                    var cell = map.GetCell(new Position(row, col));
+                    switch (_input1[row][col])
                     {
                         case '@':
                         case '.':
@@ -57,68 +46,135 @@ namespace TestProject1
                 }
             }
 
-            var input2 = new List<string>
-            {
-                ".@#.",
-                ".B.B",
-                "BB.&",
-                "B&.^",
-                "&M.&"
-            };
-
-            var map2 = IMap.Create(5, 4, input2);
-
-            for (int row = 0; row < 5; row++)
-            {
-                for (int col = 0; col < 4; col++)
-                {
-                    var cell = map2.GetCell(new Position(row, col));
-                    switch (input2[row][col])
-                    {
-                        case '@':
-                        case '.':
-                            Assert.IsType<Blank>(cell.Interatable);
-                            break;
-                        case 'B':
-                            Assert.IsType<ItemBox>(cell.Interatable);
-                            break;
-                        case '&':
-                        case 'M':
-                            Assert.IsType<Monster>(cell.Interatable);
-                            break;
-                        case '^':
-                            Assert.IsType<Trap>(cell.Interatable);
-                            break;
-                        case '#':
-                            Assert.IsType<Wall>(cell.Interatable);
-                            break;
-                        default:
-                            Assert.True(false);
-                            break;
-                    }
-                }
-            }
+            Assert.Equal(_height1, map.Size.Height);
+            Assert.Equal(_width1, map.Size.Width);
         }
+
+        [Fact]
+        void input_correctly_mapped_to_cells_2()
+        {
+            var map = IMap.Create(_height2, _width2, _input2);
+
+            for (int row = 0; row < _height2; row++)
+            {
+                for (int col = 0; col < _width2; col++)
+                {
+                    var cell = map.GetCell(new Position(row, col));
+                    switch (_input2[row][col])
+                    {
+                        case '@':
+                        case '.':
+                            Assert.IsType<Blank>(cell.Interatable);
+                            break;
+                        case 'B':
+                            Assert.IsType<ItemBox>(cell.Interatable);
+                            break;
+                        case '&':
+                        case 'M':
+                            Assert.IsType<Monster>(cell.Interatable);
+                            break;
+                        case '^':
+                            Assert.IsType<Trap>(cell.Interatable);
+                            break;
+                        case '#':
+                            Assert.IsType<Wall>(cell.Interatable);
+                            break;
+                        default:
+                            Assert.True(false);
+                            break;
+                    }
+                }
+            }
+
+            Assert.Equal(_height2, map.Size.Height);
+            Assert.Equal(_width2, map.Size.Width);
+        }
+
 
         [Fact]
         void tostring_correctly_change_input_to_output()
         {
-            var input = new List<string>
+            var map = IMap.Create(_height1, _width1, _input1);
+            var player = new Player();
+            player.Position = _input1.Select((line, index) =>
             {
-                ".&....&.",
-                "..B.&..&",
-                "B...&...",
-                ".B@.B#..",
-                ".&....M.",
-                ".B...B..",
-                "..B^^&..",
-            };
+                if (line.Contains('@'))
+                {
+                    return new Position(index, line.IndexOf('@'));
+                }
+                else return new Position(-1, -1);
+            })
+            .Where(x => x.Row >= 0)
+            .FirstOrDefault();
 
-            var map = IMap.Create(7, 8, input);
+            var result = map.ToString(player);
 
-            var result = map.ToString();
-
-            Assert.Equal(input.Select(x => x.Replace("@", ".")).StringJoin(Environment.NewLine), result);
+            Assert.Equal(_input1.Select(x => x.Replace("@", ".")).StringJoin(Environment.NewLine), result);
         }
+
+        [Fact]
+        void movable_returns_correctly()
+        {
+            var map = IMap.Create(_height3, _width3, _input3);
+
+            for (int row = 0; row < _height3; row++)
+            {
+                for (int col = 0; col < _width3; col++)
+                {
+                    var isMovable = map.Movable(new Position(row, col));
+                    if (_input3[row][col] == '#')
+                    {
+                        Assert.False(isMovable);
+                    }
+                    else
+                    {
+                        Assert.True(isMovable);
+                    }
+                }
+            }
+
+            Assert.False(map.Movable(new Position(-1, 0)));
+            Assert.False(map.Movable(new Position(0, -1)));
+            Assert.False(map.Movable(new Position(-1, -1)));
+            Assert.False(map.Movable(new Position(_height3, 0)));
+            Assert.False(map.Movable(new Position(0, _width3)));
+            Assert.False(map.Movable(new Position(_height3, _width3)));
+        }
+
+        #region Input
+        private readonly List<string> _input1 = new List<string>
+        {
+            ".&....&.",
+            "..B.&..&",
+            "B...&...",
+            ".B@.B#..",
+            ".&....M.",
+            ".B...B..",
+            "..B^^&..",
+        };
+        private readonly int _height1 = 7;
+        private readonly int _width1 = 8;
+
+        private readonly List<string> _input2 = new List<string>
+        {
+            ".@#.",
+            ".B.B",
+            "BB.&",
+            "B&.^",
+            "&M.&",
+        };
+        private readonly int _height2 = 5;
+        private readonly int _width2 = 4;
+
+        private readonly List<string> _input3 = new List<string>
+        {
+            ".#@",
+            "M&^",
+            "B.."
+        };
+        private readonly int _height3 = 3;
+        private readonly int _width3 = 3;
+
+        #endregion Input
     }
 }
