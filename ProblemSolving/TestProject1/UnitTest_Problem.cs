@@ -35,20 +35,20 @@ namespace TestProject1
                     {
                         case '@':
                         case '.':
-                            Assert.IsType<Blank>(cell);
+                            Assert.IsType<Blank>(cell.Interatable);
                             break;
                         case 'B':
-                            Assert.IsType<ItemBox>(cell);
+                            Assert.IsType<ItemBox>(cell.Interatable);
                             break;
                         case '&':
                         case 'M':
-                            Assert.IsType<Monster>(cell);
+                            Assert.IsType<Monster>(cell.Interatable);
                             break;
                         case '^':
-                            Assert.IsType<Trap>(cell);
+                            Assert.IsType<Trap>(cell.Interatable);
                             break;
                         case '#':
-                            Assert.IsType<Wall>(cell);
+                            Assert.IsType<Wall>(cell.Interatable);
                             break;
                         default:
                             Assert.True(false);
@@ -68,29 +68,29 @@ namespace TestProject1
 
             var map2 = IMap.Create(5, 4, input2);
 
-            for (int row = 0; row < 7; row++)
+            for (int row = 0; row < 5; row++)
             {
-                for (int col = 0; col < 8; col++)
+                for (int col = 0; col < 4; col++)
                 {
                     var cell = map2.GetCell(new Position(row, col));
                     switch (input2[row][col])
                     {
                         case '@':
                         case '.':
-                            Assert.IsType<Blank>(cell);
+                            Assert.IsType<Blank>(cell.Interatable);
                             break;
                         case 'B':
-                            Assert.IsType<ItemBox>(cell);
+                            Assert.IsType<ItemBox>(cell.Interatable);
                             break;
                         case '&':
                         case 'M':
-                            Assert.IsType<Monster>(cell);
+                            Assert.IsType<Monster>(cell.Interatable);
                             break;
                         case '^':
-                            Assert.IsType<Trap>(cell);
+                            Assert.IsType<Trap>(cell.Interatable);
                             break;
                         case '#':
-                            Assert.IsType<Wall>(cell);
+                            Assert.IsType<Wall>(cell.Interatable);
                             break;
                         default:
                             Assert.True(false);
@@ -118,7 +118,7 @@ namespace TestProject1
 
             var result = map.ToString();
 
-            Assert.Equal(input.StringJoin(Environment.NewLine), result);
+            Assert.Equal(input.Select(x => x.Replace("@", ".")).StringJoin(Environment.NewLine), result);
         }
     }
 }

@@ -81,6 +81,8 @@ namespace ConsoleApp1
         bool Movable(Position position);
         ICell GetCell(Position position);
 
+        string ToString();
+
         string ToString(IPlayer player);
 
         static IMap Create(int height, int width, List<string> input)
@@ -105,7 +107,7 @@ namespace ConsoleApp1
 
         public ICell GetCell(Position position)
         {
-            throw new NotImplementedException();
+            return _cells[position.Row][position.Column];
         }
 
         public bool Movable(Position position)
@@ -113,12 +115,17 @@ namespace ConsoleApp1
             throw new NotImplementedException();
         }
 
+        public override string ToString()
+        {
+            return ToString(null);
+        }
+
         public string ToString(IPlayer player)
         {
             return _cells
                 .Select(row => row.Select(cell =>
                 {
-                    if (cell.Position == player.Position)
+                    if (cell.Position == player?.Position)
                     {
                         return "@";
                     }
@@ -147,8 +154,8 @@ namespace ConsoleApp1
 
     public class Cell : ICell
     {
-        public Position Position { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
-        public IInteractable Interatable { get => throw new NotImplementedException(); init => throw new NotImplementedException(); }
+        public Position Position { get; init; }
+        public IInteractable Interatable { get; init; }
 
         public void Interact(IPlayer player)
         {
@@ -174,7 +181,8 @@ namespace ConsoleApp1
                 '.' => new Blank(),
                 '#' => new Wall(),
                 'B' => new ItemBox(),
-                '&' => new Monster(),
+                '&' => new Monster(chr),
+                'M' => new Monster(chr),
                 '^' => new Trap(),
                 _ => new Blank(),
             };
@@ -230,16 +238,25 @@ namespace ConsoleApp1
 
     public interface IMonster : IInteractable
     {
+        bool IsBoss { get; }
     }
 
     public class Monster : IMonster
     {
+        public bool IsBoss { get; init; }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="input">One 4 2 10 3 이 들어온다</param>
         public Monster(string input)
         {
+        }
+        public Monster(char chr)
+        {
+            if (chr == 'M')
+            {
+                IsBoss = true;
+            }
         }
         public Monster() { }
 
@@ -366,7 +383,7 @@ namespace ConsoleApp1
                 case IBlank: return ".";
                 case IWall: return "#";
                 case IItemBox: return "B";
-                case IMonster: return "&";
+                case IMonster monster: return monster.IsBoss ? "M" : "&";
                 case ITrap: return "^";
                 default: return ".";
             }
