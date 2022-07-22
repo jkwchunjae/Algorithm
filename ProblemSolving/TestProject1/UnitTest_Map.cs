@@ -24,20 +24,20 @@ namespace TestProject1
                     {
                         case '@':
                         case '.':
-                            Assert.IsType<Blank>(cell.Interatable);
+                            Assert.IsType<Blank>(cell.Interactable);
                             break;
                         case 'B':
-                            Assert.IsType<ItemBox>(cell.Interatable);
+                            Assert.IsType<ItemBox>(cell.Interactable);
                             break;
                         case '&':
                         case 'M':
-                            Assert.IsType<Monster>(cell.Interatable);
+                            Assert.IsType<Monster>(cell.Interactable);
                             break;
                         case '^':
-                            Assert.IsType<Trap>(cell.Interatable);
+                            Assert.IsType<Trap>(cell.Interactable);
                             break;
                         case '#':
-                            Assert.IsType<Wall>(cell.Interatable);
+                            Assert.IsType<Wall>(cell.Interactable);
                             break;
                         default:
                             Assert.True(false);
@@ -64,20 +64,20 @@ namespace TestProject1
                     {
                         case '@':
                         case '.':
-                            Assert.IsType<Blank>(cell.Interatable);
+                            Assert.IsType<Blank>(cell.Interactable);
                             break;
                         case 'B':
-                            Assert.IsType<ItemBox>(cell.Interatable);
+                            Assert.IsType<ItemBox>(cell.Interactable);
                             break;
                         case '&':
                         case 'M':
-                            Assert.IsType<Monster>(cell.Interatable);
+                            Assert.IsType<Monster>(cell.Interactable);
                             break;
                         case '^':
-                            Assert.IsType<Trap>(cell.Interatable);
+                            Assert.IsType<Trap>(cell.Interactable);
                             break;
                         case '#':
-                            Assert.IsType<Wall>(cell.Interatable);
+                            Assert.IsType<Wall>(cell.Interactable);
                             break;
                         default:
                             Assert.True(false);
