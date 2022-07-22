@@ -454,6 +454,7 @@ namespace ConsoleApp1
         bool DeadAfterTrap(ITrap trap);
         bool DeadAfterMonster(IMonster monster);
         void EquipWeapon(IWeapon weapon);
+        void EquipArmor(IArmor armor);
     }
 
     public class Player : IPlayer
@@ -477,6 +478,11 @@ namespace ConsoleApp1
         public bool DeadAfterTrap(ITrap trap)
         {
             throw new NotImplementedException();
+        }
+
+        public void EquipArmor(IArmor armor)
+        {
+            Armor = armor;
         }
 
         public void EquipWeapon(IWeapon weapon)
@@ -529,7 +535,7 @@ namespace ConsoleApp1
 
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipArmor(this);
         }
     }
 
