@@ -126,7 +126,14 @@ namespace ConsoleApp1
             map.UpdateMonsters(monsters);
             map.UpdateItems(items);
 
-            player = null;
+            var playerRow = lines.Select((line, row) => (line, row))
+                .First(x => x.line.Contains('@'))
+                .row;
+            var playerColumn = lines[playerRow].IndexOf('@');
+            player = new Player
+            {
+                Position = new Position(playerRow, playerColumn),
+            };
 
             return map;
         }
@@ -302,7 +309,7 @@ namespace ConsoleApp1
             {
                 '.' => new Blank(),
                 '#' => new Wall(),
-                'B' => new ItemBox(),
+                'B' => new ItemBox(chr),
                 '&' => new Monster(chr),
                 'M' => new Monster(chr),
                 '^' => new Trap(),
@@ -356,11 +363,14 @@ namespace ConsoleApp1
             string property = itemString[1];
             Item = type switch
             {
-                "W" => new Weapon(Int32.Parse(property)),
-                "A" => new Armor(Int32.Parse(property)),
+                "W" => new Weapon(property.ToInt()),
+                "A" => new Armor(property.ToInt()),
                 "O" => IOrnament.Create(property),
                 _ => throw new ArgumentException(),
             };
+        }
+        public ItemBox(char chr)
+        {
         }
 
         public InteractResult Interact(IPlayer player)
@@ -373,17 +383,21 @@ namespace ConsoleApp1
     public interface IMonster : IInteractable
     {
         bool IsBoss { get; }
+        string Name { get; }
     }
 
     public class Monster : IMonster
     {
         public bool IsBoss { get; set; }
+        public string Name { get; set; }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="input">One 4 2 10 3 이 들어온다</param>
         public Monster(string input)
         {
+            var arr = input.Split(' ');
+            Name = arr[0];
         }
         public Monster(char chr)
         {
@@ -461,12 +475,12 @@ namespace ConsoleApp1
     public class Player : IPlayer
     {
         public Position Position { get; set; }
-        public int Experience { get; set; }
-        public int Level { get; set; }
-        public int MaxHP { get; set; }
-        public int CurrentHP { get; private set; }
-        public int AttackValue { get; set; }
-        public int DefenseValue { get; set; }
+        public int Experience { get; set; } = 0;
+        public int Level { get; set; } = 1;
+        public int MaxHP { get; set; } = 20;
+        public int CurrentHP { get; private set; } = 20;
+        public int AttackValue { get; set; } = 2;
+        public int DefenseValue { get; set; } = 2;
         public IWeapon Weapon { get; set; }
         public IArmor Armor { get; set; }
         public IOrnament[] Ornaments { get; set; }

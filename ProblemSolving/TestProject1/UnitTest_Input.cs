@@ -6,10 +6,7 @@ namespace TestProject1;
 
 public class UnitTest_Input
 {
-    [Fact]
-    public void InputTest1()
-    {
-        var input = @"7 8
+    readonly string _input1 = @"7 8
 .&....&.
 ..B.&..&
 B...&...
@@ -33,6 +30,37 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
 6 2 O DX
 7 3 O HU
 6 6 W 3".Replace("\r", "");
+
+    [Fact]
+    public void InputTest_MapInstance()
+    {
+        var input = _input1;
+        IO.SetInputOutput(new InputOutput { Input = input });
+
+        var map = Program.CreateMapFromInput(out var moves, out var player);
+        var height1 = input.Split('\n').First().Split(' ')[0].ToInt();
+        var width1 = input.Split('\n').First().Split(' ')[1].ToInt();
+        var input1 = input.Split('\n').Skip(1).Take(map.Size.Height).ToList();
+
+        Assert.NotNull(map);
+        Assert.Equal((height1, width1), map.Size);
+    }
+
+    [Fact]
+    public void InputTest_PlayerPosition()
+    {
+        var input = _input1;
+        IO.SetInputOutput(new InputOutput { Input = input });
+
+        var map = Program.CreateMapFromInput(out var moves, out var player);
+
+        Assert.Equal(new Position(3, 2), player.Position);
+    }
+
+    [Fact]
+    public void InputTest_CellInteractableType()
+    {
+        var input = _input1;
         IO.SetInputOutput(new InputOutput { Input = input });
 
         var map = Program.CreateMapFromInput(out var moves, out var player);
@@ -76,10 +104,107 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
                 }
             }
         }
+    }
 
-        Assert.Equal(height1, map.Size.Height);
-        Assert.Equal(width1, map.Size.Width);
+    [Fact]
+    public void InputTest_Items()
+    {
+        var input = _input1;
+        IO.SetInputOutput(new InputOutput { Input = input });
 
-        Assert.NotNull(map);
+        var map = Program.CreateMapFromInput(out var moves, out var player);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(3, 4)).Interactable);
+        if (map.GetCell(new Position(3, 4)).Interactable is ItemBox itembox1)
+            Assert.IsType<Weapon>(itembox1.Item);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(1, 2)).Interactable);
+        if (map.GetCell(new Position(1, 2)).Interactable is ItemBox itembox2)
+            Assert.IsType<OrnamentCourage>(itembox2.Item);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(2, 0)).Interactable);
+        if (map.GetCell(new Position(2, 0)).Interactable is ItemBox itembox3)
+            Assert.IsType<Armor>(itembox3.Item);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(3, 1)).Interactable);
+        if (map.GetCell(new Position(3, 1)).Interactable is ItemBox itembox4)
+            Assert.IsType<Armor>(itembox4.Item);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(5, 1)).Interactable);
+        if (map.GetCell(new Position(5, 1)).Interactable is ItemBox itembox5)
+            Assert.IsType<OrnamentDexterity>(itembox5.Item);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(6, 2)).Interactable);
+        if (map.GetCell(new Position(6, 2)).Interactable is ItemBox itembox6)
+            Assert.IsType<OrnamentHunter>(itembox6.Item);
+
+        Assert.IsType<ItemBox>(map.GetCell(new Position(5, 5)).Interactable);
+        if (map.GetCell(new Position(5, 5)).Interactable is ItemBox itembox7)
+            Assert.IsType<Weapon>(itembox7.Item);
+    }
+
+    [Fact]
+    public void InputTest_Monsters()
+    {
+        var input = _input1;
+        IO.SetInputOutput(new InputOutput { Input = input });
+
+        var map = Program.CreateMapFromInput(out var moves, out var player);
+
+        Assert.IsType<Monster>(map.GetCell(new Position(2, 4)).Interactable);
+        if (map.GetCell(new Position(2, 4)).Interactable is Monster monster1)
+        {
+            Assert.Equal("One", monster1.Name);
+            Assert.False(monster1.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(1, 4)).Interactable);
+        if (map.GetCell(new Position(1, 4)).Interactable is Monster monster2)
+        {
+            Assert.Equal("Two", monster2.Name);
+            Assert.False(monster2.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(0, 1)).Interactable);
+        if (map.GetCell(new Position(0, 1)).Interactable is Monster monster3)
+        {
+            Assert.Equal("Three", monster3.Name);
+            Assert.False(monster3.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(4, 1)).Interactable);
+        if (map.GetCell(new Position(4, 1)).Interactable is Monster monster4)
+        {
+            Assert.Equal("Four", monster4.Name);
+            Assert.False(monster4.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(6, 5)).Interactable);
+        if (map.GetCell(new Position(6, 5)).Interactable is Monster monster5)
+        {
+            Assert.Equal("Five", monster5.Name);
+            Assert.False(monster5.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(4, 6)).Interactable);
+        if (map.GetCell(new Position(4, 6)).Interactable is Monster monster6)
+        {
+            Assert.Equal("Boss", monster6.Name);
+            Assert.True(monster6.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(0, 6)).Interactable);
+        if (map.GetCell(new Position(0, 6)).Interactable is Monster monster7)
+        {
+            Assert.Equal("EO", monster7.Name);
+            Assert.False(monster7.IsBoss);
+        }
+
+        Assert.IsType<Monster>(map.GetCell(new Position(1, 7)).Interactable);
+        if (map.GetCell(new Position(1, 7)).Interactable is Monster monster8)
+        {
+            Assert.Equal("ET", monster8.Name);
+            Assert.False(monster8.IsBoss);
+        }
     }
 }
