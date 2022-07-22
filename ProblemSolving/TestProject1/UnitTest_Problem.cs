@@ -24,7 +24,7 @@ namespace TestProject1
                 "..B^^&..",
             };
 
-            var map1 = IMap.CreateMap(7, 8, input1);
+            var map1 = IMap.Create(7, 8, input1);
             
             for (int row = 0; row < 7; row++)
             {
@@ -66,7 +66,7 @@ namespace TestProject1
                 "&M.&"
             };
 
-            var map2 = IMap.CreateMap(5, 4, input2);
+            var map2 = IMap.Create(5, 4, input2);
 
             for (int row = 0; row < 7; row++)
             {
@@ -114,7 +114,7 @@ namespace TestProject1
                 "..B^^&..",
             };
 
-            var map = IMap.CreateMap(7, 8, input);
+            var map = IMap.Create(7, 8, input);
 
             var result = map.ToString();
 
