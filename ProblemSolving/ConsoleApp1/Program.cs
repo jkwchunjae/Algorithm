@@ -115,7 +115,7 @@ namespace ConsoleApp1
                 var e = arr[6].ToInt();
 
                 var position = new Position(row, column);
-                var monster = new Monster($"{name} {w} {a} {h} {e}");
+                var monster = new Monster(name, w, a, h, e);
 
                 return (position, monster);
             });
@@ -129,7 +129,7 @@ namespace ConsoleApp1
                 var s = arr[3];
 
                 var position = new Position(row, column);
-                var item = new ItemBox($"{t} {s}");
+                var item = new ItemBox(t, s);
 
                 return (position, item);
             });
@@ -363,15 +363,8 @@ namespace ConsoleApp1
     {
         public IItem Item { get; init; }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="input">1 3 O DX 중 "O DX" 가 들어온다</param>
-        public ItemBox(string input)
+        public ItemBox(string type, string property)
         {
-            var itemString = input.Split();
-            string type = itemString[0];
-            string property = itemString[1];
             Item = type switch
             {
                 "W" => new Weapon(property.ToInt()),
@@ -400,14 +393,10 @@ namespace ConsoleApp1
     {
         public bool IsBoss { get; set; }
         public string Name { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="input">One 4 2 10 3 이 들어온다</param>
-        public Monster(string input)
+
+        public Monster(string name, int weapon, int armor, int hp, int exp)
         {
-            var arr = input.Split(' ');
-            Name = arr[0];
+            Name = name;
         }
         public Monster(char chr)
         {
@@ -431,7 +420,7 @@ namespace ConsoleApp1
 
     public class Trap : ITrap
     {
-        public int Damage { get; init; } = 5;
+        public int Damage { get; init; }
         private const string TRAPNAME = "SPIKE TRAP";
         
         public InteractResult Interact(IPlayer player)
