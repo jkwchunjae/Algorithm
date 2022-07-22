@@ -338,7 +338,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
-            return new InteractResult(false, false);
+            return new InteractResult();
         }
     }
 
@@ -350,7 +350,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
-            return new InteractResult(false, false);
+            return new InteractResult();
         }
     }
 
@@ -387,7 +387,10 @@ namespace ConsoleApp1
         public InteractResult Interact(IPlayer player)
         {
             Item.Interact(player);
-            return new InteractResult(false, true);
+            return new InteractResult
+            {
+                ChangeToBlank = true,
+            };
         }
     }
 
@@ -451,11 +454,11 @@ namespace ConsoleApp1
             InteractResult result;
             if (player.CurrentHP <= 0)
             {
-                result = new InteractResult(true, false, false, TRAPNAME);
+                result = InteractResult.CreateDeadResult(TRAPNAME);
             }
             else
             {
-                result = new InteractResult(false, false, false, String.Empty);
+                result = new InteractResult();
             }
 
             return result;
@@ -464,18 +467,23 @@ namespace ConsoleApp1
 
     public class InteractResult
     {
-        public InteractResult(bool dead, bool changeToBlank, bool win, string deadBy)
-        {
-            Dead = dead;
-            ChangeToBlank = changeToBlank;
-            Win = win;
-            DeadBy = deadBy;
-        }
-
         public bool Dead { get; init; } // 부활까지 포함해서 최종적으로 죽었는지
         public bool ChangeToBlank { get; init; }
         public bool Win { get; init; }
         public string DeadBy { get; init; }
+
+        public static InteractResult CreateWinResult()
+        {
+            return new InteractResult { Win = true };
+        }
+        public static InteractResult CreateDeadResult(string deadBy)
+        {
+            return new InteractResult
+            {
+                Dead = true,
+                DeadBy = deadBy,
+            };
+        }
     }
     #endregion
 
