@@ -22,16 +22,14 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "13976";
+            var problemNumber = "17081";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var input = IO.GetLong();
-
-                var result = Solve(input);
+                var result = Solve();
                 result.Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
@@ -48,31 +46,9 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static long Solve(long N)
+        public static string Solve()
         {
-            if (N % 2 == 1)
-            {
-                return 0;
-            }
-            else if (N == 2)
-            {
-                return 3;
-            }
-            else if (N == 4)
-            {
-                return 11;
-            }
-
-            int mod = 1_000_000_007;
-            long n = ((N - 6) / 2 + 1);
-
-            var seedMatrix = new Matrix(2, 2, 4, -1, 1, 0);
-            var left = seedMatrix.Pow(n, mod);
-
-            var right = new Matrix(2, 1, 11, 3);
-
-            Matrix result = left * right;
-            return (result[0][0] + mod + mod) % mod;
+            return string.Empty;
         }
     }
 
