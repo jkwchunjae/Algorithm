@@ -503,13 +503,14 @@ namespace ConsoleApp1
         IOrnament[] Ornaments { get; set; }
 
         bool DeadAfterMonster(IMonster monster);
-        void EquipOrnament(IOrnament ornament);
         string ToString();
         void DecreaseHP(int damage);
     }
 
     public class Player : IPlayer
     {
+        private const int ORNAMENTCAPA = 4;
+        
         public Position Position { get; set; }
         public int Experience { get; set; } = 0;
         public int Level { get; set; } = 1;
@@ -519,7 +520,7 @@ namespace ConsoleApp1
         public int DefenseValue { get; set; } = 2;
         public IWeapon Weapon { get; set; }
         public IArmor Armor { get; set; }
-        public IOrnament[] Ornaments { get; set; }
+        public IOrnament[] Ornaments { get; set; } = new IOrnament[ORNAMENTCAPA];
 
         public bool DeadAfterMonster(IMonster monster)
         {
@@ -536,42 +537,7 @@ namespace ConsoleApp1
             Weapon = weapon;
         }
 
-        public void EquipOrnament(IOrnament ornament)
-        {
-            if (IsOrnamentsFull())
-            {
-                return;
-            }
 
-            if (IsDuplicateOrnament(ornament))
-            {
-                return;
-            }
-
-            AddOrnament(ornament);
-        }
-
-        private bool IsOrnamentsFull()
-        {
-            return Ornaments.All(o => o is not null);
-        }
-
-        private bool IsDuplicateOrnament(IOrnament ornament)
-        {
-            return Ornaments.Any(o => o.GetType() == ornament.GetType());
-        }
-
-        private void AddOrnament(IOrnament ornament)
-        {
-            for (int i = 0; i < Ornaments.Length; i++)
-            {
-                if (Ornaments[i] is null)
-                {
-                    Ornaments[i] = ornament;
-                    break;
-                }
-            }
-        }
 
         public override string ToString()
         {
@@ -601,6 +567,7 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
+            player.Weapon = this;
             player.AttackValue = AttackValue;
             
             return InteractResult.CreateChangeToBlankResult();
@@ -623,6 +590,7 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
+            player.Armor = this;
             player.DefenseValue = DefenseValue;
             return InteractResult.CreateChangeToBlankResult();
         }
@@ -644,12 +612,50 @@ namespace ConsoleApp1
                 _ => throw new ArgumentException(),
             };
         }
+
+        static void EquipOrnament(IOrnament ornament, IPlayer player)
+        {
+            if (IsOrnamentsFull(player))
+            {
+                return;
+            }
+
+            if (IsDuplicateOrnament(ornament, player))
+            {
+                return;
+            }
+
+            AddOrnament(ornament, player);
+        }
+
+        private static bool IsOrnamentsFull(IPlayer player)
+        {
+            return player.Ornaments.All(o => o is not null);
+        }
+
+        private static bool IsDuplicateOrnament(IOrnament ornament, IPlayer player)
+        {
+            return player.Ornaments.Any(o => o?.GetType() == ornament.GetType());
+        }
+
+        private static void AddOrnament(IOrnament ornament, IPlayer player)
+        {
+            for (int i = 0; i < player.Ornaments.Length; i++)
+            {
+                if (player.Ornaments[i] is null)
+                {
+                    player.Ornaments[i] = ornament;
+                    break;
+                }
+            }
+        }
     }
 
     public class OrnamentHpRegeneration : IOrnament
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -658,6 +664,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -666,6 +673,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -674,6 +682,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -682,6 +691,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -690,6 +700,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -698,6 +709,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
+            IOrnament.EquipOrnament(this, player);
             return InteractResult.CreateChangeToBlankResult();
         }
     }

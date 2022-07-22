@@ -66,7 +66,7 @@ public class InteractionTest_ItemBox
 
         itemBox.Interact(player);
 
-        Assert.Contains(player.Ornaments, x => x is OrnamentCourage);
+        Assert.Contains(player.Ornaments, x => x?.GetType() == typeof(OrnamentCourage));
     }
 
 
