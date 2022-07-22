@@ -48,18 +48,12 @@ namespace ConsoleApp1
 
         public static string Solve()
         {
-            var map = CreateMap();
-            return string.Empty;
-        }
-
-        public static IMap CreateMap()
-        {
             var (height, width) = IO.GetIntTuple2();
             var lines = Enumerable.Range(0, height)
                 .Select(_ => IO.GetLine())
                 .ToList();
-
-            return new Map(height, width, lines);
+            var map = IMap.CreateMap(height, width, lines);
+            return string.Empty;
         }
     }
 
@@ -87,6 +81,11 @@ namespace ConsoleApp1
         ICell GetCell(Position position);
 
         string ToString(IPlayer player);
+
+        static IMap CreateMap(int height, int width, List<string> input)
+        {
+            return new Map(height, width, input);
+        }
     }
 
     public class Map : IMap
