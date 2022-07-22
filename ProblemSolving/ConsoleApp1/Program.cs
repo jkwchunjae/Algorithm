@@ -338,7 +338,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
-            return new InteractResult();
+            return InteractResult.CreateNoImpactResult();
         }
     }
 
@@ -350,7 +350,7 @@ namespace ConsoleApp1
     {
         public InteractResult Interact(IPlayer player)
         {
-            return new InteractResult();
+            return InteractResult.CreateNoImpactResult();
         }
     }
 
@@ -387,10 +387,7 @@ namespace ConsoleApp1
         public InteractResult Interact(IPlayer player)
         {
             Item.Interact(player);
-            return new InteractResult
-            {
-                ChangeToBlank = true,
-            };
+            return InteractResult.CreateChangeToBlankResult();
         }
     }
 
@@ -458,7 +455,7 @@ namespace ConsoleApp1
             }
             else
             {
-                result = new InteractResult();
+                result = InteractResult.CreateNoImpactResult();
             }
 
             return result;
@@ -472,6 +469,8 @@ namespace ConsoleApp1
         public bool Win { get; init; }
         public string DeadBy { get; init; }
 
+        private InteractResult() { }
+
         public static InteractResult CreateWinResult()
         {
             return new InteractResult { Win = true };
@@ -483,6 +482,16 @@ namespace ConsoleApp1
                 Dead = true,
                 DeadBy = deadBy,
             };
+        }
+
+        public static InteractResult CreateNoImpactResult()
+        {
+            return new InteractResult();
+        }
+
+        public static InteractResult CreateChangeToBlankResult()
+        {
+            return new InteractResult { ChangeToBlank = true };
         }
     }
     #endregion
