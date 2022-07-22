@@ -48,6 +48,13 @@ namespace ConsoleApp1
 
         public static string Solve()
         {
+            var map = CreateMapFromInput();
+
+            return string.Empty;
+        }
+
+        public static IMap CreateMapFromInput()
+        {
             var (height, width) = IO.GetIntTuple2();
             var lines = height.MakeList(_ => IO.GetLine());
             var map = IMap.Create(height, width, lines);
@@ -57,8 +64,8 @@ namespace ConsoleApp1
             var monsters = map.MonsterCount.MakeList(_ =>
             {
                 var arr = IO.GetStringList();
-                var row = arr[0].ToInt();
-                var column = arr[1].ToInt();
+                var row = arr[0].ToInt() - 1;
+                var column = arr[1].ToInt() - 1;
                 var name = arr[2];
                 var w = arr[3].ToInt();
                 var a = arr[4].ToInt();
@@ -73,8 +80,8 @@ namespace ConsoleApp1
             var items = map.ItemCount.MakeList(_ =>
             {
                 var arr = IO.GetStringList();
-                var row = arr[0].ToInt();
-                var column = arr[1].ToInt();
+                var row = arr[0].ToInt() - 1;
+                var column = arr[1].ToInt() - 1;
 
                 var t = arr[2];
                 var s = arr[3];
@@ -88,7 +95,7 @@ namespace ConsoleApp1
             map.UpdateMonsters(monsters);
             map.UpdateItems(items);
 
-            return string.Empty;
+            return map;
         }
     }
 
