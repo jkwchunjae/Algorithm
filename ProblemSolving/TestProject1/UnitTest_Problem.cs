@@ -10,54 +10,6 @@ namespace TestProject1
 {
     public class UnitTest_Problem
     {
-        class Blank : IBlank
-        {
-            public InteractResult Interact(IPlayer player)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        class ItemBox : IItemBox
-        {
-            public InteractResult Interact(IPlayer player)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        class Monster : IMonster
-        {
-            public InteractResult Interact(IPlayer player)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        class BossMonster : IMonster
-        {
-            public InteractResult Interact(IPlayer player)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        class Trap : ITrap
-        {
-            public InteractResult Interact(IPlayer player)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        class Wall : IWall
-        {
-            public InteractResult Interact(IPlayer player)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         [Fact]
         void input_correctly_mapped_to_cells()
         {
@@ -72,7 +24,7 @@ namespace TestProject1
                 "..B^^&..",
             };
 
-            var map1 = new Map(7, 8, input1);
+            var map1 = IMap.CreateMap(7, 8, input1);
             
             for (int row = 0; row < 7; row++)
             {
@@ -89,10 +41,8 @@ namespace TestProject1
                             Assert.IsType<ItemBox>(cell);
                             break;
                         case '&':
-                            Assert.IsType<Monster>(cell);
-                            break;
                         case 'M':
-                            Assert.IsType<BossMonster>(cell);
+                            Assert.IsType<Monster>(cell);
                             break;
                         case '^':
                             Assert.IsType<Trap>(cell);
@@ -116,7 +66,7 @@ namespace TestProject1
                 "&M.&"
             };
 
-            var map2 = new Map(5, 4, input2);
+            var map2 = IMap.CreateMap(5, 4, input2);
 
             for (int row = 0; row < 7; row++)
             {
@@ -133,10 +83,8 @@ namespace TestProject1
                             Assert.IsType<ItemBox>(cell);
                             break;
                         case '&':
-                            Assert.IsType<Monster>(cell);
-                            break;
                         case 'M':
-                            Assert.IsType<BossMonster>(cell);
+                            Assert.IsType<Monster>(cell);
                             break;
                         case '^':
                             Assert.IsType<Trap>(cell);
@@ -166,11 +114,11 @@ namespace TestProject1
                 "..B^^&..",
             };
 
-            var map = new Map(7, 8, input);
+            var map = IMap.CreateMap(7, 8, input);
 
             var result = map.ToString();
 
-            Assert.Equal(input.StringJoin("\n"), result);
+            Assert.Equal(input.StringJoin(Environment.NewLine), result);
         }
     }
 }
