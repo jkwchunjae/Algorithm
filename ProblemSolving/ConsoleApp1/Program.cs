@@ -299,7 +299,7 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            return Interactable.Interact(player);
         }
 
         public Cell(Position position, char chr)
@@ -433,22 +433,43 @@ namespace ConsoleApp1
     public class Trap : ITrap
     {
         public int Damage { get; init; }
+        private const string TRAPNAME = "SPIKE TRAP";
         
         public InteractResult Interact(IPlayer player)
         {
+            bool ownDexterity = player.Ornaments.Any(o => o is OrnamentDexterity);
 
-            var dead = player.DeadAfterTrap(this);
+            if (ownDexterity)
+            {
+                player.DecreaseHP(1);
+            }
+            else
+            {
+                player.DecreaseHP(Damage);
+            }
 
-            return new InteractResult(dead, false);
+            InteractResult result;
+            if (player.CurrentHP <= 0)
+            {
+                result = new InteractResult(true, false, false, TRAPNAME);
+            }
+            else
+            {
+                result = new InteractResult(false, false, false, String.Empty);
+            }
+
+            return result;
         }
     }
 
     public class InteractResult
     {
-        public InteractResult(bool dead, bool changeToBlank)
+        public InteractResult(bool dead, bool changeToBlank, bool win, string deadBy)
         {
             Dead = dead;
             ChangeToBlank = changeToBlank;
+            Win = win;
+            DeadBy = deadBy;
         }
 
         public bool Dead { get; init; } // 부활까지 포함해서 최종적으로 죽었는지
@@ -476,12 +497,12 @@ namespace ConsoleApp1
         IArmor Armor { get; set; }
         IOrnament[] Ornaments { get; set; }
 
-        bool DeadAfterTrap(ITrap trap);
         bool DeadAfterMonster(IMonster monster);
         void EquipWeapon(IWeapon weapon);
         void EquipArmor(IArmor armor);
         void EquipOrnament(IOrnament ornament);
         string ToString();
+        void DecreaseHP(int damage);
     }
 
     public class Player : IPlayer
@@ -502,23 +523,7 @@ namespace ConsoleApp1
             throw new NotImplementedException();
         }
 
-        public bool DeadAfterTrap(ITrap trap)
-        {
-            bool ownDexterity = Ornaments.Any(o => o is OrnamentDexterity);
-
-            if (ownDexterity)
-            {
-                DecreaseHP(1);
-            }
-            else
-            {
-                DecreaseHP(trap.Damage);
-            }
-
-            return CurrentHP <= 0;
-        }
-
-        private void DecreaseHP(int damage)
+        public void DecreaseHP(int damage)
         {
             CurrentHP -= damage;
         }
