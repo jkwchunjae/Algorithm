@@ -432,7 +432,7 @@ namespace ConsoleApp1
 
     public class Trap : ITrap
     {
-        public int Damage { get; init; }
+        public int Damage { get; init; } = 5;
         private const string TRAPNAME = "SPIKE TRAP";
         
         public InteractResult Interact(IPlayer player)
