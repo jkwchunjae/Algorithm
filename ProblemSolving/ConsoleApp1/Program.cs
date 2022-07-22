@@ -453,6 +453,7 @@ namespace ConsoleApp1
 
         bool DeadAfterTrap(ITrap trap);
         bool DeadAfterMonster(IMonster monster);
+        void EquipWeapon(IWeapon weapon);
     }
 
     public class Player : IPlayer
@@ -477,6 +478,12 @@ namespace ConsoleApp1
         {
             throw new NotImplementedException();
         }
+
+        public void EquipWeapon(IWeapon weapon)
+        {
+            Weapon = weapon;
+        }
+
     }
     #endregion
 
@@ -502,7 +509,7 @@ namespace ConsoleApp1
 
         public void Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            player.EquipWeapon(this);
         }
     }
 
