@@ -338,23 +338,35 @@ namespace ConsoleApp1
 
     public interface IItemBox : IInteractable
     {
+        public IItem Item { get; init; }
     }
 
     public class ItemBox : IItemBox
     {
+        public IItem Item { get; init; }
+        
         /// <summary>
         /// 
         /// </summary>
         /// <param name="input">1 3 O DX 중 "O DX" 가 들어온다</param>
         public ItemBox(string input)
         {
+            var itemString = input.Split();
+            string type = itemString[0];
+            string property = itemString[1];
+            Item = type switch
+            {
+                "W" => new Weapon(Int32.Parse(property)),
+                "A" => new Armor(Int32.Parse(property)),
+                "O" => IOrnament.Create(property),
+                _ => throw new ArgumentException(),
+            };
         }
-
-        public ItemBox() { }
 
         public InteractResult Interact(IPlayer player)
         {
-            throw new NotImplementedException();
+            Item.Interact(player);
+            return new InteractResult(false, true);
         }
     }
 
@@ -441,7 +453,6 @@ namespace ConsoleApp1
 
         bool DeadAfterTrap(ITrap trap);
         bool DeadAfterMonster(IMonster monster);
-
     }
 
     public class Player : IPlayer
@@ -472,54 +483,121 @@ namespace ConsoleApp1
     #region Item
     public interface IItem
     {
+        public void Interact(IPlayer player);
     }
 
     public interface IWeapon : IItem
     {
+        public int AttackValue { get; init;}
     }
 
     public class Weapon : IWeapon
     {
+        public int AttackValue { get; init; }
+
+        public Weapon(int attackValue)
+        {
+            AttackValue = attackValue;
+        }
+
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public interface IArmor : IItem
     {
+        public int DefenseValue { get; init; }
     }
 
     public class Armor : IArmor
     {
+        public int DefenseValue { get; init; }
+
+        public Armor(int defenseValue)
+        {
+            DefenseValue = defenseValue;
+        }
+
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public interface IOrnament : IItem
     {
+        static IOrnament Create(string property)
+        {
+            return property switch
+            {
+                "HR" => new OrnamentHpRegeneration(),
+                "RE" => new OrnamentReincarnation(),
+                "CO" => new OrnamentCourage(),
+                "EX" => new OrnamentExperience(),
+                "DX" => new OrnamentDexterity(),
+                "HU" => new OrnamentHunter(),
+                "CU" => new OrnamentCursed(),
+                _ => throw new ArgumentException(),
+            };
+        }
     }
 
     public class OrnamentHpRegeneration : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrnamentReincarnation : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrnamentCourage : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrnamentExperience : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrnamentDexterity : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrnamentHunter : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrnamentCursed : IOrnament
     {
+        public void Interact(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
     }
     #endregion
 
