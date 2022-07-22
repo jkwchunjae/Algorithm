@@ -76,6 +76,55 @@ namespace ConsoleApp1
         }
     }
 
+    public enum MoveType
+    {
+        Left, Right, Up, Down
+    }
+
+    public record Position
+    {
+        public int Row { get; init; }
+        public int Column { get; init; }
+        public Position(int row, int column)
+            => (Row, Column) = (row, column);
+        public void Deconstruct(out int row, out int column)
+            => (row, column) = (Row, Column);
+    }
+
+    public interface IMap
+    {
+        // (int Height, int Width) Size { get; }
+        // IEnumerable<IEnumerable<ICell>> Cells { get; }
+
+        bool Movable(Position position);
+        ICell GetCell(Position position);
+
+        string ToString(IPlayer player);
+    }
+
+    public class Map : IMap
+    {
+        public Map(int height, int width, List<string> input)
+        {
+            
+        }
+
+        public ICell GetCell(Position position)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Movable(Position position)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string ToString(IPlayer player)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public static partial class Ex
     {
     }
@@ -256,24 +305,6 @@ namespace ConsoleApp1
 
     public static class Extensions
     {
-        public static IEnumerable<long> GetPrimeList(int maximum)
-        {
-            if (maximum < 2)
-                yield break;
-
-            var isPrime = Enumerable.Range(0, maximum + 1).Select(x => false).ToList();
-
-            yield return 2;
-            for (var prime = 3; prime <= maximum; prime += 2)
-            {
-                if (isPrime[prime] == true)
-                    continue;
-                yield return prime;
-                for (var i = prime; i <= maximum; i += prime)
-                    isPrime[i] = true;
-            }
-        }
-
         public static string With(this string format, params object[] obj)
         {
             return string.Format(format, obj);
@@ -512,395 +543,6 @@ namespace ConsoleApp1
         public static bool Empty<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             return !source.Any(predicate);
-        }
-    }
-
-    public static partial class Ex
-    {
-        public static int Ccw(Point a, Point b, Point c)
-        {
-            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
-            var op = a.X * b.Y + b.X * c.Y + c.X * a.Y;
-            op -= (a.Y * b.X + b.Y * c.X + c.Y * a.X);
-            if (op > 0) return 1;
-            else if (op == 0) return 0;
-            else return -1;
-        }
-
-        public static bool IsIntersect(Line line1, Line line2)
-        {
-            // 출처: https://jason9319.tistory.com/358 [ACM-ICPC 상 탈 사람]
-            var a = line1.P1;
-            var b = line1.P2;
-            var c = line2.P1;
-            var d = line2.P2;
-            int ab = Ccw(a, b, c) * Ccw(a, b, d);
-            int cd = Ccw(c, d, a) * Ccw(c, d, b);
-            if (ab == 0 && cd == 0)
-            {
-                if (a > b) (a, b) = Swap(a, b);
-                if (c > d) (c, d) = Swap(c, d);
-                return c <= b && a <= d;
-            }
-            return ab <= 0 && cd <= 0;
-        }
-
-        public static (T b, T a) Swap<T>(T a, T b)
-        {
-            return (b, a);
-        }
-
-        public static (bool found, long x, long y) FindDiophantusEquation(long a, long b, long c)
-        {
-            // https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=beneys&logNo=221122957338
-
-            var initA = a;
-            var initB = b;
-
-            var list = new List<(long A, long B, long M, long R)>();
-            do
-            {
-                var m = a / b;
-                var r = a % b;
-                list.Add((a, b, m, r));
-                a = b;
-                b = r;
-            } while (a % b != 0);
-
-            var gcd = list.Last().R;
-            if (c % gcd != 0)
-            {
-                return (false, 0, 0);
-            }
-
-            //list.Dump();
-            list.Reverse();
-
-            var first = list.First();
-            var list2 = new List<(long A, long X, long B, long Y)>
-            {
-                (first.A, 1, first.B, -first.M)
-            };
-            foreach (var (A, B, M, R) in list.Skip(1))
-            {
-                var prev = list2.Last();
-                if (R == prev.A)
-                {
-                    var nextA = A;
-                    var nextX = prev.X;
-                    var nextB = B;
-                    var nextY = prev.Y + (-M) * prev.X;
-                    list2.Add((nextA, nextX, nextB, nextY));
-                }
-                else // if (R == prev.B)
-                {
-                    var nextA = B;
-                    var nextX = prev.X + (-M) * prev.Y;
-                    var nextB = A;
-                    var nextY = prev.Y;
-                    list2.Add((nextA, nextX, nextB, nextY));
-                }
-            }
-            //list2.Dump();
-
-            var mm = c / gcd;
-            var last = list2.Last();
-            var x = (initA == last.A ? last.X : last.Y) * mm;
-            var y = (initA == last.A ? last.Y : last.X) * mm;
-
-            //((initA * x + initB * y)).Dump("C: " + c);
-
-            return (true, x, y);
-        }
-
-        public static long ChineseRemainderTheorem(List<(long A, long M)> arr)
-        {
-            // https://j1w2k3.tistory.com/1340
-            var M = arr.Select(x => x.M).Aggregate((a, b) => a * b);
-            var nList = arr.Select(x => M / x.M).ToList();
-
-            var xxxList = arr
-                .Zip(nList, (condition, N) => new
-                {
-                    condition.A,
-                    N,
-                    Dio = FindDiophantusEquation(N, condition.M, 1), // 특수해
-                })
-                .ToList();
-
-            long x = 0;
-            foreach (var xxx in xxxList)
-            {
-                x += (xxx.A * xxx.N * xxx.Dio.x) % M;
-                x %= M;
-            }
-
-            return x;
-        }
-    }
-
-    public class Matrix
-    {
-        private List<List<long>> Value;
-
-        public int Row => Value.Count;
-        public int Column => Value.First().Count;
-
-        public Matrix(int row, int column)
-        {
-            Value = row.MakeList(_ => column.MakeList(_ => 0L));
-        }
-
-        public Matrix(int row, int column, params int[] values)
-            : this(row, column)
-        {
-            var index = 0;
-            row.For(r => column.For(c => Value[r][c] = values[index++]));
-        }
-
-        public Matrix(List<List<long>> value)
-        {
-            Value = value;
-        }
-
-        public List<long> this[int row] => Value[row];
-
-        public static Matrix operator *(Matrix m1, Matrix m2)
-        {
-            var result = m1.Row.MakeList(r =>
-            {
-                return m2.Column.MakeList(c =>
-                {
-                    long sum = 0;
-                    m1.Column.For(k =>
-                    {
-                        sum += m1[r][k] * m2[k][c];
-                    });
-                    return sum;
-                });
-            });
-
-            return new Matrix(result);
-        }
-
-        private Matrix Multiply(Matrix m2, long mod)
-        {
-            var m1 = this;
-            var result = m1.Row.MakeList(r =>
-            {
-                return m2.Column.MakeList(c =>
-                {
-                    long sum = 0;
-                    m1.Column.For(k =>
-                    {
-                        sum += m1[r][k] * m2[k][c];
-                    });
-                    return sum % mod;
-                });
-            });
-
-            return new Matrix(result);
-        }
-
-        public Matrix Pow(int N)
-        {
-            var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
-
-            var result = MathEx.Pow(this, N, 항등원, (m1, m2) => m1 * m2);
-
-            return result;
-        }
-
-        public Matrix Pow(long N, int mod)
-        {
-            var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
-
-            Row.For(row => Column.For(column =>
-            {
-                Value[row][column] = (Value[row][column] + mod) % mod;
-            }));
-
-            var result = MathEx.Pow(this, N, 항등원, (m1, m2) => m1.Multiply(m2, mod));
-
-            return result;
-        }
-
-        public Matrix Pow(int N, Func<Matrix, Matrix, Matrix> fnMultifly)
-        {
-            var 항등원 = new Matrix(Row.MakeList(r => Column.MakeList(c => r == c ? 1L : 0L)));
-
-            var result = MathEx.Pow(this, N, 항등원, fnMultifly);
-
-            return result;
-        }
-
-    }
-
-    public static class MathEx
-    {
-
-        /// <summary>
-        /// pow1의 exp제곱을 구한다. \n
-        /// 2^10 = 2.Pow(10, 1, (a, b) => a * b);
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="base">밑</param>
-        /// <param name="exp">지수</param>
-        /// <param name="pow0">밑의 0제곱</param>
-        /// <param name="fnMultifly">곱셈연산</param>
-        /// <returns></returns>
-        public static T Pow<T>(this T @base, int exp, T pow0, Func<T, T, T> fnMultifly)
-        {
-            // Addition-Chain exponentiation
-
-            var basee = @base;
-            var res = pow0;
-
-            while (exp > 0)
-            {
-                if ((exp & 1) != 0)
-                    res = fnMultifly(res, basee);
-                exp >>= 1;
-                basee = fnMultifly(basee, basee);
-            }
-
-            return res;
-        }
-        public static T Pow<T>(this T @base, long exp, T pow0, Func<T, T, T> fnMultifly)
-        {
-            // Addition-Chain exponentiation
-
-            var basee = @base;
-            var res = pow0;
-
-            while (exp > 0)
-            {
-                if ((exp & 1) != 0)
-                    res = fnMultifly(res, basee);
-                exp >>= 1;
-                basee = fnMultifly(basee, basee);
-            }
-
-            return res;
-        }
-
-        public static int Pow(this int @base, int exp)
-        {
-            return @base.Pow(exp, 1, (a, b) => a * b);
-        }
-
-        public static long Pow(this long @base, int exp)
-        {
-            return @base.Pow(exp, 1, (a, b) => a * b);
-        }
-        public static long Gcd(long a, long b)
-        {
-            if (a == b) { return a; }
-            else if (a > b && a % b == 0) { return b; }
-            else if (b > a && b % a == 0) { return a; }
-
-            long _gcd = 0;
-            while (b != 0)
-            {
-                _gcd = b;
-                b = a % b;
-                a = _gcd;
-            }
-            return _gcd;
-        }
-
-        public static long Lcm(long a, long b)
-        {
-            var gcd = Gcd(a, b);
-            var lcm = (a / gcd) * b;
-            return lcm;
-        }
-
-        /// <summary> [a, b) 인지 판단한다.  </summary>
-        public static bool Between(this int value, int a, int b)
-        {
-            return value >= a && value < b;
-        }
-
-        public static long Sqrt(long value)
-        {
-            long a = 0;
-            long c = 3037000499;
-
-            while (a <= c)
-            {
-                long b = (a + c) / 2;
-                long square = b * b;
-
-                if (value == square)
-                {
-                    return b;
-                }
-                else if (value < square)
-                {
-                    c = b - 1;
-                }
-                else
-                {
-                    a = b + 1;
-                }
-            }
-
-            return c;
-        }
-    }
-
-    public class Line
-    {
-        public Point P1;
-        public Point P2;
-
-        public bool IsVertical => P1.X == P2.X;
-        public bool IsHorizontal => P1.Y == P2.Y;
-    }
-
-    public record Point
-    {
-        public int X;
-        public int Y;
-        public Point() { }
-        public Point(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-
-        public static bool operator <(Point a, Point b)
-        {
-            if (a.X < b.X)
-                return true;
-            else if (a.X == b.X && a.Y < b.Y)
-                return true;
-            return false;
-        }
-
-        public static bool operator <=(Point a, Point b)
-        {
-            if (a.X < b.X)
-                return true;
-            else if (a.X == b.X && a.Y <= b.Y)
-                return true;
-            return false;
-        }
-
-        public static bool operator >(Point a, Point b)
-        {
-            return !(a <= b);
-        }
-
-        public static bool operator >=(Point a, Point b)
-        {
-            return !(a < b);
-        }
-
-        public static Point operator +(Point a, Point b)
-        {
-            return new Point(a.X + b.X, a.Y + b.Y);
         }
     }
 
