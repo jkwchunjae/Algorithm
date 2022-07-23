@@ -398,16 +398,31 @@ namespace ConsoleApp1
     {
         bool IsBoss { get; }
         string Name { get; }
+        int AttackValue { get; }
+        int DefenseValue { get; }
+        int MaxHP { get; }
+        int CurrentHP { get; }
+        int Experience { get; }
     }
 
     public class Monster : IMonster
     {
         public bool IsBoss { get; set; }
         public string Name { get; set; }
+        public int AttackValue { get; set; }
+        public int DefenseValue { get; set; }
+        public int MaxHP { get; set; }
+        public int CurrentHP { get; set; }
+        public int Experience { get; set; }
 
         public Monster(string name, int weapon, int armor, int hp, int exp)
         {
             Name = name;
+            AttackValue = weapon;
+            DefenseValue = armor;
+            MaxHP = hp;
+            CurrentHP = hp;
+            Experience = exp;
         }
         public Monster(char chr)
         {
@@ -419,6 +434,91 @@ namespace ConsoleApp1
         public Monster() { }
 
         public InteractResult Interact(IPlayer player)
+        {
+            bool monsterDead = false;
+            bool playerDead = false;
+
+            // 플레이어의 첫 번째 공격
+            if (player.OwnOrnamentOfType(typeof(OrnamentCourage)))
+            {
+                if (player.OwnOrnamentOfType(typeof(OrnamentDexterity)))
+                {
+                    monsterDead = SufferDamage(player.TotalAttackValue * 2);
+                }
+                else
+                {
+                    monsterDead = SufferDamage(player.TotalAttackValue * 3);
+                }
+            }
+            else
+            {
+                monsterDead = SufferDamage(player.TotalAttackValue);
+            }
+
+            if (monsterDead)
+            {
+                return FinalizeMatch(playerDead, player);
+            }
+
+            // 상대방이 보스일 경우, 몬스터의 첫 번째 공격이 특수성을 가짐
+            if (player.OwnOrnamentOfType(typeof(OrnamentHunter)) && IsBoss is true)
+            {
+                // 체력 회복하고, 보스로부터 공격 당해도 피가 닳지 않음
+                player.RecoverFullHP();
+                
+                // 플레이어부터 공격해서 일방이 죽을 때까지 전투
+                while (true)
+                {
+                    playerDead = player.SufferDamage(AttackValue);
+                    if (playerDead) break;
+                    monsterDead = SufferDamage(player.TotalAttackValue);
+                    if (monsterDead) break;
+                }
+                return FinalizeMatch(playerDead, player);                
+            }
+            else
+            {
+                // 몬스터부터 공격해서 일방이 죽을 때까지 전투
+                while (true)
+                {
+                    monsterDead = SufferDamage(player.TotalAttackValue);
+                    if (monsterDead) break;
+                    playerDead = player.SufferDamage(AttackValue);
+                    if (playerDead) break;
+                }
+                return FinalizeMatch(playerDead, player);
+            }
+        }
+
+        private InteractResult FinalizeMatch(bool playerDead, IPlayer player)
+        {
+            if (playerDead)
+            {
+                if (player.OwnOrnamentOfType(typeof(OrnamentReincarnation)))
+                {
+                    CurrentHP = MaxHP;
+
+                    player.Reincarnate();
+
+                    return InteractResult.CreateNoImpactResult();
+                }
+                else
+                {
+                    return InteractResult.CreateDeadResult(Name);
+                }
+            }
+            else
+            {
+                player.RecoverHPWithOrnament();
+                player.GainExperience(Experience);
+
+                return IsBoss ?
+                    InteractResult.CreateWinResult() :
+                    InteractResult.CreateChangeToBlankResult();
+            }
+        }
+
+        private bool SufferDamage(int damage)
         {
             throw new NotImplementedException();
         }
@@ -453,7 +553,7 @@ namespace ConsoleApp1
                 bool ownReincarnation = player.OwnOrnamentOfType(typeof(OrnamentReincarnation));
                 if (ownReincarnation)
                 {
-                    player.ReincarnateAfterTrap();
+                    player.Reincarnate();
                     result = InteractResult.CreateNoImpactResult();
                 }
                 else
@@ -516,8 +616,9 @@ namespace ConsoleApp1
         int MaxHP { get; set; }
         int CurrentHP { get; set; }
 
-        int AttackValue { get; set; }
-        int DefenseValue { get; set; }
+        int BareAttackValue { get; set; }
+        int TotalAttackValue { get; }
+        int BareDefenseValue { get; set; }
 
         IWeapon Weapon { get; set; }
         IArmor Armor { get; set; }
@@ -527,7 +628,11 @@ namespace ConsoleApp1
         string ToString();
         void DecreaseHP(int damage);
         bool OwnOrnamentOfType(Type ornamentType);
-        void ReincarnateAfterTrap();
+        void Reincarnate();
+        void RecoverFullHP();
+        void RecoverHPWithOrnament();
+        void GainExperience(int exp);
+        bool SufferDamage(int damage);
     }
 
     public class Player : IPlayer
@@ -540,8 +645,9 @@ namespace ConsoleApp1
         public int Level { get; set; } = 1;
         public int MaxHP { get; set; } = 20;
         public int CurrentHP { get; set; } = 20;
-        public int AttackValue { get; set; } = 2;
-        public int DefenseValue { get; set; } = 2;
+        public int BareAttackValue { get; set; } = 2;
+        public int TotalAttackValue { get => BareAttackValue + Weapon?.AttackValue ?? 0; }
+        public int BareDefenseValue { get; set; } = 2;
         public IWeapon Weapon { get; set; }
         public IArmor Armor { get; set; }
         public IOrnament[] Ornaments { get; set; } = new IOrnament[ORNAMENTCAPA];
@@ -566,7 +672,7 @@ namespace ConsoleApp1
             Position = new Position(BeginningPosition.Row, BeginningPosition.Column);
         }
 
-        private void RecoverFullHP()
+        public void RecoverFullHP()
         {
             CurrentHP = MaxHP;
         }
@@ -594,7 +700,7 @@ namespace ConsoleApp1
             Ornaments[ornamentIndex] = null;
         }
 
-        public void ReincarnateAfterTrap()
+        public void Reincarnate()
         {
             RecoverFullHP();
             GoBackToBeinningPosition();
@@ -602,6 +708,22 @@ namespace ConsoleApp1
             RemoveOrnament(ornamentIndex);
         }
 
+        public void RecoverHPWithOrnament()
+        {
+            // HP Regeneration Ornament가 있을 경우 HP 회복
+            throw new NotImplementedException();
+        }
+
+        public void GainExperience(int exp)
+        {
+            // Experience Ornament가 있을 경우 1.2배의 경험치 얻게 한다.
+            throw new NotImplementedException();
+        }
+
+        public bool SufferDamage(int damage)
+        {
+            throw new NotImplementedException();
+        }
     }
     #endregion
 
@@ -627,7 +749,7 @@ namespace ConsoleApp1
         public InteractResult Interact(IPlayer player)
         {
             player.Weapon = this;
-            player.AttackValue = AttackValue;
+            player.BareAttackValue = AttackValue;
             
             return InteractResult.CreateChangeToBlankResult();
         }
@@ -650,7 +772,7 @@ namespace ConsoleApp1
         public InteractResult Interact(IPlayer player)
         {
             player.Armor = this;
-            player.DefenseValue = DefenseValue;
+            player.BareDefenseValue = DefenseValue;
             return InteractResult.CreateChangeToBlankResult();
         }
     }
