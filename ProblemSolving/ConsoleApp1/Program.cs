@@ -518,9 +518,11 @@ namespace ConsoleApp1
             }
         }
 
+        // return: 데미지를 입어 죽을 경우 true 반환
         private bool SufferDamage(int damage)
         {
-            throw new NotImplementedException();
+            CurrentHP -= damage;
+            return CurrentHP <= 0;
         }
     }
 
@@ -720,9 +722,11 @@ namespace ConsoleApp1
             throw new NotImplementedException();
         }
 
+        // return: 데미지를 입어 죽을 경우 true 반환
         public bool SufferDamage(int damage)
         {
-            throw new NotImplementedException();
+            CurrentHP -= damage;
+            return CurrentHP <= 0;
         }
     }
     #endregion
