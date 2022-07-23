@@ -444,11 +444,11 @@ namespace ConsoleApp1
             {
                 if (player.OwnOrnamentOfType(typeof(OrnamentDexterity)))
                 {
-                    monsterDead = SufferDamage(player.TotalAttackValue * 2);
+                    monsterDead = SufferDamage(player.TotalAttackValue * 3);
                 }
                 else
                 {
-                    monsterDead = SufferDamage(player.TotalAttackValue * 3);
+                    monsterDead = SufferDamage(player.TotalAttackValue * 2);
                 }
             }
             else
@@ -750,7 +750,13 @@ namespace ConsoleApp1
         public bool SufferDamage(int damage)
         {
             CurrentHP -= Math.Max(1, damage - TotalDefenseValue);
-            return CurrentHP <= 0;
+            if (CurrentHP <= 0) 
+            {
+                CurrentHP = 0;
+                return true;
+            }
+
+            return false;
         }
     }
     #endregion
