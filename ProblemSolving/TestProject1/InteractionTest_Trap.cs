@@ -14,13 +14,13 @@ public class InteractionTest_Trap
     public void Trap을밟으면체력이줄어든다()
     {
         IPlayer player = new Player();
-        var initHp = player.CurrentHP;
+        var initHp = player.Hp;
 
         ITrap trap = new Trap();
 
         var result = trap.Interact(player);
 
-        Assert.Equal(initHp - 5, player.CurrentHP);
+        Assert.Equal(initHp - 5, player.Hp);
         Assert.False(result.Dead);
     }
 
@@ -28,7 +28,7 @@ public class InteractionTest_Trap
     public void Trap을밟아서죽을수있다()
     {
         IPlayer player = new Player();
-        var initHp = player.CurrentHP;
+        var initHp = player.Hp;
 
         ITrap trap = new Trap();
 
@@ -39,7 +39,7 @@ public class InteractionTest_Trap
 
         Assert.True(result.Dead);
         Assert.Equal("SPIKE TRAP", result.DeadBy);
-        Assert.Equal(0, player.CurrentHP);
+        Assert.Equal(0, player.Hp);
     }
 
     [Fact]
@@ -47,13 +47,13 @@ public class InteractionTest_Trap
     {
         IPlayer player = new Player();
         new OrnamentDexterity().Interact(player);
-        var initHp = player.CurrentHP;
+        var initHp = player.Hp;
 
         ITrap trap = new Trap();
 
         var result = trap.Interact(player);
 
-        Assert.Equal(initHp - 1, player.CurrentHP);
+        Assert.Equal(initHp - 1, player.Hp);
         Assert.False(result.Dead);
     }
 
@@ -62,7 +62,7 @@ public class InteractionTest_Trap
     {
         IPlayer player = new Player();
         new OrnamentDexterity().Interact(player);
-        var initHp = player.CurrentHP;
+        var initHp = player.Hp;
 
         ITrap trap = new Trap();
 
@@ -71,6 +71,6 @@ public class InteractionTest_Trap
 
         Assert.True(result.Dead);
         Assert.Equal("SPIKE TRAP", result.DeadBy);
-        Assert.Equal(0, player.CurrentHP);
+        Assert.Equal(0, player.Hp);
     }
 }

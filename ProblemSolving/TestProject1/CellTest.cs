@@ -80,7 +80,7 @@ public class CellTest
     {
         IPlayer player = new Player();
         player.SufferDamage(1);
-        player.Ornaments.Add(new OrnamentHunter());
+        new OrnamentHunter().Interact(player);
 
         ICell cell = new Cell(new Position(1, 1), '&');
         cell.Interactable = new Monster("boss", 0, 0, 0, 0, true);
@@ -88,6 +88,6 @@ public class CellTest
 
         cell.Interact(player);
 
-        Assert.Equal(player.MaxHP, player.CurrentHP);
+        Assert.Equal(player.MaxHp, player.Hp);
     }
 }

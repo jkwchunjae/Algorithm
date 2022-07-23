@@ -392,34 +392,70 @@ namespace ConsoleApp1
         }
     }
 
+    public interface IFightable
+    {
+        int TotalAttackValue { get; }
+        int TotalDefenseValue { get; }
+        int MaxHp { get; }
+        int Hp { get; }
+        bool Alive { get; }
+        bool Dead { get; }
+        void DecreaseHp(int decreaseHpValue);
+        void SufferDamage(int damage);
+        void BeforeFight(IFightable opponent);
+        void AfterFight(IFightable opponent);
+    }
+
+    public abstract class Fightable : IFightable
+    {
+        public virtual int TotalAttackValue { get; protected set; }
+        public virtual int TotalDefenseValue { get; protected set; }
+        public virtual int MaxHp { get; protected set; }
+        public virtual int Hp { get; protected set; }
+        public bool Alive => Hp > 0;
+        public bool Dead => !Alive;
+
+        public virtual void DecreaseHp(int decreaseHpValue)
+        {
+            Hp = Math.Max(0, Hp - decreaseHpValue);
+        }
+        public virtual void SufferDamage(int damage)
+        {
+            var decreaseHp = Math.Max(1, damage - TotalDefenseValue);
+            DecreaseHp(decreaseHp);
+        }
+        public virtual void BeforeFight(IFightable opponent)
+        {
+        }
+        public virtual void AfterFight(IFightable opponent)
+        {
+        }
+    }
+
     public interface IMonster : IInteractable
     {
         bool IsBoss { get; }
         string Name { get; }
-        int AttackValue { get; }
-        int DefenseValue { get; }
-        int MaxHP { get; }
-        int CurrentHP { get; }
         int Experience { get; }
     }
 
-    public class Monster : IMonster
+    public class Monster : Fightable, IMonster
     {
         public bool IsBoss { get; set; }
-        public string Name { get; set; }
-        public int AttackValue { get; set; }
-        public int DefenseValue { get; set; }
-        public int MaxHP { get; set; }
-        public int CurrentHP { get; set; }
-        public int Experience { get; set; }
+        public string Name { get; init; }
+        private int AttackValue { get; init; }
+        private int DefenseValue { get; init; }
+        public int Experience { get; init; }
+        public override int TotalAttackValue => AttackValue;
+        public override int TotalDefenseValue => DefenseValue;
 
         public Monster(string name, int weapon, int armor, int hp, int exp, bool isBoss = false)
         {
             Name = name;
             AttackValue = weapon;
             DefenseValue = armor;
-            MaxHP = hp;
-            CurrentHP = hp;
+            MaxHp = hp;
+            Hp = hp;
             Experience = exp;
             IsBoss = isBoss;
         }
@@ -434,45 +470,42 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
-            bool monsterDead;
-            bool playerDead = false;
+            IFightable monster = this;
 
-            if (player.HasOrnament<OrnamentHunter>() && IsBoss)
+            BeforeFight(player);
+            player.BeforeFight(this);
+
+            var turnCount = 0;
+            while (player.Alive && monster.Alive)
             {
-                player.RecoverFullHP();
-            }
+                turnCount++;
 
-            // 플레이어의 첫 번째 공격
-            monsterDead = SufferDamage(player.GetFirstDamage());
-
-            if (monsterDead)
-            {
-                return FinalizeMatch(playerDead, player);
-            }
-
-            // Hunter 장신구 있고 상대방이 보스일 경우, 보스의 첫 번째 공격은 없고 바로 다시 내 공격 차례
-            if (player.HasOrnament<OrnamentHunter>() && IsBoss)
-            {
-                monsterDead = SufferDamage(player.TotalAttackValue);
-            }
-
-            while (!playerDead && !monsterDead)
-            {
-                playerDead = player.SufferDamage(AttackValue);
-                if (playerDead)
+                monster.SufferDamage(player.GetAttackValue(turnCount));
+                if (monster.Dead)
                     break;
-                monsterDead = SufferDamage(player.TotalAttackValue);
+
+                if (turnCount == 1 && player.HasOrnament<OrnamentHunter>() && IsBoss)
+                {
+                    // 보스 몬스터와 전투에 돌입하는 순간 체력을 최대치까지 회복하고, 보스 몬스터의 첫 공격에 0의 데미지를 입는다.
+                }
+                else
+                {
+                    player.SufferDamage(monster.TotalAttackValue);
+                }
             }
-            return FinalizeMatch(playerDead, player);
+
+            return FinalizeMatch(player);
         }
 
-        private InteractResult FinalizeMatch(bool playerDead, IPlayer player)
+        private InteractResult FinalizeMatch(IPlayer player)
         {
-            if (playerDead)
+            if (player.Dead)
             {
+                AfterFight(player);
                 if (player.HasOrnament<OrnamentReincarnation>())
                 {
                     player.Reincarnate();
+                    Hp = MaxHp; // 전투 중이던 몬스터가 있다면 해당 몬스터의 체력도 최대치로 회복된다.
 
                     return InteractResult.CreateNoImpactResult();
                 }
@@ -483,20 +516,12 @@ namespace ConsoleApp1
             }
             else
             {
-                player.RecoverHPWithOrnament();
-                player.GainExperience(Experience);
+                player.AfterFight(this);
 
                 return IsBoss ?
                     InteractResult.CreateWinResult() :
                     InteractResult.CreateChangeToBlankResult();
             }
-        }
-
-        /// <summary> 데미지를 입어 죽을 경우 true 반환 </summary>
-        private bool SufferDamage(int damage)
-        {
-            CurrentHP -= Math.Max(1, damage - DefenseValue);
-            return CurrentHP <= 0;
         }
     }
 
@@ -514,11 +539,11 @@ namespace ConsoleApp1
         {
             if (player.HasOrnament<OrnamentDexterity>())
             {
-                player.DecreaseHP(1);
+                player.DecreaseHp(1);
             }
             else
             {
-                player.DecreaseHP(Damage);
+                player.DecreaseHp(Damage);
             }
 
             if (player.Dead)
@@ -575,21 +600,13 @@ namespace ConsoleApp1
     #endregion
 
     #region Player
-    public interface IPlayer
+    public interface IPlayer : IFightable
     {
         Position Position { get; }
         Position BeginningPosition { get; init; }
 
         int Experience { get; }
         int Level { get; }
-
-        int MaxHP { get; }
-        int CurrentHP { get; }
-        bool Dead { get; }
-
-        int BareAttackValue { get; }
-        int TotalAttackValue { get; }
-        int BareDefenseValue { get; }
 
         IWeapon Weapon { get; }
         IArmor Armor { get; }
@@ -600,38 +617,35 @@ namespace ConsoleApp1
         void Equip(IWeapon weapon);
         void Equip(IArmor armor);
         void AddOrnament<T>(T ornament) where T : class, IOrnament;
-        void DecreaseHP(int damage);
-        bool HasOrnament<T>();
         void Reincarnate();
-        void RecoverFullHP();
-        void RecoverHPWithOrnament();
-        void GainExperience(int exp);
-        bool SufferDamage(int damage);
     }
 
-    public class Player : IPlayer
+    public class Player : Fightable, IPlayer
     {
         private const int ORNAMENTCAPA = 4;
         private const int LEVELUPMULTIPLE = 5;
-        
+
+        private int _bareAttackValue = 2;
+        private int _bareDefenseValue = 2;
+        private List<IOrnament> _ornaments = new List<IOrnament>();
+
         public Position Position { get; private set; }
         public Position BeginningPosition { get; init; }
         public int Experience { get; private set; } = 0;
         public int Level { get; private set; } = 1;
-        public int MaxHP { get; private set; } = 20;
-        public int CurrentHP { get; private set; } = 20;
-        public bool Dead => CurrentHP <= 0;
-        public int BareAttackValue { get; private set; } = 2;
-        public int TotalAttackValue { get => BareAttackValue + (Weapon?.AttackValue ?? 0); }
-        public int BareDefenseValue { get; private set; } = 2;
-        public int TotalDefenseValue { get => BareDefenseValue + (Armor?.DefenseValue ?? 0); }
+        public override int TotalAttackValue => _bareAttackValue + (Weapon?.AttackValue ?? 0);
+        public override int TotalDefenseValue => _bareDefenseValue + (Armor?.DefenseValue ?? 0);
         public IWeapon Weapon { get; private set; }
         public IArmor Armor { get; private set; }
-        private List<IOrnament> _ornaments = new List<IOrnament>();
         public IEnumerable<IOrnament> Ornaments => _ornaments;
 
-        public Player() { }
+        public Player()
+        {
+            MaxHp = 20;
+            Hp = 20;
+        }
         public Player(Position position)
+            : this()
         {
             Position = position;
             BeginningPosition = position;
@@ -640,9 +654,9 @@ namespace ConsoleApp1
         public override string ToString()
         {
             return @$"LV : {Level}
-HP : {CurrentHP}/{MaxHP}
-ATT : {BareAttackValue}+{Weapon?.AttackValue ?? 0}
-DEF : {BareDefenseValue}+{Armor?.DefenseValue ?? 0}
+HP : {Hp}/{MaxHp}
+ATT : {_bareAttackValue}+{Weapon?.AttackValue ?? 0}
+DEF : {_bareDefenseValue}+{Armor?.DefenseValue ?? 0}
 EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         }
 
@@ -677,24 +691,14 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
             _ornaments.Add(ornament);
         }
 
-        public void DecreaseHP(int damage)
-        {
-            CurrentHP = Math.Max(0, CurrentHP - damage);
-        }
-
         private void GoBackToBeinningPosition()
         {
             Position = new Position(BeginningPosition.Row, BeginningPosition.Column);
         }
 
-        public void RecoverFullHP()
+        private void RecoverFullHP()
         {
-            CurrentHP = MaxHP;
-        }
-
-        public bool HasOrnament<T>()
-        {
-            return Ornaments.Any(o => o is T);
+            Hp = MaxHp;
         }
 
         private void RemoveOrnament<T>()
@@ -713,16 +717,16 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
             RemoveOrnament<OrnamentReincarnation>();
         }
 
-        public void RecoverHPWithOrnament()
+        private void RecoverHPWithOrnament()
         {
             // HP Regeneration Ornament가 있을 경우 HP 회복
             if (Ornaments.TryGet<OrnamentHpRegeneration>(out var hpRegeneration))
             {
-                CurrentHP = Math.Min(CurrentHP + hpRegeneration.HPRegenCapa, MaxHP);
+                Hp = Math.Min(MaxHp, Hp + hpRegeneration.HPRegenCapa);
             }
         }
 
-        public void GainExperience(int exp)
+        private void GainExperience(int exp)
         {
             if (Ornaments.TryGet<OrnamentExperience>(out var ornamentExperience))
             {
@@ -739,20 +743,30 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         {
             Level += 1;
             Experience = 0;
-            MaxHP += 5;
-            BareAttackValue += 2;
-            BareDefenseValue += 2;
+            MaxHp += 5;
+            _bareAttackValue += 2;
+            _bareDefenseValue += 2;
             
             RecoverFullHP();
         }
 
-        /// <summary> 데미지를 입어 죽을 경우 true 반환 </summary>
-        public bool SufferDamage(int damage)
+        public override void BeforeFight(IFightable opponent)
         {
-            damage = Math.Max(1, damage - TotalDefenseValue);
-            DecreaseHP(damage);
-
-            return Dead;
+            if (opponent is Monster monster)
+            {
+                if (this.HasOrnament<OrnamentHunter>() && monster.IsBoss)
+                {
+                    RecoverFullHP();
+                }
+            }
+        }
+        public override void AfterFight(IFightable opponent)
+        {
+            if (opponent is Monster monster)
+            {
+                RecoverHPWithOrnament();
+                GainExperience(monster.Experience);
+            }
         }
     }
     #endregion
@@ -929,6 +943,11 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
             };
         }
 
+        public static bool HasOrnament<T>(this IPlayer player)
+        {
+            return player.Ornaments.Any(o => o is T);
+        }
+
         public static bool TryGet<T>(this IEnumerable<IOrnament> ornaments, out T ornament)
             where T : class, IOrnament
         {
@@ -953,6 +972,17 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
             return player.HasOrnament<T>();
         }
 
+        public static int GetAttackValue(this IPlayer player, int turnCount)
+        {
+            if (turnCount == 1)
+            {
+                return player.GetFirstDamage();
+            }
+            else
+            {
+                return player.TotalAttackValue;
+            }
+        }
         public static int GetFirstDamage(this IPlayer player)
         {
             if (player.HasOrnament<OrnamentCourage>())
