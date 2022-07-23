@@ -639,6 +639,7 @@ namespace ConsoleApp1
     public class Player : IPlayer
     {
         private const int ORNAMENTCAPA = 4;
+        private const int LEVELUPMULTIPLE = 5;
         
         public Position Position { get; set; }
         public Position BeginningPosition { get; init; }
@@ -655,7 +656,12 @@ namespace ConsoleApp1
 
         public override string ToString()
         {
-            return base.ToString();
+            return
+                $"LV : {Level}\n" +
+                $"HP : {CurrentHP}/{MaxHP}\n" +
+                $"ATT : {BareAttackValue}+{Weapon.AttackValue}\n" +
+                $"DEF : {BareDefenseValue}+{Armor.DefenseValue}\n" +
+                $"EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         }
 
         public void DecreaseHP(int damage)
@@ -724,7 +730,7 @@ namespace ConsoleApp1
                 exp = Convert.ToInt32(exp * experienceMultiple);
             }
             Experience += exp;
-            if (Experience >= Level * 5) LevelUp();
+            if (Experience >= Level * LEVELUPMULTIPLE) LevelUp();
         }
 
         private void LevelUp()
