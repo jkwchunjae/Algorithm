@@ -144,6 +144,7 @@ namespace ConsoleApp1
             player = new Player
             {
                 Position = new Position(playerRow, playerColumn),
+                BeginningPosition = new Position(playerRow, playerColumn),
             };
 
             return map;
@@ -299,7 +300,13 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
-            return Interactable.Interact(player);
+            var result = Interactable.Interact(player);
+            if (result.ChangeToBlank)
+            {
+                Interactable = IInteractable.CreateBlank();
+            }
+
+            return result;
         }
 
         public Cell(Position position, char chr)
@@ -326,6 +333,10 @@ namespace ConsoleApp1
                 '^' => new Trap(),
                 _ => new Blank(),
             };
+        }
+        static IInteractable CreateBlank()
+        {
+            return new Blank();
         }
     }
 
@@ -420,12 +431,12 @@ namespace ConsoleApp1
 
     public class Trap : ITrap
     {
-        public int Damage { get; init; }
+        public int Damage { get; init; } = 5;
         private const string TRAPNAME = "SPIKE TRAP";
         
         public InteractResult Interact(IPlayer player)
         {
-            bool ownDexterity = player.Ornaments?.Any(o => o is OrnamentDexterity) ?? false;
+            bool ownDexterity = player.OwnOrnamentOfType(typeof(OrnamentDexterity));
 
             if (ownDexterity)
             {
@@ -439,7 +450,16 @@ namespace ConsoleApp1
             InteractResult result;
             if (player.CurrentHP <= 0)
             {
-                result = InteractResult.CreateDeadResult(TRAPNAME);
+                bool ownReincarnation = player.OwnOrnamentOfType(typeof(OrnamentReincarnation));
+                if (ownReincarnation)
+                {
+                    player.ReincarnateAfterTrap();
+                    result = InteractResult.CreateNoImpactResult();
+                }
+                else
+                {
+                    result = InteractResult.CreateDeadResult(TRAPNAME);
+                }
             }
             else
             {
@@ -488,6 +508,7 @@ namespace ConsoleApp1
     public interface IPlayer
     {
         Position Position { get; set; }
+        Position BeginningPosition { get; init; }
 
         int Experience { get; set; }
         int Level { get; set; }
@@ -505,6 +526,8 @@ namespace ConsoleApp1
         bool DeadAfterMonster(IMonster monster);
         string ToString();
         void DecreaseHP(int damage);
+        bool OwnOrnamentOfType(Type ornamentType);
+        void ReincarnateAfterTrap();
     }
 
     public class Player : IPlayer
@@ -512,6 +535,7 @@ namespace ConsoleApp1
         private const int ORNAMENTCAPA = 4;
         
         public Position Position { get; set; }
+        public Position BeginningPosition { get; init; }
         public int Experience { get; set; } = 0;
         public int Level { get; set; } = 1;
         public int MaxHP { get; set; } = 20;
@@ -527,22 +551,57 @@ namespace ConsoleApp1
             throw new NotImplementedException();
         }
 
+        public override string ToString()
+        {
+            return base.ToString();
+        }
+
         public void DecreaseHP(int damage)
         {
             CurrentHP -= damage;
         }
 
-        public void EquipWeapon(IWeapon weapon)
+        private void GoBackToBeinningPosition()
         {
-            Weapon = weapon;
+            Position = new Position(BeginningPosition.Row, BeginningPosition.Column);
         }
 
-
-
-        public override string ToString()
+        private void RecoverFullHP()
         {
-            return base.ToString();
+            CurrentHP = MaxHP;
         }
+
+        public bool OwnOrnamentOfType(Type ornamentType)
+        {
+            return Ornaments.Any(o =>
+            {
+                if (o is null) return false;
+                else return o.GetType().Equals(ornamentType);
+            });
+        }
+        
+        private int IndexOfOrnamentIfPossess(Type ornamentType)
+        {
+            return Array.FindIndex(Ornaments, o =>
+            {
+                if (o is null) return false;
+                else return o.GetType().Equals(ornamentType);
+            });
+        }
+
+        private void RemoveOrnament(int ornamentIndex)
+        {
+            Ornaments[ornamentIndex] = null;
+        }
+
+        public void ReincarnateAfterTrap()
+        {
+            RecoverFullHP();
+            GoBackToBeinningPosition();
+            int ornamentIndex = IndexOfOrnamentIfPossess(typeof(OrnamentReincarnation));
+            RemoveOrnament(ornamentIndex);
+        }
+
     }
     #endregion
 
