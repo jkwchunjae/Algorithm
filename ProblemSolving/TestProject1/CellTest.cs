@@ -48,7 +48,7 @@ public class CellTest
     {
         IPlayer player = new Player();
         ICell cell = new Cell(new Position(1, 1), '&');
-        cell.Interactable = new Monster("Name", 1, 1, 1, 1);
+        cell.Interactable = new Monster("Name", 1, 1, 1, 1, false);
 
         cell.Interact(player);
 
@@ -59,7 +59,7 @@ public class CellTest
     {
         IPlayer player = new Player();
         ICell cell = new Cell(new Position(1, 1), '&');
-        cell.Interactable = new Monster("Name", 999, 999, 999, 999);
+        cell.Interactable = new Monster("Name", 999, 999, 999, 999, false);
 
         cell.Interact(player);
 

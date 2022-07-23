@@ -1,4 +1,5 @@
-﻿using System;
+﻿// https://github.com/jkwchunjae/Algorithm/blob/dev2-algoton/ProblemSolving/ConsoleApp1/Program.cs
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace ConsoleApp1
         {
             var outputResult = new List<string>();
 
-            var map = CreateMapFromInput(out var moves, out var player);
+            var map = IMap.CreateMapFromInput(out var moves, out var player);
 
             int turnCount = 0;
             foreach (var move in moves)
@@ -97,56 +98,6 @@ namespace ConsoleApp1
             return outputResult.StringJoin(Environment.NewLine);
         }
 
-        public static IMap CreateMapFromInput(out List<MoveType> moves, out IPlayer player)
-        {
-            var (height, width) = IO.GetIntTuple2();
-            var lines = height.MakeList(_ => IO.GetLine());
-            var map = IMap.Create(height, width, lines);
-
-            moves = IO.GetLine().Select(chr => Ex.ToMoveType(chr)).ToList();
-
-            var monsters = map.MonsterCount.MakeList(_ =>
-            {
-                var arr = IO.GetStringList();
-                var row = arr[0].ToInt() - 1;
-                var column = arr[1].ToInt() - 1;
-                var name = arr[2];
-                var w = arr[3].ToInt();
-                var a = arr[4].ToInt();
-                var h = arr[5].ToInt();
-                var e = arr[6].ToInt();
-
-                var position = new Position(row, column);
-                var monster = new Monster(name, w, a, h, e);
-
-                return (position, monster);
-            });
-            var items = map.ItemCount.MakeList(_ =>
-            {
-                var arr = IO.GetStringList();
-                var row = arr[0].ToInt() - 1;
-                var column = arr[1].ToInt() - 1;
-
-                var t = arr[2];
-                var s = arr[3];
-
-                var position = new Position(row, column);
-                var item = new ItemBox(t, s);
-
-                return (position, item);
-            });
-
-            map.UpdateMonsters(monsters);
-            map.UpdateItems(items);
-
-            var playerRow = lines.Select((line, row) => (line, row))
-                .First(x => x.line.Contains('@'))
-                .row;
-            var playerColumn = lines[playerRow].IndexOf('@');
-            player = new Player(new Position(playerRow, playerColumn));
-
-            return map;
-        }
     }
 
     public enum MoveType
@@ -176,9 +127,6 @@ namespace ConsoleApp1
         int MonsterCount { get; }
         int ItemCount { get; }
 
-        void UpdateMonsters(List<(Position, Monster)> monsters);
-        void UpdateItems(List<(Position, ItemBox)> items);
-
         string ToString();
 
         string ToString(IPlayer player);
@@ -187,17 +135,68 @@ namespace ConsoleApp1
         {
             return new Map(height, width, input);
         }
+
+        public static IMap CreateMapFromInput(out List<MoveType> moves, out IPlayer player)
+        {
+            var (height, width) = IO.GetIntTuple2();
+            var lines = height.MakeList(_ => IO.GetLine());
+            var baseMap = IMap.Create(height, width, lines);
+
+            moves = IO.GetLine().Select(chr => Ex.ToMoveType(chr)).ToList();
+
+            var monsters = baseMap.MonsterCount.MakeList(_ =>
+            {
+                var arr = IO.GetStringList();
+                var row = arr[0].ToInt() - 1;
+                var column = arr[1].ToInt() - 1;
+                var name = arr[2];
+                var w = arr[3].ToInt();
+                var a = arr[4].ToInt();
+                var h = arr[5].ToInt();
+                var e = arr[6].ToInt();
+
+                var isBoss = false;
+                var cell = baseMap.GetCell(new Position(row, column));
+                if (cell.Interactable is IMonster prevMonster)
+                {
+                    isBoss = prevMonster.IsBoss;
+                }
+
+                var position = new Position(row, column);
+                IInteractable monster = new Monster(name, w, a, h, e, isBoss);
+
+                return (position, monster);
+            });
+            var items = baseMap.ItemCount.MakeList(_ =>
+            {
+                var arr = IO.GetStringList();
+                var row = arr[0].ToInt() - 1;
+                var column = arr[1].ToInt() - 1;
+
+                var t = arr[2];
+                var s = arr[3];
+
+                var position = new Position(row, column);
+                IInteractable item = new ItemBox(t, s);
+
+                return (position, item);
+            });
+
+            var map = new Map(height, width, lines, monsters.Concat(items));
+
+            var playerRow = lines.Select((line, row) => (line, row))
+                .First(x => x.line.Contains('@'))
+                .row;
+            var playerColumn = lines[playerRow].IndexOf('@');
+            player = new Player(new Position(playerRow, playerColumn));
+
+            return map;
+        }
     }
 
     public class Map : IMap
     {
-        public Map(int height, int width, List<string> input)
-        {
-            Size = (height, width);
-            _cells = input
-                .Select((line, row) => line.Select((chr, column) => ICell.Create(row, column, chr)).ToList())
-                .ToList();
-        }
+        private List<List<ICell>> _cells;
 
         public (int Height, int Width) Size { get; set; }
 
@@ -207,7 +206,25 @@ namespace ConsoleApp1
         public int ItemCount => _cells
                 .Sum(cells => cells.Count(cell => cell.Interactable is IItemBox));
 
-        private List<List<ICell>> _cells;
+        public Map(int height, int width, List<string> input, IEnumerable<(Position Position, IInteractable Interactable)> interatables = null)
+        {
+            Size = (height, width);
+            _cells = input
+                .Select((line, row) => line.Select((chr, column) =>
+                {
+                    var position = new Position(row, column);
+                    var found = interatables?.FirstOrDefault(x => x.Position == position);
+                    if (found?.Interactable != default)
+                    {
+                        return new Cell(position, found?.Interactable) as ICell;
+                    }
+                    else
+                    {
+                        return new Cell(position, chr) as ICell;
+                    }
+                }).ToList())
+                .ToList();
+        }
 
         public ICell GetCell(Position position)
         {
@@ -253,42 +270,14 @@ namespace ConsoleApp1
                 }).StringJoin(""))
                 .StringJoin(Environment.NewLine);
         }
-
-        public void UpdateMonsters(List<(Position, Monster)> monsters)
-        {
-            monsters.ForEach(data =>
-            {
-                var (position, monster) = data;
-                if (_cells[position.Row][position.Column].Interactable is Monster prevMonster)
-                {
-                    monster.IsBoss = prevMonster?.IsBoss ?? false;
-                }
-                _cells[position.Row][position.Column].Interactable = monster;
-            });
-        }
-
-        public void UpdateItems(List<(Position, ItemBox)> items)
-        {
-            items.ForEach(data =>
-            {
-                var (position, itembox) = data;
-                _cells[position.Row][position.Column].Interactable = itembox;
-            });
-        }
     }
 
     public interface ICell
     {
         Position Position { get; init; }
-
         IInteractable Interactable { get; set; }
 
         InteractResult Interact(IPlayer player);
-
-        static ICell Create(int row, int column, char chr)
-        {
-            return new Cell(new Position(row, column), chr);
-        }
     }
 
     public class Cell : ICell
@@ -312,6 +301,11 @@ namespace ConsoleApp1
             Position = position;
             Interactable = IInteractable.Create(chr);
         }
+        public Cell(Position position, IInteractable interactable)
+        {
+            Position = position;
+            Interactable = interactable;
+        }
     }
     #endregion
 
@@ -325,9 +319,9 @@ namespace ConsoleApp1
             {
                 '.' => new Blank(),
                 '#' => new Wall(),
-                'B' => new ItemBox(chr),
-                '&' => new Monster(chr),
-                'M' => new Monster(chr),
+                'B' => new ItemBox(),
+                '&' => new Monster(isBoss: false),
+                'M' => new Monster(isBoss: true),
                 '^' => new Trap(),
                 _ => new Blank(),
             };
@@ -382,7 +376,7 @@ namespace ConsoleApp1
                 _ => throw new ArgumentException(),
             };
         }
-        public ItemBox(char chr)
+        public ItemBox()
         {
         }
 
@@ -441,7 +435,7 @@ namespace ConsoleApp1
 
     public class Monster : Fightable, IMonster
     {
-        public bool IsBoss { get; set; }
+        public bool IsBoss { get; init; }
         public string Name { get; init; }
         private int AttackValue { get; init; }
         private int DefenseValue { get; init; }
@@ -449,7 +443,7 @@ namespace ConsoleApp1
         public override int TotalAttackValue => AttackValue;
         public override int TotalDefenseValue => DefenseValue;
 
-        public Monster(string name, int weapon, int armor, int hp, int exp, bool isBoss = false)
+        public Monster(string name, int weapon, int armor, int hp, int exp, bool isBoss)
         {
             Name = name;
             AttackValue = weapon;
@@ -459,12 +453,9 @@ namespace ConsoleApp1
             Experience = exp;
             IsBoss = isBoss;
         }
-        public Monster(char chr)
+        public Monster(bool isBoss)
         {
-            if (chr == 'M')
-            {
-                IsBoss = true;
-            }
+            IsBoss = isBoss;
         }
         public Monster() { }
 
@@ -908,15 +899,15 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
     {
         public static string ToText(this ICell cell)
         {
-            switch (cell.Interactable)
+            return cell.Interactable switch
             {
-                case IBlank: return ".";
-                case IWall: return "#";
-                case IItemBox: return "B";
-                case IMonster monster: return monster.IsBoss ? "M" : "&";
-                case ITrap: return "^";
-                default: return ".";
-            }
+                IBlank => ".",
+                IWall => "#",
+                IItemBox => "B",
+                IMonster monster => monster.IsBoss ? "M" : "&",
+                ITrap => "^",
+                _ => ".",
+            };
         }
 
         public static MoveType ToMoveType(char chr)

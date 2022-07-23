@@ -37,7 +37,7 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
         var input = _input1;
         IO.SetInputOutput(new InputOutput { Input = input });
 
-        var map = Program.CreateMapFromInput(out var moves, out var player);
+        var map = IMap.CreateMapFromInput(out var moves, out var player);
         var height1 = input.Split('\n').First().Split(' ')[0].ToInt();
         var width1 = input.Split('\n').First().Split(' ')[1].ToInt();
         var input1 = input.Split('\n').Skip(1).Take(map.Size.Height).ToList();
@@ -52,7 +52,7 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
         var input = _input1;
         IO.SetInputOutput(new InputOutput { Input = input });
 
-        var map = Program.CreateMapFromInput(out var moves, out var player);
+        var map = IMap.CreateMapFromInput(out var moves, out var player);
 
         Assert.Equal(new Position(3, 2), player.Position);
     }
@@ -63,7 +63,7 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
         var input = _input1;
         IO.SetInputOutput(new InputOutput { Input = input });
 
-        var map = Program.CreateMapFromInput(out var moves, out var player);
+        var map = IMap.CreateMapFromInput(out var moves, out var player);
         var height1 = input.Split('\n').First().Split(' ')[0].ToInt();
         var width1 = input.Split('\n').First().Split(' ')[1].ToInt();
         var input1 = input.Split('\n').Skip(1).Take(map.Size.Height).ToList();
@@ -112,7 +112,7 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
         var input = _input1;
         IO.SetInputOutput(new InputOutput { Input = input });
 
-        var map = Program.CreateMapFromInput(out var moves, out var player);
+        var map = IMap.CreateMapFromInput(out var moves, out var player);
 
         Assert.IsType<ItemBox>(map.GetCell(new Position(3, 4)).Interactable);
         if (map.GetCell(new Position(3, 4)).Interactable is ItemBox itembox1)
@@ -149,7 +149,7 @@ RRRUULLULUDDDLDRDRDRRRURRULUULLU
         var input = _input1;
         IO.SetInputOutput(new InputOutput { Input = input });
 
-        var map = Program.CreateMapFromInput(out var moves, out var player);
+        var map = IMap.CreateMapFromInput(out var moves, out var player);
 
         Assert.IsType<Monster>(map.GetCell(new Position(2, 4)).Interactable);
         if (map.GetCell(new Position(2, 4)).Interactable is Monster monster1)
