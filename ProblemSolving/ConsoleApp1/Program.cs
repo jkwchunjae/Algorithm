@@ -469,10 +469,10 @@ namespace ConsoleApp1
                 // 플레이어부터 공격해서 일방이 죽을 때까지 전투
                 while (true)
                 {
-                    playerDead = player.SufferDamage(AttackValue);
-                    if (playerDead) break;
                     monsterDead = SufferDamage(player.TotalAttackValue);
                     if (monsterDead) break;
+                    playerDead = player.SufferDamage(AttackValue);
+                    if (playerDead) break;
                 }
                 return FinalizeMatch(playerDead, player);                
             }
@@ -481,10 +481,10 @@ namespace ConsoleApp1
                 // 몬스터부터 공격해서 일방이 죽을 때까지 전투
                 while (true)
                 {
-                    monsterDead = SufferDamage(player.TotalAttackValue);
-                    if (monsterDead) break;
                     playerDead = player.SufferDamage(AttackValue);
                     if (playerDead) break;
+                    monsterDead = SufferDamage(player.TotalAttackValue);
+                    if (monsterDead) break;
                 }
                 return FinalizeMatch(playerDead, player);
             }
@@ -626,7 +626,6 @@ namespace ConsoleApp1
         IArmor Armor { get; set; }
         IOrnament[] Ornaments { get; set; }
 
-        bool DeadAfterMonster(IMonster monster);
         string ToString();
         void DecreaseHP(int damage);
         bool OwnOrnamentOfType(Type ornamentType);
@@ -648,16 +647,11 @@ namespace ConsoleApp1
         public int MaxHP { get; set; } = 20;
         public int CurrentHP { get; set; } = 20;
         public int BareAttackValue { get; set; } = 2;
-        public int TotalAttackValue { get => BareAttackValue + Weapon?.AttackValue ?? 0; }
+        public int TotalAttackValue { get => BareAttackValue + (Weapon?.AttackValue ?? 0); }
         public int BareDefenseValue { get; set; } = 2;
         public IWeapon Weapon { get; set; }
         public IArmor Armor { get; set; }
         public IOrnament[] Ornaments { get; set; } = new IOrnament[ORNAMENTCAPA];
-
-        public bool DeadAfterMonster(IMonster monster)
-        {
-            throw new NotImplementedException();
-        }
 
         public override string ToString()
         {
@@ -723,8 +717,25 @@ namespace ConsoleApp1
 
         public void GainExperience(int exp)
         {
-            // Experience Ornament가 있을 경우 1.2배의 경험치 얻게 한다.
-            throw new NotImplementedException();
+            int ornamentIndex = IndexOfOrnamentIfPossess(typeof(OrnamentExperience));
+            if (ornamentIndex != -1)
+            {
+                var experienceMultiple = ((OrnamentExperience)Ornaments[ornamentIndex]).ExperienceMultiple;
+                exp = Convert.ToInt32(exp * experienceMultiple);
+            }
+            Experience += exp;
+            if (Experience >= Level * 5) LevelUp();
+        }
+
+        private void LevelUp()
+        {
+            Level += 1;
+            Experience = 0;
+            MaxHP += 5;
+            BareAttackValue += 2;
+            BareDefenseValue += 2;
+            
+            RecoverFullHP();
         }
 
         // return: 데미지를 입어 죽을 경우 true 반환
@@ -872,6 +883,7 @@ namespace ConsoleApp1
 
     public class OrnamentExperience : IOrnament
     {
+        public double ExperienceMultiple { get; init; } = 1.2;
         public InteractResult Interact(IPlayer player)
         {
             IOrnament.EquipOrnament(this, player);
