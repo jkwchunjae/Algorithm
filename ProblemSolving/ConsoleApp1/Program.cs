@@ -463,8 +463,8 @@ namespace ConsoleApp1
         {
             IFightable monster = this;
 
-            BeforeFight(player);
-            player.BeforeFight(this);
+            monster.BeforeFight(player);
+            player.BeforeFight(monster);
 
             var turnCount = 0;
             while (player.Alive && monster.Alive)
@@ -477,7 +477,8 @@ namespace ConsoleApp1
 
                 if (turnCount == 1 && player.HasOrnament<OrnamentHunter>() && IsBoss)
                 {
-                    // 보스 몬스터와 전투에 돌입하는 순간 체력을 최대치까지 회복하고, 보스 몬스터의 첫 공격에 0의 데미지를 입는다.
+                    // 보스 몬스터의 첫 공격에 0의 데미지를 입는다.
+                    player.DecreaseHp(0);
                 }
                 else
                 {
@@ -490,13 +491,13 @@ namespace ConsoleApp1
 
         private InteractResult FinalizeMatch(IPlayer player)
         {
+            IFightable monster = this;
             if (player.Dead)
             {
-                AfterFight(player);
+                monster.AfterFight(player);
                 if (player.HasOrnament<OrnamentReincarnation>())
                 {
                     player.Reincarnate();
-                    Hp = MaxHp; // 전투 중이던 몬스터가 있다면 해당 몬스터의 체력도 최대치로 회복된다.
 
                     return InteractResult.CreateNoImpactResult();
                 }
@@ -507,11 +508,23 @@ namespace ConsoleApp1
             }
             else
             {
-                player.AfterFight(this);
+                player.AfterFight(monster);
 
                 return IsBoss ?
                     InteractResult.CreateWinResult() :
                     InteractResult.CreateChangeToBlankResult();
+            }
+        }
+
+        public override void AfterFight(IFightable opponent)
+        {
+            if (opponent is IPlayer player)
+            {
+                if (player.HasOrnament<OrnamentReincarnation>())
+                {
+                    // 전투 중이던 몬스터가 있다면 해당 몬스터의 체력도 최대치로 회복된다.
+                    Hp = MaxHp;
+                }
             }
         }
     }
@@ -745,6 +758,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         {
             if (opponent is Monster monster)
             {
+                // 보스 몬스터와 전투에 돌입하는 순간 체력을 최대치까지 회복하고
                 if (this.HasOrnament<OrnamentHunter>() && monster.IsBoss)
                 {
                     RecoverFullHP();
