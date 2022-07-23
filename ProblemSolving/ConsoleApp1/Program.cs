@@ -62,7 +62,7 @@ namespace ConsoleApp1
                 Position nextPosition = player.Position.GetNext(move);
                 if (map.Movable(nextPosition))
                 {
-                    player.Position = nextPosition;
+                    player.Move(move);
                 }
                 var nextCell = map.GetCell(player.Position);
                 var result = nextCell.Interact(player);
@@ -143,11 +143,7 @@ namespace ConsoleApp1
                 .First(x => x.line.Contains('@'))
                 .row;
             var playerColumn = lines[playerRow].IndexOf('@');
-            player = new Player
-            {
-                Position = new Position(playerRow, playerColumn),
-                BeginningPosition = new Position(playerRow, playerColumn),
-            };
+            player = new Player(new Position(playerRow, playerColumn));
 
             return map;
         }
@@ -473,8 +469,6 @@ namespace ConsoleApp1
             {
                 if (player.HasOrnament<OrnamentReincarnation>())
                 {
-                    CurrentHP = MaxHP;
-
                     player.Reincarnate();
 
                     return InteractResult.CreateNoImpactResult();
@@ -580,25 +574,29 @@ namespace ConsoleApp1
     #region Player
     public interface IPlayer
     {
-        Position Position { get; set; }
+        Position Position { get; }
         Position BeginningPosition { get; init; }
 
-        int Experience { get; set; }
-        int Level { get; set; }
+        int Experience { get; }
+        int Level { get; }
 
-        int MaxHP { get; set; }
-        int CurrentHP { get; set; }
+        int MaxHP { get; }
+        int CurrentHP { get; }
         bool Dead { get; }
 
-        int BareAttackValue { get; set; }
+        int BareAttackValue { get; }
         int TotalAttackValue { get; }
-        int BareDefenseValue { get; set; }
+        int BareDefenseValue { get; }
 
-        IWeapon Weapon { get; set; }
-        IArmor Armor { get; set; }
-        List<IOrnament> Ornaments { get; set; }
+        IWeapon Weapon { get; }
+        IArmor Armor { get; }
+        IEnumerable<IOrnament> Ornaments { get; }
 
         string ToString();
+        void Move(MoveType movetype);
+        void Equip(IWeapon weapon);
+        void Equip(IArmor armor);
+        void AddOrnament<T>(T ornament) where T : class, IOrnament;
         void DecreaseHP(int damage);
         bool HasOrnament<T>();
         void Reincarnate();
@@ -613,20 +611,28 @@ namespace ConsoleApp1
         private const int ORNAMENTCAPA = 4;
         private const int LEVELUPMULTIPLE = 5;
         
-        public Position Position { get; set; }
+        public Position Position { get; private set; }
         public Position BeginningPosition { get; init; }
-        public int Experience { get; set; } = 0;
-        public int Level { get; set; } = 1;
-        public int MaxHP { get; set; } = 20;
-        public int CurrentHP { get; set; } = 20;
+        public int Experience { get; private set; } = 0;
+        public int Level { get; private set; } = 1;
+        public int MaxHP { get; private set; } = 20;
+        public int CurrentHP { get; private set; } = 20;
         public bool Dead => CurrentHP <= 0;
-        public int BareAttackValue { get; set; } = 2;
+        public int BareAttackValue { get; private set; } = 2;
         public int TotalAttackValue { get => BareAttackValue + (Weapon?.AttackValue ?? 0); }
-        public int BareDefenseValue { get; set; } = 2;
+        public int BareDefenseValue { get; private set; } = 2;
         public int TotalDefenseValue { get => BareDefenseValue + (Armor?.DefenseValue ?? 0); }
-        public IWeapon Weapon { get; set; }
-        public IArmor Armor { get; set; }
-        public List<IOrnament> Ornaments { get; set; } = new();
+        public IWeapon Weapon { get; private set; }
+        public IArmor Armor { get; private set; }
+        private List<IOrnament> _ornaments = new List<IOrnament>();
+        public IEnumerable<IOrnament> Ornaments => _ornaments;
+
+        public Player() { }
+        public Player(Position position)
+        {
+            Position = position;
+            BeginningPosition = position;
+        }
 
         public override string ToString()
         {
@@ -635,6 +641,37 @@ HP : {CurrentHP}/{MaxHP}
 ATT : {BareAttackValue}+{Weapon?.AttackValue ?? 0}
 DEF : {BareDefenseValue}+{Armor?.DefenseValue ?? 0}
 EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
+        }
+
+        public void Move(MoveType movetype)
+        {
+            Position = Position.GetNext(movetype);
+        }
+
+        public void Equip(IWeapon weapon)
+        {
+            Weapon = weapon;
+        }
+
+        public void Equip(IArmor armor)
+        {
+            Armor = armor;
+        }
+
+        public void AddOrnament<T>(T ornament)
+            where T : class, IOrnament
+        {
+            if (this.IsFullOrnaments())
+            {
+                return;
+            }
+
+            if (this.HasDuplicatedOrnament(ornament))
+            {
+                return;
+            }
+
+            _ornaments.Add(ornament);
         }
 
         public void DecreaseHP(int damage)
@@ -662,7 +699,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
             var ornaments = Ornaments.Where(o => o is T).ToList();
             foreach (var ornament in ornaments)
             {
-                Ornaments.Remove(ornament);
+                _ornaments.Remove(ornament);
             }
         }
 
@@ -738,8 +775,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
 
         public InteractResult Interact(IPlayer player)
         {
-            player.Weapon = this;
-            
+            player.Equip(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -760,7 +796,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
 
         public InteractResult Interact(IPlayer player)
         {
-            player.Armor = this;
+            player.Equip(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -781,22 +817,6 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
                 _ => throw new ArgumentException(),
             };
         }
-
-        static void EquipOrnament<T>(T ornament, IPlayer player)
-            where T : class, IOrnament
-        {
-            if (player.IsFullOrnaments())
-            {
-                return;
-            }
-
-            if (player.HasDuplicatedOrnament(ornament))
-            {
-                return;
-            }
-
-            player.Ornaments.Add(ornament);
-        }
     }
 
     public class OrnamentHpRegeneration : IOrnament
@@ -805,7 +825,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -814,7 +834,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
     {
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -823,7 +843,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
     {
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -833,7 +853,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         public double ExperienceMultiple { get; init; } = 1.2;
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -842,7 +862,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
     {
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -851,7 +871,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
     {
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -860,7 +880,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
     {
         public InteractResult Interact(IPlayer player)
         {
-            IOrnament.EquipOrnament(this, player);
+            player.AddOrnament(this);
             return InteractResult.CreateChangeToBlankResult();
         }
     }
@@ -921,7 +941,7 @@ EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
 
         public static bool IsFullOrnaments(this IPlayer player)
         {
-            return player.Ornaments.Count >= 4;
+            return player.Ornaments.Count() >= 4;
         }
 
         public static bool HasDuplicatedOrnament<T>(this IPlayer player, T ornament)

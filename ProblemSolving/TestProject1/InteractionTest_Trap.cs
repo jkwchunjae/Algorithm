@@ -13,7 +13,7 @@ public class InteractionTest_Trap
     [Fact]
     public void Trap을밟으면체력이줄어든다()
     {
-        IPlayer player = new Player() { MaxHP = 20, CurrentHP = 20 };
+        IPlayer player = new Player();
         var initHp = player.CurrentHP;
 
         ITrap trap = new Trap();
@@ -27,7 +27,7 @@ public class InteractionTest_Trap
     [Fact]
     public void Trap을밟아서죽을수있다()
     {
-        IPlayer player = new Player() { MaxHP = 20, CurrentHP = 20 };
+        IPlayer player = new Player();
         var initHp = player.CurrentHP;
 
         ITrap trap = new Trap();
@@ -45,8 +45,8 @@ public class InteractionTest_Trap
     [Fact]
     public void Dexterity를가지고있을때는체력이1만줄어든다()
     {
-        IPlayer player = new Player() { MaxHP = 5, CurrentHP = 5 };
-        player.Ornaments = new List<IOrnament> { new OrnamentDexterity() };
+        IPlayer player = new Player();
+        new OrnamentDexterity().Interact(player);
         var initHp = player.CurrentHP;
 
         ITrap trap = new Trap();
@@ -60,16 +60,13 @@ public class InteractionTest_Trap
     [Fact]
     public void Dexterity를가지고있을때는체력이1만줄어들고죽는다()
     {
-        IPlayer player = new Player() { MaxHP = 5, CurrentHP = 5 };
-        player.Ornaments = new List<IOrnament> { new OrnamentDexterity() };
+        IPlayer player = new Player();
+        new OrnamentDexterity().Interact(player);
         var initHp = player.CurrentHP;
 
         ITrap trap = new Trap();
 
-        trap.Interact(player);
-        trap.Interact(player);
-        trap.Interact(player);
-        trap.Interact(player);
+        (initHp - 1).For(_ => trap.Interact(player));
         var result = trap.Interact(player);
 
         Assert.True(result.Dead);

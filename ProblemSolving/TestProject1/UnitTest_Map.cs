@@ -94,8 +94,7 @@ namespace TestProject1
         void tostring_correctly_change_input_to_output()
         {
             var map = IMap.Create(_height1, _width1, _input1);
-            var player = new Player();
-            player.Position = _input1.Select((line, index) =>
+            var position = _input1.Select((line, index) =>
             {
                 if (line.Contains('@'))
                 {
@@ -103,8 +102,9 @@ namespace TestProject1
                 }
                 else return new Position(-1, -1);
             })
-            .Where(x => x.Row >= 0)
-            .FirstOrDefault();
+           .Where(x => x.Row >= 0)
+           .FirstOrDefault();
+            var player = new Player(position);
 
             var result = map.ToString(player);
 
