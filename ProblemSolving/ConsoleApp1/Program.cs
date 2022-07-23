@@ -435,7 +435,7 @@ namespace ConsoleApp1
 
         public InteractResult Interact(IPlayer player)
         {
-            bool monsterDead = false;
+            bool monsterDead;
             bool playerDead = false;
 
             // 플레이어의 첫 번째 공격
@@ -713,7 +713,12 @@ namespace ConsoleApp1
         public void RecoverHPWithOrnament()
         {
             // HP Regeneration Ornament가 있을 경우 HP 회복
-            throw new NotImplementedException();
+            int ornamentIndex = IndexOfOrnamentIfPossess(typeof(OrnamentHpRegeneration));
+            if (ornamentIndex != -1)
+            {
+                int hpRegenCapa = ((OrnamentHpRegeneration)Ornaments[ornamentIndex]).HPRegenCapa;
+                CurrentHP = Math.Min(CurrentHP + hpRegenCapa, MaxHP);
+            }
         }
 
         public void GainExperience(int exp)
@@ -838,6 +843,8 @@ namespace ConsoleApp1
 
     public class OrnamentHpRegeneration : IOrnament
     {
+        public int HPRegenCapa { get; init; } = 3;
+        
         public InteractResult Interact(IPlayer player)
         {
             IOrnament.EquipOrnament(this, player);
