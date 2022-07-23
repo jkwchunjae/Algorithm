@@ -28,6 +28,7 @@ namespace ConsoleApp1
             foreach (var inputOutput in inputOutputList)
             {
                 inputOutput.Input = inputOutput.Input.Replace("&amp;", "&");
+                inputOutput.Output = inputOutput.Output.Replace("&amp;", "&");
                 IO.SetInputOutput(inputOutput);
 #endif
                 var result = Solve();
