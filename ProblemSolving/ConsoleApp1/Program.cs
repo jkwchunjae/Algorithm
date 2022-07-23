@@ -730,7 +730,7 @@ namespace ConsoleApp1
             if (ornamentIndex != -1)
             {
                 var experienceMultiple = ((OrnamentExperience)Ornaments[ornamentIndex]).ExperienceMultiple;
-                exp = Convert.ToInt32(exp * experienceMultiple);
+                exp = (int)(exp * experienceMultiple);
             }
             Experience += exp;
             if (Experience >= Level * LEVELUPMULTIPLE) LevelUp();
