@@ -413,7 +413,7 @@ namespace ConsoleApp1
         public int CurrentHP { get; set; }
         public int Experience { get; set; }
 
-        public Monster(string name, int weapon, int armor, int hp, int exp)
+        public Monster(string name, int weapon, int armor, int hp, int exp, bool isBoss = false)
         {
             Name = name;
             AttackValue = weapon;
@@ -421,6 +421,7 @@ namespace ConsoleApp1
             MaxHP = hp;
             CurrentHP = hp;
             Experience = exp;
+            IsBoss = isBoss;
         }
         public Monster(char chr)
         {
@@ -436,6 +437,11 @@ namespace ConsoleApp1
             bool monsterDead;
             bool playerDead = false;
 
+            if (player.HasOrnament<OrnamentHunter>() && IsBoss)
+            {
+                player.RecoverFullHP();
+            }
+
             // 플레이어의 첫 번째 공격
             monsterDead = SufferDamage(player.GetFirstDamage());
 
@@ -444,12 +450,9 @@ namespace ConsoleApp1
                 return FinalizeMatch(playerDead, player);
             }
 
-            // 상대방이 보스일 경우, 몬스터의 첫 번째 공격이 특수성을 가짐
+            // Hunter 장신구 있고 상대방이 보스일 경우, 보스의 첫 번째 공격은 없고 바로 다시 내 공격 차례
             if (player.HasOrnament<OrnamentHunter>() && IsBoss)
             {
-                // 체력 회복하고, 보스로부터 공격 당해도 피가 닳지 않음
-                player.RecoverFullHP();
-
                 monsterDead = SufferDamage(player.TotalAttackValue);
             }
 

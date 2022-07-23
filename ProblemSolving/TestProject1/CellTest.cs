@@ -75,4 +75,19 @@ public class CellTest
 
         Assert.IsType<Trap>(cell.Interactable);
     }
+    [Fact]
+    public void Hunter장신구를가지고있을때보스를한방에죽여도HP가풀로채워져있어야한다()
+    {
+        IPlayer player = new Player();
+        player.SufferDamage(1);
+        player.Ornaments.Add(new OrnamentHunter());
+
+        ICell cell = new Cell(new Position(1, 1), '&');
+        cell.Interactable = new Monster("boss", 0, 0, 0, 0, true);
+
+
+        cell.Interact(player);
+
+        Assert.Equal(player.MaxHP, player.CurrentHP);
+    }
 }
