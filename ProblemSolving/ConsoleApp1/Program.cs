@@ -441,9 +441,9 @@ namespace ConsoleApp1
             bool playerDead = false;
 
             // 플레이어의 첫 번째 공격
-            if (player.OwnOrnamentOfType(typeof(OrnamentCourage)))
+            if (player.OwnOrnamentOfType<OrnamentCourage>())
             {
-                if (player.OwnOrnamentOfType(typeof(OrnamentDexterity)))
+                if (player.OwnOrnamentOfType<OrnamentDexterity>())
                 {
                     monsterDead = SufferDamage(player.TotalAttackValue * 3);
                 }
@@ -463,7 +463,7 @@ namespace ConsoleApp1
             }
 
             // 상대방이 보스일 경우, 몬스터의 첫 번째 공격이 특수성을 가짐
-            if (player.OwnOrnamentOfType(typeof(OrnamentHunter)) && IsBoss is true)
+            if (player.OwnOrnamentOfType<OrnamentHunter>() && IsBoss is true)
             {
                 // 체력 회복하고, 보스로부터 공격 당해도 피가 닳지 않음
                 player.RecoverFullHP();
@@ -496,7 +496,7 @@ namespace ConsoleApp1
         {
             if (playerDead)
             {
-                if (player.OwnOrnamentOfType(typeof(OrnamentReincarnation)))
+                if (player.OwnOrnamentOfType<OrnamentReincarnation>())
                 {
                     CurrentHP = MaxHP;
 
@@ -540,7 +540,7 @@ namespace ConsoleApp1
         
         public InteractResult Interact(IPlayer player)
         {
-            bool ownDexterity = player.OwnOrnamentOfType(typeof(OrnamentDexterity));
+            bool ownDexterity = player.OwnOrnamentOfType<OrnamentDexterity>();
 
             if (ownDexterity)
             {
@@ -554,7 +554,7 @@ namespace ConsoleApp1
             InteractResult result;
             if (player.CurrentHP <= 0)
             {
-                bool ownReincarnation = player.OwnOrnamentOfType(typeof(OrnamentReincarnation));
+                bool ownReincarnation = player.OwnOrnamentOfType<OrnamentReincarnation>();
                 if (ownReincarnation)
                 {
                     player.Reincarnate();
@@ -630,7 +630,7 @@ namespace ConsoleApp1
 
         string ToString();
         void DecreaseHP(int damage);
-        bool OwnOrnamentOfType(Type ornamentType);
+        bool OwnOrnamentOfType<T>();
         void Reincarnate();
         void RecoverFullHP();
         void RecoverHPWithOrnament();
@@ -682,13 +682,9 @@ namespace ConsoleApp1
             CurrentHP = MaxHP;
         }
 
-        public bool OwnOrnamentOfType(Type ornamentType)
+        public bool OwnOrnamentOfType<T>()
         {
-            return Ornaments.Any(o =>
-            {
-                if (o is null) return false;
-                else return o.GetType().Equals(ornamentType);
-            });
+            return Ornaments.Any(o => o is T);
         }
         
         private int IndexOfOrnamentIfPossess(Type ornamentType)
