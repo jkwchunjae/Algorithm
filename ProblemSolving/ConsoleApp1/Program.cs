@@ -521,7 +521,7 @@ namespace ConsoleApp1
         // return: 데미지를 입어 죽을 경우 true 반환
         private bool SufferDamage(int damage)
         {
-            CurrentHP -= damage;
+            CurrentHP -= Math.Max(1, damage - DefenseValue);
             return CurrentHP <= 0;
         }
     }
@@ -650,6 +650,7 @@ namespace ConsoleApp1
         public int BareAttackValue { get; set; } = 2;
         public int TotalAttackValue { get => BareAttackValue + (Weapon?.AttackValue ?? 0); }
         public int BareDefenseValue { get; set; } = 2;
+        public int TotalDefenseValue { get => BareDefenseValue + (Armor?.DefenseValue ?? 0); }
         public IWeapon Weapon { get; set; }
         public IArmor Armor { get; set; }
         public IOrnament[] Ornaments { get; set; } = new IOrnament[ORNAMENTCAPA];
@@ -659,8 +660,8 @@ namespace ConsoleApp1
             return
                 $"LV : {Level}\n" +
                 $"HP : {CurrentHP}/{MaxHP}\n" +
-                $"ATT : {BareAttackValue}+{Weapon.AttackValue}\n" +
-                $"DEF : {BareDefenseValue}+{Armor.DefenseValue}\n" +
+                $"ATT : {BareAttackValue}+{Weapon?.AttackValue ?? 0}\n" +
+                $"DEF : {BareDefenseValue}+{Armor?.DefenseValue ?? 0}\n" +
                 $"EXP : {Experience}/{Level * LEVELUPMULTIPLE}";
         }
 
@@ -747,7 +748,7 @@ namespace ConsoleApp1
         // return: 데미지를 입어 죽을 경우 true 반환
         public bool SufferDamage(int damage)
         {
-            CurrentHP -= damage;
+            CurrentHP -= Math.Max(1, damage - TotalDefenseValue);
             return CurrentHP <= 0;
         }
     }
@@ -775,7 +776,6 @@ namespace ConsoleApp1
         public InteractResult Interact(IPlayer player)
         {
             player.Weapon = this;
-            player.BareAttackValue = AttackValue;
             
             return InteractResult.CreateChangeToBlankResult();
         }
@@ -798,7 +798,6 @@ namespace ConsoleApp1
         public InteractResult Interact(IPlayer player)
         {
             player.Armor = this;
-            player.BareDefenseValue = DefenseValue;
             return InteractResult.CreateChangeToBlankResult();
         }
     }
