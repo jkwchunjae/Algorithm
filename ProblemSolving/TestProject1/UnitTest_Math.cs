@@ -126,12 +126,13 @@ namespace TestProject1
         [InlineData(7, 126336, (-96512), 24128, (-18432))]
         public void Test_MatrixPow3(int N, int a, int b, int c, int d)
         {
-            var init = new Matrix(2, 2, 6, -4, 1, 0);
-            var m = init.Pow(N, 1000000007);
-            Assert.Equal(a, m[0][0]);
-            Assert.Equal(b, m[0][1]);
-            Assert.Equal(c, m[1][0]);
-            Assert.Equal(d, m[1][1]);
+            var mod = 1000000007;
+            var init = new Matrix(2, 2, 6, mod - 4, 1, 0);
+            var m = init.Pow(N, mod);
+            Assert.Equal((a + mod) % mod, m[0][0]);
+            Assert.Equal((b + mod) % mod, m[0][1]);
+            Assert.Equal((c + mod) % mod, m[1][0]);
+            Assert.Equal((d + mod) % mod, m[1][1]);
         }
 
         [Theory]
