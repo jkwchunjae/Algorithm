@@ -2,17 +2,32 @@
 
 public class Solution
 {
+    readonly long mod = 1000_000_007;
     public int SumSubarrayMins(int[] arr)
     {
-        var mod = 1000_000_007;
         var result = 0L;
-        var beginIndex = 0L;
-        var endIndex = 0L;
-        var currentIndex = 0L;
 
-        return 0;
+        for (var i = 0; i < arr.Length; i++)
+        {
+            var curr = arr[i];
+            var left = i;
+            var right = i;
+
+            while (left > 0 && arr[left - 1] >= curr)
+                left--;
+            while (right < arr.Length - 1 && curr < arr[right + 1])
+                right++;
+
+            var arraySize = right - left + 1;
+            var position = i - left;
+
+            var subarrayCount = Ex.CountOfSubarray(arraySize, position);
+            result += subarrayCount * curr;
+            result %= mod;
+	    }
+
+        return (int)result;
     }
-
 }
 
 public static class Ex
