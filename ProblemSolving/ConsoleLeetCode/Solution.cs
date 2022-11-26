@@ -2,47 +2,46 @@
 
 public class Solution
 {
-    readonly long mod = 1000_000_007;
-    public int SumSubarrayMins(int[] arr)
+    public int ConsecutiveNumbersSum(int N)
     {
-        var result = 0L;
+        var maxSplitCount = Ex.GetMaxSplitCount(N);
+        var result = Enumerable.Range(1, maxSplitCount)
+            .Count(split => Ex.SplitPossible(N, split));
 
-        for (var i = 0; i < arr.Length; i++)
-        {
-            var curr = arr[i];
-            var left = i;
-            var right = i;
-
-            while (left > 0 && arr[left - 1] >= curr)
-                left--;
-            while (right < arr.Length - 1 && curr < arr[right + 1])
-                right++;
-
-            var arraySize = right - left + 1;
-            var position = i - left;
-
-            var subarrayCount = Ex.CountOfSubarray(arraySize, position);
-            result += subarrayCount * curr;
-            result %= mod;
-	    }
-
-        return (int)result;
+        return result;
     }
 }
 
 public static class Ex
 {
-    /// <summary>
-    /// array에 내가 index번 위치에 있을 때 나를 포함해서 만들 수 있는 subarray의 개수
-    /// </summary>
-    /// <param name="arraySize"></param>
-    /// <param name="index"></param>
-    /// <returns></returns>
-    public static long CountOfSubarray(long arraySize, long index)
+    public static int GetMaxSplitCount(int N)
     {
-        var n = index + 1;
-        var m = arraySize - n;
-
-        return n * (m + 1);
+        double n = 2L * N + 0.25;
+        return (int)(Math.Sqrt(n) - 0.5);
+    }
+    public static bool SplitPossible(int N, int split)
+    {
+        if (split % 2 == 0)
+        {
+            var leftMid = N / split;
+            var left = leftMid - (split / 2 - 1);
+            var right = leftMid + (split / 2);
+            var sum = SumRange(left, right);
+            return sum == N;
+        }
+        else
+        {
+            var mid = N / split;
+            var left = mid - split / 2;
+            var right = mid + split / 2;
+            var sum = SumRange(left, right);
+            return sum == N;
+        }
+    }
+    public static long SumRange(int left, int right)
+    {
+        long count = right - left + 1;
+        long sum = ((left + right) * count) / 2;
+        return sum;
     }
 }

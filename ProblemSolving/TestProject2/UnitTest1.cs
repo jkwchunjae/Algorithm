@@ -4,88 +4,65 @@ namespace TestProject2;
 
 public class UnitTest1
 {
-    [Fact]
-    public void SumSubMin1()
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(2, 1)]
+    [InlineData(3, 2)]
+    [InlineData(4, 2)]
+    [InlineData(5, 2)]
+    [InlineData(6, 3)]
+    [InlineData(9, 3)]
+    [InlineData(10, 4)]
+    [InlineData(14, 4)]
+    [InlineData(15, 5)]
+    [InlineData(20, 5)]
+    [InlineData(21, 6)]
+    [InlineData(28, 7)]
+    [InlineData(1000006280, 44720)]
+    [InlineData(1000006281, 44721)]
+    public void CalcMaxSplitCount1(int N, int expected)
     {
-        var arr = new[] { 5, 3, 1, 2, 4 };
+        var result = Ex.GetMaxSplitCount(N);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(1, 3, 6)]
+    [InlineData(4, 7, 22)]
+    [InlineData(1, 44721, 1000006281)]
+    public void TestSumRange(int left, int right, long expected)
+    {
+        var result = Ex.SumRange(left, right);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(1, 1, true)]
+    [InlineData(2, 2, false)]
+    [InlineData(2, 1, true)]
+    [InlineData(3, 2, true)]
+    [InlineData(4, 2, false)]
+    [InlineData(15, 2, true)]
+    [InlineData(15, 3, true)]
+    [InlineData(15, 4, false)]
+    [InlineData(15, 5, true)]
+    [InlineData(4942, 4, true)]
+    [InlineData(1000006281, 44721, true)]
+    public void SplitTest(int N, int split, bool expected)
+    {
+        var result = Ex.SplitPossible(N, split);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(5, 2)]
+    [InlineData(9, 3)]
+    [InlineData(15, 4)]
+    [InlineData(1, 1)]
+    public void SolutionTest(int N, int expected)
+    {
         var sol = new Solution();
-        var sum = sol.SumSubarrayMins(arr);
-        Assert.Equal(28, sum);
-    }
-    [Fact]
-    public void SumSubMin2()
-    {
-        var arr = new[] { 5, 3, 2, 4, 1, 6 };
-        var sol = new Solution();
-        var sum = sol.SumSubarrayMins(arr);
-        Assert.Equal(43, sum);
-    }
-    [Fact]
-    public void SumSubMin3()
-    {
-        var arr = new[] { 5, 3, 2, 4, 1, 1 };
-        var sol = new Solution();
-        var sum = sol.SumSubarrayMins(arr);
-        Assert.Equal(38, sum);
-    }
-    [Fact]
-    public void SumSubMin4()
-    {
-        var arr = new[] { 3, 1, 2, 4 };
-        var sol = new Solution();
-        var sum = sol.SumSubarrayMins(arr);
-        Assert.Equal(17, sum);
-    }
-    [Fact]
-    public void SumSubMin5()
-    {
-        var arr = new[] { 11, 81, 94, 43, 3 };
-        var sol = new Solution();
-        var sum = sol.SumSubarrayMins(arr);
-        Assert.Equal(444, sum);
-    }
-
-
-
-
-
-
-
-
-
-    [Fact]
-    public void CountOfSubarray_1()
-    {
-        // [1, 2, 3] 중에 1이 포함되는 경우
-        var count = Ex.CountOfSubarray(3, 0);
-        Assert.Equal(3, count);
-    }
-    [Fact]
-    public void CountOfSubarray_2()
-    {
-        // [4, 1, 2, 3] 중에 1이 포함되는 경우
-        var count = Ex.CountOfSubarray(4, 1);
-        Assert.Equal(6, count);
-    }
-    [Fact]
-    public void CountOfSubarray_3()
-    {
-        // [5, 4, 1, 2, 3] 중에 1이 포함되는 경우
-        var count = Ex.CountOfSubarray(5, 2);
-        Assert.Equal(9, count);
-    }
-    [Fact]
-    public void CountOfSubarray_4()
-    {
-        // [6, 5, 4, 1, 2, 3] 중에 1이 포함되는 경우
-        var count = Ex.CountOfSubarray(6, 3);
-        Assert.Equal(12, count);
-    }
-    [Fact]
-    public void CountOfSubarray_5()
-    {
-        // [7, 6, 5, 4, 1, 2, 3] 중에 1이 포함되는 경우
-        var count = Ex.CountOfSubarray(7, 4);
-        Assert.Equal(15, count);
+        var result = sol.ConsecutiveNumbersSum(N);
+        Assert.Equal(expected, result);
     }
 }
