@@ -1,47 +1,18 @@
-﻿namespace ConsoleLeetCode;
+﻿using System.Text;
+
+namespace ConsoleLeetCode;
 
 public class Solution
 {
-    public int ConsecutiveNumbersSum(int N)
+    public string FrequencySort(string s)
     {
-        var maxSplitCount = Ex.GetMaxSplitCount(N);
-        var result = Enumerable.Range(1, maxSplitCount)
-            .Count(split => Ex.SplitPossible(N, split));
-
-        return result;
+        return s
+            .GroupBy(c => c)
+            .Select(x => new { Chr = x.Key, Count = x.Count() })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Chr)
+            .Aggregate(new StringBuilder(s.Length), (builder, item) => builder.Append(item.Chr, item.Count))
+            .ToString();
     }
 }
 
-public static class Ex
-{
-    public static int GetMaxSplitCount(int N)
-    {
-        double n = 2L * N + 0.25;
-        return (int)(Math.Sqrt(n) - 0.5);
-    }
-    public static bool SplitPossible(int N, int split)
-    {
-        if (split % 2 == 0)
-        {
-            var leftMid = N / split;
-            var left = leftMid - (split / 2 - 1);
-            var right = leftMid + (split / 2);
-            var sum = SumRange(left, right);
-            return sum == N;
-        }
-        else
-        {
-            var mid = N / split;
-            var left = mid - split / 2;
-            var right = mid + split / 2;
-            var sum = SumRange(left, right);
-            return sum == N;
-        }
-    }
-    public static long SumRange(int left, int right)
-    {
-        long count = right - left + 1;
-        long sum = ((left + right) * count) / 2;
-        return sum;
-    }
-}
