@@ -35,20 +35,20 @@ public class UnitTest1
     [Fact]
     public void Test1()
     {
-        var tree = MakeTree(new int?[] { null, 1, 2, 3 });
+        var tree = MakeTree(new int?[] { null, 1, 2, 3, 4, 5, 6 });
         var sol = new Solution();
-        var result = sol.MaxPathSum(tree);
+        var result = sol.MaxProduct(tree);
 
-        Assert.Equal(6, result);
+        Assert.Equal(110, result);
     }
 
     [Fact]
     public void Test2()
     {
-        var tree = MakeTree(new int?[] { null, -10, 9, 20, null, null, 15, 7 });
+        var tree = MakeTree(new int?[] { null, 1, null, 2, 3, 4, null, null, 5, 6 });
         var sol = new Solution();
-        var result = sol.MaxPathSum(tree);
+        var result = sol.MaxProduct(tree);
 
-        Assert.Equal(42, result);
+        Assert.Equal(90, result);
     }
 }

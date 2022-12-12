@@ -1,53 +1,51 @@
 ﻿namespace ConsoleLeetCode;
 
-public class TreeNode {
-    public int val;
-    public TreeNode? left;
-    public TreeNode? right;
-}
-
 public class Solution
 {
-    public int MaxPathSum(TreeNode root)
+    public int MaxProduct(TreeNode root)
     {
-        long maxResult = int.MinValue;
+        const long mod = 1_000_000_007;
+
+        long treeSum = root.TreeSum();
+        long maxProduct = int.MinValue;
 
         Queue<TreeNode> queue = new();
         queue.Enqueue(root);
+
         while (queue.Any())
         {
             var node = queue.Dequeue();
-            long pathSum = node.val;
-            pathSum += node.left?.SingleMax() ?? 0;
-            pathSum += node.right?.SingleMax() ?? 0;
+            var nodeSum = node.TreeSum();
 
-            maxResult = Math.Max(maxResult, pathSum);
+            long product = (((treeSum - nodeSum) % mod) * (nodeSum % mod)) % mod;
 
-            if (node.left != null)
-                queue.Enqueue(node.left!);
-            if (node.right != null)
-                queue.Enqueue(node.right!);
+            maxProduct = Math.Max(maxProduct, product);
+
+            if (node.left != default)
+                queue.Enqueue(node.left);
+            if (node.right != default)
+                queue.Enqueue(node.right);
         }
 
-        return (int)maxResult;
+        return (int)maxProduct;
     }
 }
 
 public static class Ex
 {
-    private static Dictionary<TreeNode, long> _singlemax = new();
-    public static long SingleMax(this TreeNode node)
+    private static Dictionary<TreeNode, long> _sum = new();
+    public static long TreeSum(this TreeNode node)
     {
-        if (_singlemax.TryGetValue(node, out var m))
+        if (_sum.TryGetValue(node, out var m))
         {
             return m;
         }
 
-        var leftMax = node.left?.SingleMax() ?? 0;
-        var rightMax = node.right?.SingleMax() ?? 0;
+        var leftSum = node.left?.TreeSum() ?? 0;
+        var rightSum = node.right?.TreeSum() ?? 0;
 
-        var result = node.val + Math.Max(leftMax, rightMax);
-        _singlemax.Add(node, result);
+        var result = node.val + leftSum + rightSum;
+        _sum.Add(node, result);
         return result;
     }
 }
