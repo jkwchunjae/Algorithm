@@ -22,16 +22,14 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "13976";
+            var problemNumber = "4673";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var input = IO.GetLong();
-
-                var result = Solve(input);
+                var result = Solve(10000);
                 result.Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
@@ -48,31 +46,43 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static long Solve(long N)
+        public static string Solve(int N)
         {
-            if (N % 2 == 1)
+            var selfNumber = new List<int>();
+
+            var checkSelf = Enumerable.Range(0, N + 10)
+                .Select(x => true)
+                .ToArray();
+
+            for (var i = 1; i <= N; i++)
             {
-                return 0;
+                if (checkSelf[i])
+                {
+                    selfNumber.Add(i);
+                    var drNumber = MakeDrNumber(i);
+                    if (drNumber < checkSelf.Length)
+                    {
+                        checkSelf[drNumber] = false;
+                    }
+                }
+                else
+                {
+                    var drNumber = MakeDrNumber(i);
+                    if (drNumber < checkSelf.Length)
+                    {
+                        checkSelf[drNumber] = false;
+                    }
+                }
             }
-            else if (N == 2)
-            {
-                return 3;
-            }
-            else if (N == 4)
-            {
-                return 11;
-            }
 
-            int mod = 1_000_000_007;
-            long n = ((N - 6) / 2 + 1);
+            return selfNumber.StringJoin(Environment.NewLine);
+        }
 
-            var seedMatrix = new Matrix(2, 2, 4, -1, 1, 0);
-            var left = seedMatrix.Pow(n, mod);
-
-            var right = new Matrix(2, 1, 11, 3);
-
-            Matrix result = left * right;
-            return (result[0][0] + mod + mod) % mod;
+        public static int MakeDrNumber(int number)
+        {
+            var str = number.ToString();
+            return number + str
+                .Sum(chr => (chr - '0'));
         }
     }
 
