@@ -22,15 +22,17 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "4673";
+            var problemNumber = "1138";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var result = Solve(10000);
-                result.Dump();
+                var N = IO.GetInt();
+                var arr = IO.GetIntList();
+                var result = Solve(N, arr);
+                result.StringJoin(" ").Dump();
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -46,43 +48,34 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static string Solve(int N)
+        public static int[] Solve(int N, int[] arr)
         {
-            var selfNumber = new List<int>();
+            var result = arr.Select(_ => 0).ToArray();
 
-            var checkSelf = Enumerable.Range(0, N + 10)
-                .Select(x => true)
-                .ToArray();
-
-            for (var i = 1; i <= N; i++)
+            for (var i = 0; i < N; i++)
             {
-                if (checkSelf[i])
-                {
-                    selfNumber.Add(i);
-                    var drNumber = MakeDrNumber(i);
-                    if (drNumber < checkSelf.Length)
-                    {
-                        checkSelf[drNumber] = false;
-                    }
-                }
-                else
-                {
-                    var drNumber = MakeDrNumber(i);
-                    if (drNumber < checkSelf.Length)
-                    {
-                        checkSelf[drNumber] = false;
-                    }
-                }
+                var num = i + 1;
+                var count = arr[i];
+                Fill(result, num, count);
             }
 
-            return selfNumber.StringJoin(Environment.NewLine);
+            return result;
         }
 
-        public static int MakeDrNumber(int number)
+        public static void Fill(int[] arr, int number, int requestCount)
         {
-            var str = number.ToString();
-            return number + str
-                .Sum(chr => (chr - '0'));
+            for (var i = 0; i < arr.Length; i++)
+            {
+                if (arr[i] == 0 && requestCount == 0)
+                {
+                    arr[i] = number;
+                    return;
+                }
+                if (arr[i] == 0 || arr[i] > number)
+                {
+                    requestCount--;
+                }
+            }
         }
     }
 
@@ -434,7 +427,7 @@ namespace ConsoleApp1
                 switch (result)
                 {
                     case LoopResult.Break:
-                        break;
+                        return;
                     case LoopResult.Continue:
                         continue;
                 }
@@ -449,7 +442,7 @@ namespace ConsoleApp1
                 switch (result)
                 {
                     case LoopResult.Break:
-                        break;
+                        return;
                     case LoopResult.Continue:
                         continue;
                 }
