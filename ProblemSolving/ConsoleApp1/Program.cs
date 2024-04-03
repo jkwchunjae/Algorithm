@@ -137,9 +137,11 @@ namespace ConsoleApp1
 
         public static string GetLine()
         {
-#if DEBUG
+#if DEBUG // delete
             return _input[_readInputCount++];
-#else
+#endif
+
+#if !DEBUG
             return _inputReader.ReadLine();
 #endif
         }
