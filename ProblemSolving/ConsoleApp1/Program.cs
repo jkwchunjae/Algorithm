@@ -60,11 +60,15 @@ namespace ConsoleApp1
 
         public static int Solve(List<int[]> table, Position position)
         {
-            return table.Skip(position.i - 1)
-                .Take(position.x - position.i + 1)
-                .Sum(row => row.Skip(position.j - 1)
-                    .Take(position.y - position.j + 1)
-                    .Sum());
+            var sum = 0;
+            for (var row = position.i - 1; row < position.x; row++)
+            {
+                for (var column = position.j - 1; column < position.y; column++)
+                {
+                    sum += table[row][column];
+                }
+            }
+            return sum;
         }
     }
 
