@@ -13,6 +13,7 @@ using System.Diagnostics;
 
 namespace ConsoleApp1
 {
+    public record Position(int i, int j, int x, int y);
     public class Program
     {
 #if DEBUG // delete
@@ -22,17 +23,26 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "1138";
+            var problemNumber = "2167";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var arr = IO.GetIntList();
-                var result = Solve(N, arr);
-                result.StringJoin(" ").Dump();
+                var (N, M) = IO.GetIntTuple2();
+                var table = N.MakeList(_ => IO.GetIntList());
+                var K = IO.GetInt();
+                var query = K.MakeList(_ =>
+                {
+                    var (i, j, x, y) = IO.GetIntTuple4();
+                    return new Position(i, j, x, y);
+                });
+                query.ForEach(position =>
+                {
+                    var sum = Solve(table, position);
+                    sum.Dump();
+                });
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -48,34 +58,13 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static int[] Solve(int N, int[] arr)
+        public static int Solve(List<int[]> table, Position position)
         {
-            var result = arr.Select(_ => 0).ToArray();
-
-            for (var i = 0; i < N; i++)
-            {
-                var num = i + 1;
-                var count = arr[i];
-                Fill(result, num, count);
-            }
-
-            return result;
-        }
-
-        public static void Fill(int[] arr, int number, int requestCount)
-        {
-            for (var i = 0; i < arr.Length; i++)
-            {
-                if (arr[i] == 0 && requestCount == 0)
-                {
-                    arr[i] = number;
-                    return;
-                }
-                if (arr[i] == 0 || arr[i] > number)
-                {
-                    requestCount--;
-                }
-            }
+            return table.Skip(position.i - 1)
+                .Take(position.x - position.i + 1)
+                .Sum(row => row.Skip(position.j - 1)
+                    .Take(position.y - position.j + 1)
+                    .Sum());
         }
     }
 
