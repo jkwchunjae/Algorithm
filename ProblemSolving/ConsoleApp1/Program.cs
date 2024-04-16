@@ -23,26 +23,16 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2167";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
+            var problemNumber = "2447";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var (N, M) = IO.GetIntTuple2();
-                var table = N.MakeList(_ => IO.GetIntList());
-                var K = IO.GetInt();
-                var query = K.MakeList(_ =>
-                {
-                    var (i, j, x, y) = IO.GetIntTuple4();
-                    return new Position(i, j, x, y);
-                });
-                query.ForEach(position =>
-                {
-                    var sum = Solve(table, position);
-                    sum.Dump();
-                });
+                var N = IO.GetInt();
+                var lines = Solve(N);
+                lines.ForEach(x => x.Dump());
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -58,17 +48,62 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static int Solve(List<int[]> table, Position position)
+        public static IEnumerable<string> Solve(int N)
         {
-            var sum = 0;
-            for (var row = position.i - 1; row < position.x; row++)
+            var cells = N.MakeList(_ => N.MakeList(_ => new Cell()))
+                .ToList();
+
+            PrintStar(cells, N, 0, 0);
+
+            return cells.Select(x => CellsToString(x));
+        }
+
+        public static void PrintStar(List<List<Cell>> cells, int size, int row, int column)
+        {
+            bool[][] starPosition = new bool[][]
             {
-                for (var column = position.j - 1; column < position.y; column++)
-                {
-                    sum += table[row][column];
-                }
+                new bool[] { true, true, true },
+                new bool[] { true, false, true },
+                new bool[] { true, true, true },
+            };
+            var arr = new int[] { 0, 1, 2 };
+            if (size == 3)
+            {
+                Extensions.AllPairs(arr, arr)
+                    .Where(x => starPosition[x.Item1][x.Item2])
+                    .ForEach(x =>
+                    {
+                        var (i, j) = x;
+                        cells[row + i][column + j].SetStar();
+                    });
             }
-            return sum;
+            else
+            {
+                Extensions.AllPairs(arr, arr)
+                    .Where(x => starPosition[x.Item1][x.Item2])
+                    .ForEach(x =>
+                    {
+                        var (i, j) = x;
+                        var nextRow = row + i * size / 3;
+                        var nextColumn = column + j * size / 3;
+                        PrintStar(cells, size / 3, nextRow, nextColumn);
+                    });
+            }
+        }
+
+        public static string CellsToString(List<Cell> cells)
+        {
+            return new string(cells.Select(cell => cell.Char).ToArray());
+        }
+    }
+
+    public class Cell
+    {
+        public bool Star { get; set; } = false;
+        public char Char => Star ? '*' : ' ';
+        public void SetStar()
+        {
+            Star = true;
         }
     }
 
@@ -498,6 +533,31 @@ namespace ConsoleApp1
                 {
                     var item2 = source[j];
                     yield return (item1, item2);
+                }
+            }
+        }
+
+        public static IEnumerable<(T1, T2)> AllPairs<T1, T2>(this IEnumerable<T1> source1, IEnumerable<T2> source2)
+        {
+            foreach (var item1 in source1)
+            {
+                foreach (var item2 in source2)
+                {
+                    yield return (item1, item2);
+                }
+            }
+        }
+
+        public static IEnumerable<(T1, T2, T3)> AllPairs<T1, T2, T3>(this IEnumerable<T1> source1, IEnumerable<T2> source2, IEnumerable<T3> source3)
+        {
+            foreach (var item1 in source1)
+            {
+                foreach (var item2 in source2)
+                {
+                    foreach (var item3 in source3)
+                    {
+                        yield return (item1, item2, item3);
+                    }
                 }
             }
         }
