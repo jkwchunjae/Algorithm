@@ -11,6 +11,46 @@ using WinFormsLibrary1;
 using System.Diagnostics;
 #endif
 
+//  *   
+// * *  
+//***** 
+
+//     *      
+//    * *     
+//   *****    
+//  *     *   
+// * *   * *  
+//***** ***** 
+
+//N:12 row:0 column:0
+//	N:6 row:0 column:6
+//		N:3 row:0 column:9
+//		N:3 row:3 column:6
+//		N:3 row:3 column:12
+//	N:6 row:6 column:0
+//		N:3 row:6 column:3
+//		N:3 row:9 column:0
+//		N:3 row:9 column:6
+//	N:6 row:6 column:12
+//		N:3 row:6(row) column:15(column+N/2)
+//		N:3 row:9(row+N/2) column:12(column)
+//		N:3 row:9(row+N/2) column:18(column+N)
+
+//           *            
+//          * *           
+//         *****          
+//        *     *         
+//       * *   * *        
+//      ***** *****       
+//     *           *      
+//    * *         * *     
+//   *****       *****    
+//  *     *     *     *   
+// * *   * *   * *   * *  
+//***** ***** ***** ***** 
+
+
+
 namespace ConsoleApp1
 {
     public record Position(int i, int j, int x, int y);
@@ -23,7 +63,7 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2447";
+            var problemNumber = "2448";
             var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
@@ -50,60 +90,46 @@ namespace ConsoleApp1
 
         public static IEnumerable<string> Solve(int N)
         {
-            var cells = N.MakeList(_ => N.MakeList(_ => new Cell()))
-                .ToList();
+            var height = N;
+            var width = 2 * N;
+            var cells = height.MakeList(_ => width.MakeList(_ => false));
 
             PrintStar(cells, N, 0, 0);
 
             return cells.Select(x => CellsToString(x));
         }
 
-        public static void PrintStar(List<List<Cell>> cells, int size, int row, int column)
+        public static void PrintStar(List<List<bool>> cells, int size, int row, int column)
         {
-            bool[][] starPosition = new bool[][]
-            {
-                new bool[] { true, true, true },
-                new bool[] { true, false, true },
-                new bool[] { true, true, true },
-            };
-            var arr = new int[] { 0, 1, 2 };
             if (size == 3)
             {
-                Extensions.AllPairs(arr, arr)
-                    .Where(x => starPosition[x.Item1][x.Item2])
-                    .ForEach(x =>
-                    {
-                        var (i, j) = x;
-                        cells[row + i][column + j].SetStar();
-                    });
+                var unit = new string[]
+                {
+                    "  *   ",
+                    " * *  ",
+                    "***** "
+                };
+                Extensions.AllPairs(unit.Length, unit[0].Length)
+                    .Where(p => unit[p.Row][p.Column] == '*')
+                    .ForEach(p => cells[row + p.Row][column + p.Column] = true);
             }
             else
             {
-                Extensions.AllPairs(arr, arr)
-                    .Where(x => starPosition[x.Item1][x.Item2])
-                    .ForEach(x =>
-                    {
-                        var (i, j) = x;
-                        var nextRow = row + i * size / 3;
-                        var nextColumn = column + j * size / 3;
-                        PrintStar(cells, size / 3, nextRow, nextColumn);
-                    });
+                var nextSize = size / 2;
+                var nextPositions = new List<(int Row, int Column)>
+                {
+                    (row, column + size / 2),
+                    (row + size / 2, column),
+                    (row + size / 2, column + size),
+                };
+                nextPositions
+                    .ForEach(p => PrintStar(cells, nextSize, p.Row, p.Column));
             }
         }
 
-        public static string CellsToString(List<Cell> cells)
+        public static string CellsToString(List<bool> cells)
         {
-            return new string(cells.Select(cell => cell.Char).ToArray());
-        }
-    }
-
-    public class Cell
-    {
-        public bool Star { get; set; } = false;
-        public char Char => Star ? '*' : ' ';
-        public void SetStar()
-        {
-            Star = true;
+            return new string(cells.Select(star => star ? '*' : ' ').ToArray());
         }
     }
 
@@ -511,6 +537,16 @@ namespace ConsoleApp1
             return value;
         }
 
+        public static IEnumerable<(int Row, int Column)> AllPairs(int rowCount, int columnCount)
+        {
+            for (var row = 0; row < rowCount; row++)
+            {
+                for (var column = 0; column < columnCount; column++)
+                {
+                    yield return (row, column);
+                }
+            }
+        }
         public static IEnumerable<(TItem Item1, TItem Item2)> AllPairs<TItem>(this List<TItem> source, bool includeDuplicate = false)
         {
             for (var i = 0; i < source.Count(); i++)
