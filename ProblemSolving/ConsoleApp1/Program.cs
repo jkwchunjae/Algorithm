@@ -4,52 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Net.Http.Headers;
+
 #if DEBUG // delete
 using System.Net.Http;
 using Newtonsoft.Json;
 using WinFormsLibrary1;
 using System.Diagnostics;
 #endif
-
-//  *   
-// * *  
-//***** 
-
-//     *      
-//    * *     
-//   *****    
-//  *     *   
-// * *   * *  
-//***** ***** 
-
-//N:12 row:0 column:0
-//	N:6 row:0 column:6
-//		N:3 row:0 column:9
-//		N:3 row:3 column:6
-//		N:3 row:3 column:12
-//	N:6 row:6 column:0
-//		N:3 row:6 column:3
-//		N:3 row:9 column:0
-//		N:3 row:9 column:6
-//	N:6 row:6 column:12
-//		N:3 row:6(row) column:15(column+N/2)
-//		N:3 row:9(row+N/2) column:12(column)
-//		N:3 row:9(row+N/2) column:18(column+N)
-
-//           *            
-//          * *           
-//         *****          
-//        *     *         
-//       * *   * *        
-//      ***** *****       
-//     *           *      
-//    * *         * *     
-//   *****       *****    
-//  *     *     *     *   
-// * *   * *   * *   * *  
-//***** ***** ***** ***** 
-
-
 
 namespace ConsoleApp1
 {
@@ -63,16 +25,23 @@ namespace ConsoleApp1
         {
             using var io = new IoInstance();
 #if DEBUG // delete
-            var problemNumber = "2448";
-            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: true);
+            var problemNumber = "5430";
+            var inputOutputList = BojUtils.MakeInputOutput(problemNumber, useLocalInput: false);
             var checkAll = true;
             foreach (var inputOutput in inputOutputList)
             {
                 IO.SetInputOutput(inputOutput);
 #endif
-                var N = IO.GetInt();
-                var lines = Solve(N);
-                lines.ForEach(x => x.Dump());
+                var T = IO.GetInt();
+                T.For(_ =>
+                {
+                    var commandString = IO.GetString();
+                    var N = IO.GetInt();
+                    var arrayString = IO.GetString();
+                    var array = arrayString.ToIntArray();
+                    var result = Solve(commandString.ToArray(), array);
+                    result.Dump();
+                });
 #if DEBUG // delete
                 var correct = IO.IsCorrect().Dump();
                 checkAll = checkAll && correct;
@@ -88,53 +57,131 @@ namespace ConsoleApp1
             return 0;
         }
 
-        public static IEnumerable<string> Solve(int N)
+        public static string Solve(char[] commands, int[] array)
         {
-            var height = N;
-            var width = 2 * N;
-            var cells = height.MakeList(_ => width.MakeList(_ => false));
+            var acArray = new AcArray(array);
 
-            PrintStar(cells, N, 0, 0);
+            foreach (var command in commands)
+            {
+                var (result, arrstring) = acArray.Action(command);
+                if (result == false)
+                {
+                    return "error";
+                }
+            }
 
-            return cells.Select(x => CellsToString(x));
+            return acArray.ToString();
+        }
+    }
+
+    public class AcArray
+    {
+        enum Head
+        {
+            Left, Right,
+        };
+        private int[] _array;
+        private int leftIndex = 0;
+        private int rightIndex = 0;
+        private Head head = Head.Left;
+        private bool isEmpty = false;
+
+        public AcArray(int[] array)
+        {
+            _array = array;
+            if (array.Length == 0)
+            {
+                isEmpty = true;
+            }
+            leftIndex = 0;
+            rightIndex = _array.Length - 1;
         }
 
-        public static void PrintStar(List<List<bool>> cells, int size, int row, int column)
+        public override string ToString()
         {
-            if (size == 3)
+            if (isEmpty)
             {
-                var unit = new string[]
-                {
-                    "  *   ",
-                    " * *  ",
-                    "***** "
-                };
-                Extensions.AllPairs(unit.Length, unit[0].Length)
-                    .Where(p => unit[p.Row][p.Column] == '*')
-                    .ForEach(p => cells[row + p.Row][column + p.Column] = true);
+                return "[]";
+            }
+            else if (head == Head.Left)
+            {
+                var finalArray = _array
+                    .Skip(leftIndex)
+                    .Take(rightIndex - leftIndex + 1)
+                    .ToArray();
+
+                return $"[{finalArray.StringJoin(",")}]";
+            }
+            else if (head == Head.Right)
+            {
+                var finalArray = _array
+                    .Skip(leftIndex)
+                    .Take(rightIndex - leftIndex + 1)
+                    .Reverse()
+                    .ToArray();
+
+                return $"[{finalArray.StringJoin(",")}]";
             }
             else
             {
-                var nextSize = size / 2;
-                var nextPositions = new List<(int Row, int Column)>
-                {
-                    (row, column + size / 2),
-                    (row + size / 2, column),
-                    (row + size / 2, column + size),
-                };
-                nextPositions
-                    .ForEach(p => PrintStar(cells, nextSize, p.Row, p.Column));
+                return string.Empty;
             }
         }
 
-        public static string CellsToString(List<bool> cells)
+        public (bool, string) Action(char command)
         {
-            return new string(cells.Select(star => star ? '*' : ' ').ToArray());
+            if (command == 'R')
+            {
+                Reverse();
+                return (true, ToString());
+            }
+            else if (command == 'D')
+            {
+                var result = Delete();
+                return (result, ToString());
+            }
+            else
+            {
+                return (false, string.Empty);
+            }
+        }
+
+        public void Reverse()
+        {
+            this.head = this.head == Head.Left ? Head.Right : Head.Left;
+        }
+
+        public bool Delete()
+        {
+            if (isEmpty)
+                return false;
+
+            if (head == Head.Left)
+            {
+                leftIndex++;
+            }
+            else if (head == Head.Right)
+            {
+                rightIndex--;
+            }
+            if (leftIndex > rightIndex)
+            {
+                isEmpty = true;
+            }
+            return true;
         }
     }
 
     public static partial class Ex
     {
+        public static int[] ToIntArray(this string arrayString)
+        {
+            return arrayString.Substring(1, arrayString.Length - 2)
+                        .Split(',')
+                        .Where(x => x.Length > 0)
+                        .Select(x => x.ToInt())
+                        .ToArray();
+        }
     }
 
     public class IoInstance : IDisposable
@@ -1047,6 +1094,7 @@ namespace ConsoleApp1
         private static string GetHtml(this string problemNumber)
         {
             var client = new HttpClient();
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
             var task = client.GetStringAsync($"https://www.acmicpc.net/problem/{problemNumber}");
             task.Wait();
             return task.Result;
