@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ConsoleApp1/ConsoleApp1.csproj" />
+  <Project Path="ConsoleLeetCode/ConsoleLeetCode.csproj" />
+  <Project Path="TestProject1/TestProject1.csproj" />
+  <Project Path="TestProject2/TestProject2.csproj" />
+  <Project Path="WinFormsLibrary1/WinFormsLibrary1.csproj" />
+</Solution>
